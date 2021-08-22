@@ -1,0 +1,23 @@
+How to use:
+
+- make your own bot and generate its token following https://discordjs.guide/preparations/setting-up-a-bot-application.html
+
+- create config.json file with:
+{
+	"token": "your bot's token",
+    "clientId": "clientid of bot (only for deploying commands)",
+    "guildId": "guildid of server (only for deploying commands)",
+    "coffeeJSON": "filename of .json file to use"
+}
+
+- add bot to a server for testing following https://discordjs.guide/preparations/adding-your-bot-to-servers.html
+
+- tick PRESENCE INTENT and SERVER MEMBERS INTENT in Privileged Gateway Intents under the Bot tab of the developer portal https://stackoverflow.com/questions/64559390/none-of-my-discord-js-guildmember-events-are-emitting-my-user-caches-are-basica
+
+- get Node.js 16+ (https://nodejs.org/en/)
+
+- `npm i` to get dependencies
+
+- deploy commands to your server with `node deploy-commands.js`
+
+- run bot with `node index.js`
