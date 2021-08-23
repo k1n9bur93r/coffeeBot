@@ -77,14 +77,12 @@ client.on("interactionCreate", async (interaction) => {
       });
       return;
     }
-    if (parsedCoffeeAmount) {
-      if (isNaN(parsedCoffeeAmount) || parsedCoffeeAmount < 1) {
-        await interaction.reply({
-          content: "Nice try hax0r man",
-          ephemeral: true,
-        });
-        return;
-      }
+    if (isNaN(parsedCoffeeAmount) || parsedCoffeeAmount < 1) {
+      await interaction.reply({
+        content: "Nice try hax0r man",
+        ephemeral: true,
+      });
+      return;
     }
 
     if (coffees[interaction.user.id] == undefined) {
