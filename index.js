@@ -60,7 +60,7 @@ client.on("interactionCreate", async (interaction) => {
             interaction.options.get("user").user.id,
             interaction.channel
         );
-        let parsedCoffeeAmount = interaction.options.getInteger("amount");
+        let parsedCoffeeAmount = interaction.options.getNumber("amount");
         if (mentionedUser) {
             if (mentionedUser == undefined) {
                 await interaction.reply({
@@ -77,7 +77,7 @@ client.on("interactionCreate", async (interaction) => {
             });
             return;
         }
-        if (isNaN(parsedCoffeeAmount) || parsedCoffeeAmount < 1) {
+        if (isNaN(parsedCoffeeAmount) || parsedCoffeeAmount <= 0) {
             await interaction.reply({
                 content: "Nice try hax0r man",
                 ephemeral: true,
@@ -118,7 +118,7 @@ client.on("interactionCreate", async (interaction) => {
             interaction.options.get("user").user.id,
             interaction.channel
         );
-        let parsedCoffeeAmount = interaction.options.getInteger("amount");
+        let parsedCoffeeAmount = interaction.options.getNumber("amount");
         if (mentionedUser) {
             if (mentionedUser == undefined) {
                 await interaction.reply({
@@ -129,7 +129,7 @@ client.on("interactionCreate", async (interaction) => {
             }
         }
         if (parsedCoffeeAmount) {
-            if (isNaN(parsedCoffeeAmount) || parsedCoffeeAmount < 1) {
+            if (isNaN(parsedCoffeeAmount) || parsedCoffeeAmount <= 0) {
                 await interaction.reply({
                     content: "Nice try hax0r man",
                     ephemeral: true,
@@ -186,11 +186,18 @@ client.on("interactionCreate", async (interaction) => {
             await interaction.reply(
                 `<@${interaction.user.id}> revoked their coin flip offer.`
             );
-        } else {
+        } else if ((interaction.commandName == "coinflip")) {
             let coinFlipper1 = curCoinflipRequest;
             let coinFlipper2 = interaction.user.id;
             let winner;
             let loser;
+
+            if (Math.random() > .99) {
+                // easter egg: 1% chance coin lands on side :^)
+                curCoinflipRequest = ""
+                await interaction.reply(`The coinflip landed on its side! It is a tie and no coffees are owed!`);
+                return;
+            }
 
             if (Math.random() > 0.5) {
                 winner = coinFlipper1;
@@ -221,9 +228,65 @@ client.on("interactionCreate", async (interaction) => {
 
             curCoinflipRequest = "";
             await interaction.reply(
-                `<@${winner}> won the coinflip! <@${loser}> payed up 1 coffee.`
+                `<@${winner}> won the coinflip! <@${loser}> paid up 1 coffee.`
             );
         }
+    } else if (interaction.commandName == "transfer") {
+        let transferer = interaction.user.id
+        let fromId = interaction.options.get("from").user.id
+        let toId = interaction.options.get("to").user.id
+        let amount = interaction.options.getNumber("amount")
+
+        //check if from user owes less than amount to transferer or that transferer owes less than amount to toId
+        if (coffees[fromId][transferer] < amount) {
+            // if so, then ephemeral error and return
+            await interaction.reply({
+                content: `<@${fromId}> does not owe you ${amount}`,
+                ephemeral: true,
+            });
+            return
+        }
+        if (coffees[transferer][toId] < amount) {
+            await interaction.reply({
+                content: `You do not owe <@${toId}> ${amount}`,
+                ephemeral: true,
+            });
+            return
+        }
+        if (coffees[fromId][toId] == undefined) {
+            coffees[fromId][toId] = 0
+        } 
+        if (amount < 0) {
+            await interaction.reply({
+                content: `Cannot transfer negative amount!`,
+                ephemeral: true,
+            });
+            return
+        }
+        if (toId == transferer || fromId == transferer) {
+            await interaction.reply({
+                content: `Cannot transfer to or from yourself!`,
+                ephemeral: true,
+            });
+            return
+        }
+
+        coffees[fromId][transferer] -= amount
+        coffees[transferer][toId] -= amount
+        coffees[fromId][toId] += amount
+
+        //write new json to file
+        fs.writeFile(
+            `${coffeeJSON}`,
+            JSON.stringify(coffees, null, 1),
+            (err) => {
+                if (err) throw err;
+            }
+        );
+
+        await interaction.reply(
+            `<@${transferer}> is transfering ${amount} from <@${fromId}> to <@${toId}>.`
+        );
     }
 });
 

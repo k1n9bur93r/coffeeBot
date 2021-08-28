@@ -15,7 +15,7 @@ const commands = [
             option.setName('user')
                 .setDescription('User to give coffee to')
                 .setRequired(true))
-        .addIntegerOption(option =>
+        .addNumberOption(option =>
             option.setName('amount')
                 .setDescription('Amount to give')
                 .setRequired(true)),
@@ -24,10 +24,24 @@ const commands = [
             option.setName('user')
                 .setDescription('User to redeem coffee from')
                 .setRequired(true))
-        .addIntegerOption(option =>
+        .addNumberOption(option =>
             option.setName('amount')
                 .setDescription('Amount to redeem')
                 .setRequired(true)),
+    new SlashCommandBuilder().setName('coinflip').setDescription('Put out offer to coinflip for 1 coffee'),
+    new SlashCommandBuilder().setName('transfer').setDescription('Transfer redeemable coffees to cover owed coffees')
+        .addUserOption(option =>
+            option.setName('from')
+                .setDescription('User to transfer redeemble from')
+                .setRequired(true))
+        .addUserOption(option =>
+            option.setName('to')
+                .setDescription('User to transfer redeemable to')
+                .setRequired(true))
+        .addNumberOption(option =>
+            option.setName('amount')
+                .setDescription('Coffee amount to transfer')
+                .setRequired(true)),            
 ]
     .map(command => command.toJSON());
 
