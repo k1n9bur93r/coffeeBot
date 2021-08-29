@@ -357,7 +357,13 @@ client.on("interactionCreate", async (interaction) => {
 
             // calculate winner
             let distances = []
-            let sortedPlayerIds = getSortedKeys(curCoffeePotPlayers)
+
+            let newPlayerList = {} //this list will hold diff from num
+            for ( let playerId in curCoffeePotPlayers) {
+                newPlayerList[playerId] = Math.abs(randomNum - curCoffeePotPlayers[playerId])
+            }
+
+            let sortedPlayerIds = getSortedKeys(newPlayerList)
             let winner = ""
 
             if ( curCoffeePotPlayers[sortedPlayerIds[0]] == curCoffeePotPlayers[sortedPlayerIds[1]] ) {
@@ -380,11 +386,6 @@ client.on("interactionCreate", async (interaction) => {
             curCoffeePotSlots = -1
             curCoffeePotPlayers = {}
 
-            const embed = new MessageEmbed()
-                .setTitle("Coffee Pot Results")
-                .setDescription(coffeePotText)
-                .setThumbnail("https://www.krupsusa.com/medias/?context=bWFzdGVyfGltYWdlc3wxNDQ4OTJ8aW1hZ2UvanBlZ3xpbWFnZXMvaDk5L2hiMS8xMzg3MTUxMjk0NDY3MC5iaW58NzZkZDc3MGJhYmQzMjAwYjc4NmJjN2NjOGMxN2UwZmNkODQ2ZjMwZWE0YzM4OWY4MDFmOTFkZWUxYWVkMzU5Zg");
-            await interaction.reply({ embeds: [embed] });            
             
             if (winner != "") {
                 for (let playerId of sortedPlayerIds) {
@@ -401,6 +402,20 @@ client.on("interactionCreate", async (interaction) => {
                     }
                 }
             }
+            
+            fs.writeFile(
+                `${coffeeJSON}`,
+                JSON.stringify(coffees, null, 1),
+                (err) => {
+                    if (err) throw err;
+                }
+            );
+                
+            const embed = new MessageEmbed()
+                .setTitle("Coffee Pot Results")
+                .setDescription(coffeePotText)
+                .setThumbnail("https://www.krupsusa.com/medias/?context=bWFzdGVyfGltYWdlc3wxNDQ4OTJ8aW1hZ2UvanBlZ3xpbWFnZXMvaDk5L2hiMS8xMzg3MTUxMjk0NDY3MC5iaW58NzZkZDc3MGJhYmQzMjAwYjc4NmJjN2NjOGMxN2UwZmNkODQ2ZjMwZWE0YzM4OWY4MDFmOTFkZWUxYWVkMzU5Zg");
+            await interaction.reply({ embeds: [embed] });
 
             return
         }
