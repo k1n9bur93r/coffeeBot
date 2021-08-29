@@ -41,7 +41,17 @@ const commands = [
         .addNumberOption(option =>
             option.setName('amount')
                 .setDescription('Coffee amount to transfer')
-                .setRequired(true)),            
+                .setRequired(true)),
+    new SlashCommandBuilder().setName('startpot').setDescription('Start a coffee betting pot')
+        .addIntegerOption(option =>
+            option.setName('amount')
+            .setDescription('Amount of people to run the pot at')
+            .setRequired(true)),
+    new SlashCommandBuilder().setName('joinpot').setDescription('Join a coffee betting pot')
+        .addIntegerOption(option =>
+            option.setName('number')
+            .setDescription('Choose a number between 1 and 1000')
+            .setRequired(true)),         
 ]
     .map(command => command.toJSON());
 

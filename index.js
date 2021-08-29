@@ -5,6 +5,8 @@ const fs = require("fs");
 const coffees = require(`./${coffeeJSON}`);
 
 let curCoinflipRequest = "";
+let curCoffeePotPlayers = {};
+let curCoffeePotSlots = -1;
 
 // Create a new client instance
 const client = new Client({
@@ -273,7 +275,9 @@ client.on("interactionCreate", async (interaction) => {
 
         coffees[fromId][transferer] -= amount
         coffees[transferer][toId] -= amount
-        coffees[fromId][toId] += amount
+
+        if (fromId != toId)
+            coffees[fromId][toId] += amount
 
         //write new json to file
         fs.writeFile(
@@ -287,10 +291,134 @@ client.on("interactionCreate", async (interaction) => {
         await interaction.reply(
             `<@${transferer}> is transfering ${amount} from <@${fromId}> to <@${toId}>.`
         );
+    } else if (interaction.commandName == "startpot") {
+        let spotsAmount = interaction.options.getInteger("amount")
+        
+        if (spotsAmount < 2) {
+            await interaction.reply({
+                content: `Must have atleast 2 spots`,
+                ephemeral: true,
+            });
+            return
+        }
+
+        // clear pot players
+        curCoffeePotPlayers = {};
+        // set pot amount
+        curCoffeePotSlots = spotsAmount;
+
+        let coffeePotText = `<@${interaction.user.id}> is starting a :coffee: pot with ***${spotsAmount}*** spots!\n\n`
+            +`**How it works:**\n`
+            +`• Players may wager 1 :coffee: by doing ***/joinpot [# between 1 and 1000]***\n`
+            +`• Once **${spotsAmount}** players join the pot, then a random number is selected\n`
+            +`• The closest guesser to the number takes all the :coffee: in the pot`
+        
+        const embed = new MessageEmbed()
+            .setTitle("Coffee Pot")
+            .setDescription(coffeePotText)
+            .setThumbnail("https://www.krupsusa.com/medias/?context=bWFzdGVyfGltYWdlc3wxNDQ4OTJ8aW1hZ2UvanBlZ3xpbWFnZXMvaDk5L2hiMS8xMzg3MTUxMjk0NDY3MC5iaW58NzZkZDc3MGJhYmQzMjAwYjc4NmJjN2NjOGMxN2UwZmNkODQ2ZjMwZWE0YzM4OWY4MDFmOTFkZWUxYWVkMzU5Zg");
+        await interaction.reply({ embeds: [embed] });
+            
+    } else if (interaction.commandName == "joinpot") {
+        let joinerId = interaction.user.id;
+        let guessNumber = interaction.options.getInteger("number");
+        //check if pot exists (slots == -1 means not pot exists)
+        if (curCoffeePotSlots == -1) {
+            await interaction.reply({
+                content: `No pot currently exists. Create one with **/startpot**!`,
+                ephemeral: true,
+            });
+            return
+        }
+        //check if number is between 1-1000
+        if (guessNumber < 1 || guessNumber > 1000) {
+            await interaction.reply({
+                content: `Your number must be between 1 and 1000!`,
+                ephemeral: true,
+            });
+            return            
+        }
+        //check if already in pot
+        if (joinerId in curCoffeePotPlayers) {
+            await interaction.reply({
+                content: `You are already in the pot!`,
+                ephemeral: true,
+            });
+            return
+        }
+
+        curCoffeePotPlayers[joinerId] = guessNumber
+
+        //check if pot now full
+        if (curCoffeePotSlots == Object.keys(curCoffeePotPlayers).length) {
+            
+            let randomNum = Math.ceil(Math.random() * 1000)
+            let coffeePotText = `The chosen number was **${randomNum}**!\n\n`
+
+            // calculate winner
+            let distances = []
+            let sortedPlayerIds = getSortedKeys(curCoffeePotPlayers)
+            let winner = ""
+
+            if ( curCoffeePotPlayers[sortedPlayerIds[0]] == curCoffeePotPlayers[sortedPlayerIds[1]] ) {
+                //THERE WAS A TIE!
+                coffeePotText += `There was a tie! No :coffee: is owed!`
+            } else {
+                winner = sortedPlayerIds[0]
+                coffeePotText += `<@${winner}> won **${curCoffeePotSlots-1}** :coffee:!`
+            }
+            
+
+            // show guesses
+            coffeePotText += `\n\n`
+            coffeePotText += `Guesses:\n`
+            for (let userId in curCoffeePotPlayers) {
+                coffeePotText += `<@${userId}> **${curCoffeePotPlayers[userId]}**\n`
+            }
+            
+            //reset slots and players
+            curCoffeePotSlots = -1
+            curCoffeePotPlayers = {}
+
+            const embed = new MessageEmbed()
+                .setTitle("Coffee Pot Results")
+                .setDescription(coffeePotText)
+                .setThumbnail("https://www.krupsusa.com/medias/?context=bWFzdGVyfGltYWdlc3wxNDQ4OTJ8aW1hZ2UvanBlZ3xpbWFnZXMvaDk5L2hiMS8xMzg3MTUxMjk0NDY3MC5iaW58NzZkZDc3MGJhYmQzMjAwYjc4NmJjN2NjOGMxN2UwZmNkODQ2ZjMwZWE0YzM4OWY4MDFmOTFkZWUxYWVkMzU5Zg");
+            await interaction.reply({ embeds: [embed] });            
+            
+            if (winner != "") {
+                for (let playerId of sortedPlayerIds) {
+                    if (playerId != winner) {
+                        //playerId owes winner a coffee
+                        if (coffees[playerId] == undefined) {
+                            coffees[playerId] = {};
+                        }
+                        let curCoffees = 0;
+                        if (coffees[playerId][winner] == undefined) {
+                            coffees[playerId][winner] = 0;
+                        }
+                        coffees[playerId][winner] += 1
+                    }
+                }
+            }
+
+            return
+        }
+
+        await interaction.reply(
+            `<@${interaction.user.id}> joined the pot! Slots remaining: **${curCoffeePotSlots-Object.keys(curCoffeePotPlayers).length}**`
+        );
+
     }
 });
 
 client.login(token);
+
+function getSortedKeys(obj) {
+    var keys = Object.keys(obj);
+    return keys.sort(function(a,b){return obj[a]-obj[b]});
+}
+
 
 function getUserFromMention(mention, channel) {
     if (!mention) return undefined;
