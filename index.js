@@ -478,8 +478,13 @@ client.on("interactionCreate", async (interaction) => {
         //generate response
         output=GenerateResponse(result,fileResponses,stats);
         //output
+        const msgEmbed = new MessageEmbed()
+        .setDescription(`${output}`)
+        .setThumbnail("https://cdn.discordapp.com/avatars/878799768963391568/eddb102f5d15650d0dfc73613a86f5d2.webp?size=128")
+        .setAuthor(`Coffee Bot`);
         await interaction.reply({
-            content:`<@${interaction.user.id}> Said "*${userMessage}*". **CoffeeBot Says:**\n ${output}\n`
+            content:`<@${interaction.user.id}> said\n> "*${userMessage}*"`,
+            embeds: [msgEmbed]
         });
         return;
     }
