@@ -2,3 +2,4 @@ config.json
 coffees.json
 test_config.json
 node_modules*
+gCloudJson.json
