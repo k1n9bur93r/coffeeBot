@@ -7,7 +7,9 @@ How to use:
 	"token": "your bot's token",
     "clientId": "clientid of bot (only for deploying commands)",
     "guildId": "guildid of server (only for deploying commands)",
-    "coffeeJSON": "filename of .json file to use"
+    "coffeeJSON": "filename of .json file to use",
+    "responseJSON": "talk-responses.json",
+    "gCloudJSON" : "filename of .json file to use"
 }
 
 - add bot to a server for testing following https://discordjs.guide/preparations/adding-your-bot-to-servers.html
