@@ -7,7 +7,6 @@ const coffees = require(`./${coffeeJSON}`);
 const gCloud = require(`./${gCloudJSON}`);
 const language = require('@google-cloud/language');
 const fileResponses = require(`./${responseJSON}`);
-
 const gCloudOptions={
     projectId:gCloud.project_id,
     email:gCloud.client_email,
