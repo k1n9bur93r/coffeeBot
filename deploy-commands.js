@@ -52,10 +52,16 @@ const commands = [
         .addIntegerOption(option =>
             option.setName('number')
             .setDescription('Choose a number between 1 and 1000')
-            .setRequired(true)),         
+            .setRequired(true)),
+    new SlashCommandBuilder().setName('talk').setDescription('Talk to Coffee Bot')
+        .addStringOption(option =>
+            option.setName('message')
+            .setDescription('What you want to say')
+            .setRequired(true))         
 ]
     .map(command => command.toJSON());
 
+    
 const rest = new REST({ version: '9' }).setToken(token);
 
 (async () => {

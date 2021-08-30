@@ -1,0 +1,116 @@
+{
+  "CoffeeCats": 4,
+  "Structs": {
+    "StructsP": [
+      "Your financials are looking @ , # As far as your coffee goes. $",
+      "@, $ #",
+      "# That’s @. $",
+      "Let’s take a look at your profile. # Hmm. $ @"
+    ],
+    "StructsVH": [
+      "That's great!",
+      "Very happy for you!",
+      "Dope!",
+      "You are really nice"
+    ],
+    "StructsH": [
+      "Ooooh",
+      "Lets gooo",
+      "Sweet!"
+    ],
+    "StructsN": [
+      "I see",
+      "Alright",
+      "Yeah if you say so"
+    ],
+    "StructsM": [
+      "uh...okay?",
+      "Hey its okay chill out.",
+      "I think you need to relax."
+    ],
+    "StructsVM": [
+      "K",
+      "Alright Karen",
+      "Somebody mad?"
+    ]
+  },
+  "CoffeeNumbersH": {
+    "OweFew": [
+      "Staying out of the betting game. I like it",
+      "Always good to keep your IOUs in check",
+      "Paying off your debts is always good!",
+      "Only way to win is not to play!"
+    ],
+    "OweMany": [
+      "Don't worry about owing so much you can make that back",
+      "All it takes is a few bets to set things right",
+      "Make some big plays I know you can do it",
+      "There are ups and downs you got this"
+    ],
+    "Profit": [
+      "Betting game on point!",
+      "How much did you get from Abe?",
+      "Look at that coffee profit",
+      "Omg! Rich person",
+      "Thank you for stimulating the bet economy",
+      "I hope your coffee hoard grows larger"
+    ],
+    "Debt": [
+      "Happy for you...despite all the debt.",
+      "I know you can dig yourself out of debt one day!",
+      "One day your account will be non-negative.",
+      "Do some double or nothing bets!"
+    ]
+  },
+  "CoffeeNumbersM": {
+    "OweFew": [
+      "So are you like...afraid of betting?",
+      "How about you put yourself out there a bit...betting wise",
+      "Do you even know how to use the bot?",
+      "Stop being such a bitch and bet a little!",
+      "Try betting sweetie."
+    ],
+    "OweMany": [
+      "Your bets are sloppy.",
+      "Looks like you get around...",
+      "How about losing less huh?",
+      "What is it like to be in everyone's pocket?"
+    ],
+    "Profit": [
+      "How about sharing the wealth you glutton.",
+      "Do you prey on the weak and vulnerable?",
+      "Calm down Jeff Bezos.",
+      "I hope you lose everything.",
+      "If I could I would lose all your data."
+    ],
+    "Debt": [
+      "Lmaooo am I seeing negative net worth???",
+      "Sorry you are too poor to talk to me.",
+      "Are you asking for a bailout?",
+      "Excuse me I don't understand broke."
+    ]
+  },
+  "WordBank": {
+    "VH": [
+      "Fantastic",
+      "Amazing"
+    ],
+    "H": [
+      "Great",
+      "Nice"
+    ],
+    "N": [
+      "Alright",
+      "Okay"
+    ],
+    "M": [
+      "Sure",
+      "Whatever"
+    ],
+    "VM": [
+      "Terrible",
+      "Sad",
+      "Pathetic"
+    ]
+  }
+}
