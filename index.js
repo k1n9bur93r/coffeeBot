@@ -188,16 +188,18 @@ client.on("interactionCreate", async (interaction) => {
             await interaction.reply(
                 `<@${interaction.user.id}> revoked their coin flip offer.`
             );
-        } else if ((interaction.commandName == "coinflip")) {
+        } else if (interaction.commandName == "coinflip") {
             let coinFlipper1 = curCoinflipRequest;
             let coinFlipper2 = interaction.user.id;
             let winner;
             let loser;
 
-            if (Math.random() > .99) {
+            if (Math.random() > 0.99) {
                 // easter egg: 1% chance coin lands on side :^)
-                curCoinflipRequest = ""
-                await interaction.reply(`The coinflip landed on its side! It is a tie and no coffees are owed!`);
+                curCoinflipRequest = "";
+                await interaction.reply(
+                    `The coinflip landed on its side! It is a tie and no coffees are owed!`
+                );
                 return;
             }
 
@@ -234,10 +236,10 @@ client.on("interactionCreate", async (interaction) => {
             );
         }
     } else if (interaction.commandName == "transfer") {
-        let transferer = interaction.user.id
-        let fromId = interaction.options.get("from").user.id
-        let toId = interaction.options.get("to").user.id
-        let amount = interaction.options.getNumber("amount")
+        let transferer = interaction.user.id;
+        let fromId = interaction.options.get("from").user.id;
+        let toId = interaction.options.get("to").user.id;
+        let amount = interaction.options.getNumber("amount");
 
         //check if from user owes less than amount to transferer or that transferer owes less than amount to toId
         if (coffees[fromId][transferer] < amount) {
@@ -246,38 +248,37 @@ client.on("interactionCreate", async (interaction) => {
                 content: `<@${fromId}> does not owe you ${amount}`,
                 ephemeral: true,
             });
-            return
+            return;
         }
         if (coffees[transferer][toId] < amount) {
             await interaction.reply({
                 content: `You do not owe <@${toId}> ${amount}`,
                 ephemeral: true,
             });
-            return
+            return;
         }
         if (coffees[fromId][toId] == undefined) {
-            coffees[fromId][toId] = 0
-        } 
+            coffees[fromId][toId] = 0;
+        }
         if (amount < 0) {
             await interaction.reply({
                 content: `Cannot transfer negative amount!`,
                 ephemeral: true,
             });
-            return
+            return;
         }
         if (toId == transferer || fromId == transferer) {
             await interaction.reply({
                 content: `Cannot transfer to or from yourself!`,
                 ephemeral: true,
             });
-            return
+            return;
         }
 
-        coffees[fromId][transferer] -= amount
-        coffees[transferer][toId] -= amount
+        coffees[fromId][transferer] -= amount;
+        coffees[transferer][toId] -= amount;
 
-        if (fromId != toId)
-            coffees[fromId][toId] += amount
+        if (fromId != toId) coffees[fromId][toId] += amount;
 
         //write new json to file
         fs.writeFile(
@@ -292,14 +293,14 @@ client.on("interactionCreate", async (interaction) => {
             `<@${transferer}> is transfering ${amount} from <@${fromId}> to <@${toId}>.`
         );
     } else if (interaction.commandName == "startpot") {
-        let spotsAmount = interaction.options.getInteger("amount")
-        
+        let spotsAmount = interaction.options.getInteger("amount");
+
         if (spotsAmount < 2) {
             await interaction.reply({
                 content: `Must have atleast 2 spots`,
                 ephemeral: true,
             });
-            return
+            return;
         }
 
         // clear pot players
@@ -307,18 +308,20 @@ client.on("interactionCreate", async (interaction) => {
         // set pot amount
         curCoffeePotSlots = spotsAmount;
 
-        let coffeePotText = `<@${interaction.user.id}> is starting a :coffee: pot with ***${spotsAmount}*** spots!\n\n`
-            +`**How it works:**\n`
-            +`• Players may wager 1 :coffee: by doing ***/joinpot [# between 1 and 1000]***\n`
-            +`• Once **${spotsAmount}** players join the pot, then a random number is selected\n`
-            +`• The closest guesser to the number takes all the :coffee: in the pot`
-        
+        let coffeePotText =
+            `<@${interaction.user.id}> is starting a :coffee: pot with ***${spotsAmount}*** spots!\n\n` +
+            `**How it works:**\n` +
+            `• Players may wager 1 :coffee: by doing ***/joinpot [# between 1 and 1000]***\n` +
+            `• Once **${spotsAmount}** players join the pot, then a random number is selected\n` +
+            `• The closest guesser to the number takes all the :coffee: in the pot`;
+
         const embed = new MessageEmbed()
             .setTitle("Coffee Pot")
             .setDescription(coffeePotText)
-            .setThumbnail("https://www.krupsusa.com/medias/?context=bWFzdGVyfGltYWdlc3wxNDQ4OTJ8aW1hZ2UvanBlZ3xpbWFnZXMvaDk5L2hiMS8xMzg3MTUxMjk0NDY3MC5iaW58NzZkZDc3MGJhYmQzMjAwYjc4NmJjN2NjOGMxN2UwZmNkODQ2ZjMwZWE0YzM4OWY4MDFmOTFkZWUxYWVkMzU5Zg");
+            .setThumbnail(
+                "https://www.krupsusa.com/medias/?context=bWFzdGVyfGltYWdlc3wxNDQ4OTJ8aW1hZ2UvanBlZ3xpbWFnZXMvaDk5L2hiMS8xMzg3MTUxMjk0NDY3MC5iaW58NzZkZDc3MGJhYmQzMjAwYjc4NmJjN2NjOGMxN2UwZmNkODQ2ZjMwZWE0YzM4OWY4MDFmOTFkZWUxYWVkMzU5Zg"
+            );
         await interaction.reply({ embeds: [embed] });
-            
     } else if (interaction.commandName == "joinpot") {
         let joinerId = interaction.user.id;
         let guessNumber = interaction.options.getInteger("number");
@@ -328,7 +331,7 @@ client.on("interactionCreate", async (interaction) => {
                 content: `No pot currently exists. Create one with **/startpot**!`,
                 ephemeral: true,
             });
-            return
+            return;
         }
         //check if number is between 1-1000
         if (guessNumber < 1 || guessNumber > 1000) {
@@ -336,7 +339,7 @@ client.on("interactionCreate", async (interaction) => {
                 content: `Your number must be between 1 and 1000!`,
                 ephemeral: true,
             });
-            return            
+            return;
         }
         //check if already in pot
         if (joinerId in curCoffeePotPlayers) {
@@ -344,49 +347,53 @@ client.on("interactionCreate", async (interaction) => {
                 content: `You are already in the pot!`,
                 ephemeral: true,
             });
-            return
+            return;
         }
 
-        curCoffeePotPlayers[joinerId] = guessNumber
+        curCoffeePotPlayers[joinerId] = guessNumber;
 
         //check if pot now full
         if (curCoffeePotSlots == Object.keys(curCoffeePotPlayers).length) {
-            
-            let randomNum = Math.ceil(Math.random() * 1000)
-            let coffeePotText = `The chosen number was **${randomNum}**!\n\n`
+            let randomNum = Math.ceil(Math.random() * 1000);
+            let coffeePotText = `The chosen number was **${randomNum}**!\n\n`;
 
             // calculate winner
-            let distances = []
+            let distances = [];
 
-            let newPlayerList = {} //this list will hold diff from num
-            for ( let playerId in curCoffeePotPlayers) {
-                newPlayerList[playerId] = Math.abs(randomNum - curCoffeePotPlayers[playerId])
+            let newPlayerList = {}; //this list will hold diff from num
+            for (let playerId in curCoffeePotPlayers) {
+                newPlayerList[playerId] = Math.abs(
+                    randomNum - curCoffeePotPlayers[playerId]
+                );
             }
 
-            let sortedPlayerIds = getSortedKeys(newPlayerList)
-            let winner = ""
+            let sortedPlayerIds = getSortedKeys(newPlayerList);
+            let winner = "";
 
-            if ( curCoffeePotPlayers[sortedPlayerIds[0]] == curCoffeePotPlayers[sortedPlayerIds[1]] ) {
+            if (
+                curCoffeePotPlayers[sortedPlayerIds[0]] ==
+                curCoffeePotPlayers[sortedPlayerIds[1]]
+            ) {
                 //THERE WAS A TIE!
-                coffeePotText += `There was a tie! No :coffee: is owed!`
+                coffeePotText += `There was a tie! No :coffee: is owed!`;
             } else {
-                winner = sortedPlayerIds[0]
-                coffeePotText += `<@${winner}> won **${curCoffeePotSlots-1}** :coffee:!`
+                winner = sortedPlayerIds[0];
+                coffeePotText += `<@${winner}> won **${
+                    curCoffeePotSlots - 1
+                }** :coffee:!`;
             }
-            
 
             // show guesses
-            coffeePotText += `\n\n`
-            coffeePotText += `Guesses:\n`
+            coffeePotText += `\n\n`;
+            coffeePotText += `Guesses:\n`;
             for (let userId in curCoffeePotPlayers) {
-                coffeePotText += `<@${userId}> **${curCoffeePotPlayers[userId]}**\n`
+                coffeePotText += `<@${userId}> **${curCoffeePotPlayers[userId]}**\n`;
             }
-            
-            //reset slots and players
-            curCoffeePotSlots = -1
-            curCoffeePotPlayers = {}
 
-            
+            //reset slots and players
+            curCoffeePotSlots = -1;
+            curCoffeePotPlayers = {};
+
             if (winner != "") {
                 for (let playerId of sortedPlayerIds) {
                     if (playerId != winner) {
@@ -398,11 +405,11 @@ client.on("interactionCreate", async (interaction) => {
                         if (coffees[playerId][winner] == undefined) {
                             coffees[playerId][winner] = 0;
                         }
-                        coffees[playerId][winner] += 1
+                        coffees[playerId][winner] += 1;
                     }
                 }
             }
-            
+
             fs.writeFile(
                 `${coffeeJSON}`,
                 JSON.stringify(coffees, null, 1),
@@ -410,20 +417,29 @@ client.on("interactionCreate", async (interaction) => {
                     if (err) throw err;
                 }
             );
-                
+
             const embed = new MessageEmbed()
                 .setTitle("Coffee Pot Results")
                 .setDescription(coffeePotText)
-                .setThumbnail("https://www.krupsusa.com/medias/?context=bWFzdGVyfGltYWdlc3wxNDQ4OTJ8aW1hZ2UvanBlZ3xpbWFnZXMvaDk5L2hiMS8xMzg3MTUxMjk0NDY3MC5iaW58NzZkZDc3MGJhYmQzMjAwYjc4NmJjN2NjOGMxN2UwZmNkODQ2ZjMwZWE0YzM4OWY4MDFmOTFkZWUxYWVkMzU5Zg");
+                .setThumbnail(
+                    "https://www.krupsusa.com/medias/?context=bWFzdGVyfGltYWdlc3wxNDQ4OTJ8aW1hZ2UvanBlZ3xpbWFnZXMvaDk5L2hiMS8xMzg3MTUxMjk0NDY3MC5iaW58NzZkZDc3MGJhYmQzMjAwYjc4NmJjN2NjOGMxN2UwZmNkODQ2ZjMwZWE0YzM4OWY4MDFmOTFkZWUxYWVkMzU5Zg"
+                );
             await interaction.reply({ embeds: [embed] });
 
-            return
+            return;
         }
 
         await interaction.reply(
-            `<@${interaction.user.id}> joined the pot! Slots remaining: **${curCoffeePotSlots-Object.keys(curCoffeePotPlayers).length}**`
+            `<@${interaction.user.id}> joined the pot! Slots remaining: **${
+                curCoffeePotSlots - Object.keys(curCoffeePotPlayers).length
+            }**`
         );
+    } else if (interaction.commandName == "leaderboard") {
+        const embed = new MessageEmbed()
+        .setTitle(":coffee: Leaderboard")
+        .setDescription(getLeaderboardString(interaction.channel))
 
+        await interaction.reply({ embeds: [embed] });
     }
 });
 
@@ -431,9 +447,17 @@ client.login(token);
 
 function getSortedKeys(obj) {
     var keys = Object.keys(obj);
-    return keys.sort(function(a,b){return obj[a]-obj[b]});
+    return keys.sort(function (a, b) {
+        return obj[a] - obj[b];
+    });
 }
 
+function getSortedKeysLeaderboardStyle(obj) {
+    var keys = Object.keys(obj);
+    return keys.sort(function (a, b) {
+        return obj[b] - obj[a];
+    });
+}
 
 function getUserFromMention(mention, channel) {
     if (!mention) return undefined;
@@ -503,4 +527,45 @@ function getCoffeeLedgerString(channel) {
         }
     }
     return coffeeLedgerString;
+}
+
+function getLeaderboardString(channel) {
+    let coffeeReceivers = {};
+    for (let ower in coffees) {
+        for (let receiver in coffees[ower]) {
+            if (
+                channel.members.get(ower) != undefined &&
+                channel.members.get(receiver) != undefined &&
+                coffees[ower][receiver] != 0
+            ) {
+                if (receiver in coffeeReceivers == false) {
+                    coffeeReceivers[receiver] = 0;
+                }
+                if (ower in coffeeReceivers == false) {
+                    coffeeReceivers[ower] = 0;
+                }
+                coffeeReceivers[receiver] += coffees[ower][receiver];
+                coffeeReceivers[ower] -= coffees[ower][receiver];
+            }
+        }
+    }
+
+    let coffeeLeaderboardString = "";
+    
+    let sortedPlayers = getSortedKeysLeaderboardStyle(coffeeReceivers);
+    for (let player of sortedPlayers) {
+
+        if (player == sortedPlayers[0] && coffeeReceivers[sortedPlayers[0]] != coffeeReceivers[sortedPlayers[1]] ) {
+            coffeeLeaderboardString += `**${coffeeReceivers[player]}** <@${player}> :crown:\n\n`
+        }
+        else if (player == sortedPlayers[sortedPlayers.length-1] && coffeeReceivers[sortedPlayers[sortedPlayers.length-1]] != coffeeReceivers[sortedPlayers[sortedPlayers.length-2]])
+        {
+            coffeeLeaderboardString += `**${coffeeReceivers[player]}** <@${player}> :hot_face:\n\n`
+        }
+        else {
+            coffeeLeaderboardString += `**${coffeeReceivers[player]}** <@${player}>\n\n`
+        }
+    }
+
+    return coffeeLeaderboardString;
 }
