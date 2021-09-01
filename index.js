@@ -2,7 +2,6 @@
 const { Client, Intents, MessageEmbed, Message } = require("discord.js");
 const { token, coffeeJSON,responseJSON, gCloudJSON } = require("./config.json");
 const fs = require("fs");
-const { request } = require("http");
 const coffees = require(`./${coffeeJSON}`);
 const gCloud = require(`./${gCloudJSON}`);
 const language = require('@google-cloud/language');
@@ -40,13 +39,13 @@ client.once("ready", () => {
 
 client.on("interactionCreate", async (interaction) => {
     if (!interaction.isCommand()) return;
-
+try{
     if (interaction.commandName === "ledger") {
         let coffeeLedger = getCoffeeLedgerString(interaction.channel);
         const ledgerEmbed = new MessageEmbed()
             .setTitle("Coffee Ledger")
             .setDescription(coffeeLedger);
-        await interaction.reply({ embeds: [ledgerEmbed] });
+            BotReply(interaction,ledgerEmbed,"",false);
     } else if (interaction.commandName == "profile") {
         let profiledUser = interaction.options.get("user");
         if (profiledUser == undefined) {
@@ -70,138 +69,74 @@ client.on("interactionCreate", async (interaction) => {
             )
             .setDescription(profileString)
             .setThumbnail(avatarUrl);
-        await interaction.reply({ embeds: [profilEmbed] });
+            BotReply(interaction,profilEmbed,"",false);
     } else if (interaction.commandName == "give") {
+
         let mentionedUser = getUserFromMention(
             interaction.options.get("user").user.id,
             interaction.channel
         );
         let parsedCoffeeAmount = interaction.options.getNumber("amount");
+
         if (mentionedUser) {
             if (mentionedUser == undefined) {
-                await interaction.reply({
-                    content: "You must @ an existing person",
-                    ephemeral: true,
-                });
+                BotReply(interaction,null,`You must @ an existing person`,true);
                 return;
             }
         }
         if (mentionedUser.user.id == interaction.user.id) {
-            await interaction.reply({
-                content: "You cannot give yourself coffees lul",
-                ephemeral: true,
-            });
+            BotReply(interaction,null,`You cannot give yourself coffees lul`,true);
             return;
         }
         if (isNaN(parsedCoffeeAmount) || parsedCoffeeAmount <= 0) {
-            await interaction.reply({
-                content: "Nice try hax0r man",
-                ephemeral: true,
-            });
+            BotReply(interaction,null,`Nice try hax0r man`,true);
             return;
         }
 
-        if (coffees[interaction.user.id] == undefined) {
-            coffees[interaction.user.id] = {};
-        }
-        let curCoffees = 0;
-        if (coffees[interaction.user.id][mentionedUser.user.id]) {
-            curCoffees = coffees[interaction.user.id][mentionedUser.user.id];
-        }
+        AddUserCoffee(interaction.user.id,mentionedUser.user.id,parsedCoffeeAmount)
+        NullifyCoffees(mentionedUser.user.id);
+        NullifyCoffees(interaction.user.id);
+        UpdateFile(coffeeJSON,coffees);
 
-        coffees[interaction.user.id][mentionedUser.user.id] =
-            curCoffees + parsedCoffeeAmount;
-        //write new json to file
-        fs.writeFile(
-            `${coffeeJSON}`,
-            JSON.stringify(coffees, null, 1),
-            (err) => {
-                if (err) throw err;
-            }
-        );
-
-        let ower = interaction.user.id;
-        let receiver = mentionedUser.user.id;
-        let owerMention = `<@${ower}>`;
-        let receiverMention = `<@${receiver}>`;
-        await interaction.reply(
-            `${owerMention} gave ${receiverMention} ${parsedCoffeeAmount} coffee${
-                parsedCoffeeAmount > 1 ? "s" : ""
-            }`
-        );
+        BotReply(interaction,null,`<@${interaction.user.id}> gave <@${mentionedUser.user.id}> ${parsedCoffeeAmount} coffee${ parsedCoffeeAmount > 1 ? "s" : ""}`,false);
     } else if (interaction.commandName == "redeem") {
         let mentionedUser = getUserFromMention(
             interaction.options.get("user").user.id,
             interaction.channel
         );
+
         let parsedCoffeeAmount = interaction.options.getNumber("amount");
+
         if (mentionedUser) {
             if (mentionedUser == undefined) {
-                await interaction.reply({
-                    content: "You must @ an existing person",
-                    ephemeral: true,
-                });
+                BotReply(interaction,null,`You must @ an existing person`,true);
                 return;
             }
         }
         if (parsedCoffeeAmount) {
             if (isNaN(parsedCoffeeAmount) || parsedCoffeeAmount <= 0) {
-                await interaction.reply({
-                    content: "Nice try hax0r man",
-                    ephemeral: true,
-                });
+                BotReply(interaction,null,`Nice try hax0r man`,true);
                 return;
             }
         }
 
-        if (coffees[mentionedUser.user.id] == undefined) {
-            coffees[mentionedUser.user.id] = {};
-        }
-        let curCoffees = 0;
-        if (coffees[mentionedUser.user.id][interaction.user.id]) {
-            curCoffees = coffees[mentionedUser.user.id][interaction.user.id];
-        }
-
-        let receiver = interaction.user.id;
-        let ower = mentionedUser.user.id;
-        let receiverMention = `<@${receiver}>`;
-        let owerMention = `<@${ower}>`;
-
-        if (curCoffees < parsedCoffeeAmount) {
-            await interaction.reply({
-                content: `${owerMention} does not owe you ${parsedCoffeeAmount}`,
-                ephemeral: true,
-            });
+        if (GetUserCoffee(mentionedUser.user.id,interaction.user.id) < parsedCoffeeAmount) {
+            BotReply(interaction,null,`<@${mentionedUser.user.id}> does not owe you ${parsedCoffeeAmount}`,true);
             return;
         }
 
-        coffees[mentionedUser.user.id][interaction.user.id] =
-            curCoffees - parsedCoffeeAmount;
-        //write new json to file
-        fs.writeFile(
-            `${coffeeJSON}`,
-            JSON.stringify(coffees, null, 1),
-            (err) => {
-                if (err) throw err;
-            }
-        );
-
-        await interaction.reply(
-            `${receiverMention} redeemed ${parsedCoffeeAmount} coffee${
-                parsedCoffeeAmount > 1 ? "s" : ""
-            } from ${owerMention}`
-        );
+        RemoveUserCoffee(mentionedUser.user.id,interaction.user.id,parsedCoffeeAmount)
+        NullifyCoffees(mentionedUser.user.id);
+        NullifyCoffees(interaction.user.id);
+        UpdateFile(coffeeJSON,coffees);
+        BotReply(interaction,null,`<@${interaction.user.id}> redeemed ${parsedCoffeeAmount} coffee${parsedCoffeeAmount > 1 ? "s" : ""} from <@${mentionedUser.user.id}>`,false);
     } else if (interaction.commandName == "coinflip") {
         if (curCoinflipRequest == "") {
             curCoinflipRequest = interaction.user.id;
-            await interaction.reply(
-                `<@${interaction.user.id}> is offering a **coin flip coffee bet** for **1 coffee**.  Do **/coinflip** to take the bet.`
-            );
+            BotReply(interaction,null,`<@${interaction.user.id}> is offering a **coin flip coffee bet** for **1 coffee**.  Do **/coinflip** to take the bet.`,false);
         } else if (curCoinflipRequest == interaction.user.id) {
             curCoinflipRequest = "";
-            await interaction.reply(
-                `<@${interaction.user.id}> revoked their coin flip offer.`
-            );
+            BotReply(interaction,null,`<@${interaction.user.id}> revoked their coin flip offer.`,false);
         } else if (interaction.commandName == "coinflip") {
             let coinFlipper1 = curCoinflipRequest;
             let coinFlipper2 = interaction.user.id;
@@ -211,9 +146,7 @@ client.on("interactionCreate", async (interaction) => {
             if (Math.random() > 0.99) {
                 // easter egg: 1% chance coin lands on side :^)
                 curCoinflipRequest = "";
-                await interaction.reply(
-                    `The coinflip landed on its side! It is a tie and no coffees are owed!`
-                );
+                BotReply(interaction,null,`The coinflip landed on its side! It is a tie and no coffees are owed!`,false);
                 return;
             }
 
@@ -225,29 +158,13 @@ client.on("interactionCreate", async (interaction) => {
                 loser = coinFlipper1;
             }
 
-            let curCoffees = 0;
-            if (coffees[loser])
-                curCoffees = coffees[loser][winner]
-                    ? coffees[loser][winner]
-                    : 0;
-            else {
-                coffees[loser] = {};
-            }
-
-            coffees[loser][winner] = curCoffees + 1;
-            //write new json to file
-            fs.writeFile(
-                `${coffeeJSON}`,
-                JSON.stringify(coffees, null, 1),
-                (err) => {
-                    if (err) throw err;
-                }
-            );
-
+            AddUserCoffee(loser,winner,1);
+            NullifyCoffees(loser);
+            NullifyCoffees(winner);
+            UpdateFile(coffeeJSON,coffees);
             curCoinflipRequest = "";
-            await interaction.reply(
-                `<@${winner}> won the coinflip! <@${loser}> paid up 1 coffee.`
-            );
+            BotReply(interaction,null,`<@${winner}> won the coinflip! <@${loser}> paid up 1 coffee.`,false);
+
         }
     } else if (interaction.commandName == "transfer") {
         let transferer = interaction.user.id;
@@ -258,62 +175,36 @@ client.on("interactionCreate", async (interaction) => {
         //check if from user owes less than amount to transferer or that transferer owes less than amount to toId
         if (coffees[fromId][transferer] < amount) {
             // if so, then ephemeral error and return
-            await interaction.reply({
-                content: `<@${fromId}> does not owe you ${amount}`,
-                ephemeral: true,
-            });
+            BotReply(interaction,null,`<@${fromId}> does not owe you ${amount}`,true);
             return;
         }
         if (coffees[transferer][toId] < amount) {
-            await interaction.reply({
-                content: `You do not owe <@${toId}> ${amount}`,
-                ephemeral: true,
-            });
+            BotReply(interaction,null,`You do not owe <@${toId}> ${amount}`,true);
             return;
         }
-        if (coffees[fromId][toId] == undefined) {
-            coffees[fromId][toId] = 0;
-        }
         if (amount < 0) {
-            await interaction.reply({
-                content: `Cannot transfer negative amount!`,
-                ephemeral: true,
-            });
+            BotReply(interaction,null,"Cannot transfer negative amount!",true);
             return;
         }
         if (toId == transferer || fromId == transferer) {
-            await interaction.reply({
-                content: `Cannot transfer to or from yourself!`,
-                ephemeral: true,
-            });
+            BotReply(interaction,null,"Cannot transfer to or from yourself!",true);
             return;
         }
 
-        coffees[fromId][transferer] -= amount;
-        coffees[transferer][toId] -= amount;
+        RemoveUserCoffee(fromId,transferer,amount);
+        RemoveUserCoffee(transferer,fromId,amount);
+        AddUserCoffee(fromId,toId,amount);
 
-        if (fromId != toId) coffees[fromId][toId] += amount;
+        NullifyCoffees(fromId);
+        NullifyCoffees(toId);
+        UpdateFile(coffeeJSON,coffees);
+        BotReply(interaction,null,"<@${transferer}> is transfering ${amount} from <@${fromId}> to <@${toId}>.",false);
 
-        //write new json to file
-        fs.writeFile(
-            `${coffeeJSON}`,
-            JSON.stringify(coffees, null, 1),
-            (err) => {
-                if (err) throw err;
-            }
-        );
-
-        await interaction.reply(
-            `<@${transferer}> is transfering ${amount} from <@${fromId}> to <@${toId}>.`
-        );
     } else if (interaction.commandName == "startpot") {
-        let spotsAmount = interaction.options.getInteger("amount");
+        let spotsAmount = interaction.options.getNumber("amount");
 
         if (spotsAmount < 2) {
-            await interaction.reply({
-                content: `Must have atleast 2 spots`,
-                ephemeral: true,
-            });
+            BotReply(interaction,null,"Must have atleast 2 spots",true);
             return;
         }
 
@@ -335,32 +226,24 @@ client.on("interactionCreate", async (interaction) => {
             .setThumbnail(
                 "https://www.krupsusa.com/medias/?context=bWFzdGVyfGltYWdlc3wxNDQ4OTJ8aW1hZ2UvanBlZ3xpbWFnZXMvaDk5L2hiMS8xMzg3MTUxMjk0NDY3MC5iaW58NzZkZDc3MGJhYmQzMjAwYjc4NmJjN2NjOGMxN2UwZmNkODQ2ZjMwZWE0YzM4OWY4MDFmOTFkZWUxYWVkMzU5Zg"
             );
-        await interaction.reply({ embeds: [embed] });
+        BotReply(interaction,embed,"",false);    
+
     } else if (interaction.commandName == "joinpot") {
         let joinerId = interaction.user.id;
-        let guessNumber = interaction.options.getInteger("number");
+        let guessNumber = interaction.options.getNumber("number");
         //check if pot exists (slots == -1 means not pot exists)
         if (curCoffeePotSlots == -1) {
-            await interaction.reply({
-                content: `No pot currently exists. Create one with **/startpot**!`,
-                ephemeral: true,
-            });
+            BotReply(interaction,null,"No pot currently exists. Create one with **/startpot**!",true);
             return;
         }
         //check if number is between 1-1000
         if (guessNumber < 1 || guessNumber > 1000) {
-            await interaction.reply({
-                content: `Your number must be between 1 and 1000!`,
-                ephemeral: true,
-            });
+            BotReply(interaction,null,"Your number must be between 1 and 1000!",true);
             return;
         }
         //check if already in pot
         if (joinerId in curCoffeePotPlayers) {
-            await interaction.reply({
-                content: `You are already in the pot!`,
-                ephemeral: true,
-            });
+            BotReply(interaction,null,"You are already in the pot!",true);
             return;
         }
 
@@ -370,9 +253,6 @@ client.on("interactionCreate", async (interaction) => {
         if (curCoffeePotSlots == Object.keys(curCoffeePotPlayers).length) {
             let randomNum = Math.ceil(Math.random() * 1000);
             let coffeePotText = `The chosen number was **${randomNum}**!\n\n`;
-
-            // calculate winner
-            let distances = [];
 
             let newPlayerList = {}; //this list will hold diff from num
             for (let playerId in curCoffeePotPlayers) {
@@ -412,25 +292,12 @@ client.on("interactionCreate", async (interaction) => {
                 for (let playerId of sortedPlayerIds) {
                     if (playerId != winner) {
                         //playerId owes winner a coffee
-                        if (coffees[playerId] == undefined) {
-                            coffees[playerId] = {};
-                        }
-                        let curCoffees = 0;
-                        if (coffees[playerId][winner] == undefined) {
-                            coffees[playerId][winner] = 0;
-                        }
-                        coffees[playerId][winner] += 1;
+                        AddUserCoffee(playerId,winner,1);
                     }
                 }
             }
 
-            fs.writeFile(
-                `${coffeeJSON}`,
-                JSON.stringify(coffees, null, 1),
-                (err) => {
-                    if (err) throw err;
-                }
-            );
+            UpdateFile(coffeeJSON,coffees);
 
             const embed = new MessageEmbed()
                 .setTitle("Coffee Pot Results")
@@ -438,23 +305,21 @@ client.on("interactionCreate", async (interaction) => {
                 .setThumbnail(
                     "https://www.krupsusa.com/medias/?context=bWFzdGVyfGltYWdlc3wxNDQ4OTJ8aW1hZ2UvanBlZ3xpbWFnZXMvaDk5L2hiMS8xMzg3MTUxMjk0NDY3MC5iaW58NzZkZDc3MGJhYmQzMjAwYjc4NmJjN2NjOGMxN2UwZmNkODQ2ZjMwZWE0YzM4OWY4MDFmOTFkZWUxYWVkMzU5Zg"
                 );
-            await interaction.reply({ embeds: [embed] });
+
+            BotReply(interaction,embed,"",false)
 
             return;
         }
-
-        await interaction.reply(
-            `<@${interaction.user.id}> joined the pot! Slots remaining: **${
-                curCoffeePotSlots - Object.keys(curCoffeePotPlayers).length
-            }**`
-        );
+        BotReply(interaction,null,`<@${interaction.user.id}> joined the pot! Slots remaining: **${curCoffeePotSlots - Object.keys(curCoffeePotPlayers).length}**`,false)
     } else if (interaction.commandName == "leaderboard") {
+
         const embed = new MessageEmbed()
         .setTitle(":coffee: Leaderboard")
         .setDescription(getLeaderboardString(interaction.channel))
+        BotReply(interaction,embed,"",false);
 
-        await interaction.reply({ embeds: [embed] });
     } else if(interaction.commandName== "talk"){
+
         //command user data
         let profiledUser = interaction.options.get("user");
         if (profiledUser == undefined) {
@@ -471,61 +336,125 @@ client.on("interactionCreate", async (interaction) => {
         const [result] = await gCClient.analyzeSentiment({document: document});
         const gcReponse = result.documentSentiment;
         console.log(gcReponse);
-        let stats = getDebts(profiledUser.user.id,interaction.channel);
+        let stats = getDebts(profiledUser.user.id);
         console.log(stats);
 
         await gcReponse;
         //generate response
         output=GenerateResponse(result,fileResponses,stats);
         //output
+
         const msgEmbed = new MessageEmbed()
         .setDescription(`${output}`)
         .setThumbnail("https://cdn.discordapp.com/avatars/878799768963391568/eddb102f5d15650d0dfc73613a86f5d2.webp?size=128")
         .setAuthor(`Coffee Bot`);
-        await interaction.reply({
-            content:`<@${interaction.user.id}> said\n> "*${userMessage}*"`,
-            embeds: [msgEmbed]
-        });
+
+        BotReply(interaction,msgEmbed,`<@${interaction.user.id}> said\n> "*${userMessage}*"`,false)
+
         return;
-    } else if (interaction.commandName == "nullify") {
-        let userId = interaction.member.id
-        let coffeeAmount = 0
-        if (coffees[userId] == undefined) {
-            coffees[userId] = {}
-        }
-
-        for (let debtId in coffees[userId]) {
-            let oweToDebt = coffees[userId][debtId]
-            if (coffees[debtId] == undefined)
-                coffees[debtId] = {}
-            if (coffees[debtId][userId] == undefined)
-                coffees[debtId][userId] = 0
-            let debtOweToUser = coffees[debtId][userId]
-            let minDirectionalOweage = Math.min(oweToDebt,debtOweToUser)
-
-            coffees[userId][debtId] -= minDirectionalOweage
-            coffees[debtId][userId] -= minDirectionalOweage
-            coffeeAmount += minDirectionalOweage
-        }
-
-        
-        fs.writeFile(
-            `${coffeeJSON}`,
-            JSON.stringify(coffees, null, 1),
-            (err) => {
-                if (err) throw err;
-            }
-        );
-
-        await interaction.reply({
-            content:`<@${interaction.user.id}> nullified ${coffeeAmount} :coffee:`,
-        });
-
-
+    }else if (interaction.commandName == "nullify") {
+        let coffeeAmount=NullifyCoffees(interaction.member.id)
+        UpdateFile(coffeeJSON,coffees);
+        BotReply(interaction,null,`<@${interaction.user.id}> nullified ${coffeeAmount} :coffee:`,false);
     }
+
+}
+catch(e)
+{
+    BotReply(interaction,null,`I'm Sowwy UwU~ <@${interaction.user.id}> \n> but something happened and I'm brokie... ||<@${e.message}> ||`,false)
+}
 });
 
 client.login(token);
+
+function NullifyCoffees(userId)
+{
+    let coffeeAmount = 0
+    if (coffees[userId] == undefined) {
+        coffees[userId] = {}
+    }
+
+    for (let debtId in coffees[userId]) {
+        let oweToDebt = coffees[userId][debtId]
+        if (coffees[debtId] == undefined)
+            coffees[debtId] = {}
+        if (coffees[debtId][userId] == undefined)
+            coffees[debtId][userId] = 0
+        let debtOweToUser = coffees[debtId][userId]
+        let minDirectionalOweage = Math.min(oweToDebt,debtOweToUser)
+
+        coffees[userId][debtId] -= minDirectionalOweage
+        coffees[debtId][userId] -= minDirectionalOweage
+        coffeeAmount += minDirectionalOweage
+    }
+return coffeeAmount;
+}
+async function BotReply(interaction,profilEmbed,message,hidden)
+{
+    if(profilEmbed&&message=="")
+    {
+        await interaction.reply({ 
+            ephemeral: hidden,
+            embeds: [profilEmbed] });
+    }
+    else if(profilEmbed)
+    {
+        await interaction.reply({ 
+            content:message,
+            ephemeral: hidden,
+            embeds: [profilEmbed] });
+    }
+   else {
+        await interaction.reply({
+            content:message,
+            ephemeral: hidden,
+        });
+    }
+}
+
+function AddUserCoffee(interactionUser,mentionedUser,amount)
+{
+    ValidateUserCoffee(interactionUser,mentionedUser);
+    coffees[interactionUser][mentionedUser]+=amount;
+}
+
+function ValidateUserCoffee(interactionUser,mentionedUser)
+{
+    if (coffees[interactionUser] == undefined) {
+        coffees[interactionUser] = {};
+    }
+    if (coffees[mentionedUser] == undefined) {
+        coffees[mentionedUser] = {};
+    }
+
+    if (coffees[interactionUser][mentionedUser] == undefined) {
+        coffees[interactionUser][mentionedUser] = 0;
+    }
+}
+function RemoveUserCoffee(interactionUser,mentionedUser, amount)
+{
+    ValidateUserCoffee(interactionUser,mentionedUser);  
+    coffees[interactionUser][mentionedUser] -= amount;
+}
+
+function GetUserCoffee(interactionUser, mentionedUser)
+{
+    let curCoffees;
+    ValidateUserCoffee(interactionUser,mentionedUser);
+    curCoffees = coffees[interactionUser][mentionedUser];
+    return curCoffees
+}
+
+function UpdateFile(FileName,FileObject)
+{
+    fs.writeFile(
+        `${FileName}`,
+        JSON.stringify(FileObject, null, 1),
+        (err) => {
+            if (err) throw err;
+        }
+    );
+}
 
 function getSortedKeys(obj) {
     var keys = Object.keys(obj);
@@ -659,7 +588,7 @@ function GenerateResponse(response, text,coffeeStats)
      var list2;
      var list3;
      var list4;
-     var output;
+     var output="Wow did you just like, break out of my response tree???";
      var part1;
      var part2;
      var part3;
@@ -667,7 +596,7 @@ function GenerateResponse(response, text,coffeeStats)
      if(numGen==0)
      {
 
-           if((coffeeStats.totalAmount<0 &&coffeeStats.uniqueOwe>coffeeStats.uniqueHold)||(coffeeStats.totalAmount>0 &&coffeeStats.uniqueOwe<coffeeStats.uniqueHold)||(coffeeStats.totalAmount>0 &&coffeeStats.uniqueOwe>coffeeStats.uniqueHold)||(coffeeStats.totalAmount<0 &&coffeeStats.uniqueOwe<coffeeStats.uniqueHold))
+           if((coffeeStats.totalAmount<0 &&coffeeStats.uniqueOwe>coffeeStats.uniqueHold)||(coffeeStats.totalAmount>=0 &&coffeeStats.uniqueOwe<coffeeStats.uniqueHold)||(coffeeStats.totalAmount>0 &&coffeeStats.uniqueOwe>coffeeStats.uniqueHold)||(coffeeStats.totalAmount<0 &&coffeeStats.uniqueOwe<coffeeStats.uniqueHold))
            {
                if(coffeeStats.totalAmount<0 &&coffeeStats.uniqueOwe>coffeeStats.uniqueHold)
                {
@@ -686,7 +615,7 @@ function GenerateResponse(response, text,coffeeStats)
                     part2=text.CoffeeNumbersM.OweFew[list2];
                 }
                }
-               else if(coffeeStats.totalAmount>0 &&coffeeStats.uniqueOwe<coffeeStats.uniqueHold)
+               else if(coffeeStats.totalAmount>=0 &&coffeeStats.uniqueOwe<coffeeStats.uniqueHold)
                {
                 if(response.documentSentiment.score>=0.0)
                 {
@@ -781,26 +710,26 @@ function GenerateResponse(response, text,coffeeStats)
             {
                 if(response.documentSentiment.score>=0.0)
                 {
-                    list1= Math.floor(Math.random() * (text.CoffeeNumbersH.Profit.length));
-                    part1=text.CoffeeNumbersH.Profit[list1];
-                }
-                else
-                {
-                    list1= Math.floor(Math.random() * (text.CoffeeNumbersM.Profit.length));
-                    part1=text.CoffeeNumbersM.Profit[list1];
-                }
-            }
-            else if (coffeeStats.totalAmount>0)
-            {
-                if(response.documentSentiment.score>=0.0)
-                {
                     list1= Math.floor(Math.random() * (text.CoffeeNumbersH.Debt.length));
-                    output=text.CoffeeNumbersH.Debt[list1];
+                    part1=text.CoffeeNumbersH.Debt[list1];
                 }
                 else
                 {
                     list1= Math.floor(Math.random() * (text.CoffeeNumbersM.Debt.length));
-                    output=text.CoffeeNumbersM.Debt[list1];
+                    part1=text.CoffeeNumbersM.Debt[list1];
+                }
+            }
+            else if (coffeeStats.totalAmount>=0)
+            {
+                if(response.documentSentiment.score>=0.0)
+                {
+                    list1= Math.floor(Math.random() * (text.CoffeeNumbersH.Profit.length));
+                    output=text.CoffeeNumbersH.Profit[list1];
+                }
+                else
+                {
+                    list1= Math.floor(Math.random() * (text.CoffeeNumbersM.Profit.length));
+                    output=text.CoffeeNumbersM.Profit[list1];
                 }
             }
            }
@@ -894,7 +823,7 @@ function GenerateResponse(response, text,coffeeStats)
      return output;
 }
 
-function getDebts(userId, channel)
+function getDebts(userId)
 {
     let debts={  
      owedAmount: 0,
