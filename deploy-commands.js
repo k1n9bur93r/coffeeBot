@@ -57,7 +57,8 @@ const commands = [
         .addStringOption(option =>
             option.setName('message')
             .setDescription('What you want to say')
-            .setRequired(true))         
+            .setRequired(true)),
+    new SlashCommandBuilder().setName('nullify').setDescription('Nullify your bidirectional coffees')            
 ]
     .map(command => command.toJSON());
 

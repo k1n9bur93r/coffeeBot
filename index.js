@@ -487,6 +487,41 @@ client.on("interactionCreate", async (interaction) => {
             embeds: [msgEmbed]
         });
         return;
+    } else if (interaction.commandName == "nullify") {
+        let userId = interaction.member.id
+        let coffeeAmount = 0
+        if (coffees[userId] == undefined) {
+            coffees[userId] = {}
+        }
+
+        for (let debtId in coffees[userId]) {
+            let oweToDebt = coffees[userId][debtId]
+            if (coffees[debtId] == undefined)
+                coffees[debtId] = {}
+            if (coffees[debtId][userId] == undefined)
+                coffees[debtId][userId] = 0
+            let debtOweToUser = coffees[debtId][userId]
+            let minDirectionalOweage = Math.min(oweToDebt,debtOweToUser)
+
+            coffees[userId][debtId] -= minDirectionalOweage
+            coffees[debtId][userId] -= minDirectionalOweage
+            coffeeAmount += minDirectionalOweage
+        }
+
+        
+        fs.writeFile(
+            `${coffeeJSON}`,
+            JSON.stringify(coffees, null, 1),
+            (err) => {
+                if (err) throw err;
+            }
+        );
+
+        await interaction.reply({
+            content:`<@${interaction.user.id}> nullified ${coffeeAmount} :coffee:`,
+        });
+
+
     }
 });
 
