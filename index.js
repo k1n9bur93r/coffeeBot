@@ -76,7 +76,7 @@ try{
             interaction.options.get("user").user.id,
             interaction.channel
         );
-        let parsedCoffeeAmount = interaction.options.getInteger("amount");
+        let parsedCoffeeAmount = interaction.options.getNumber("amount");
 
         if (mentionedUser) {
             if (mentionedUser == undefined) {
@@ -105,7 +105,7 @@ try{
             interaction.channel
         );
 
-        let parsedCoffeeAmount = interaction.options.getInteger("amount");
+        let parsedCoffeeAmount = interaction.options.getNumber("amount");
 
         if (mentionedUser) {
             if (mentionedUser == undefined) {
@@ -170,7 +170,7 @@ try{
         let transferer = interaction.user.id;
         let fromId = interaction.options.get("from").user.id;
         let toId = interaction.options.get("to").user.id;
-        let amount = interaction.options.getInteger("amount");
+        let amount = interaction.options.getNumber("amount");
 
         //check if from user owes less than amount to transferer or that transferer owes less than amount to toId
         if (coffees[fromId][transferer] < amount) {
@@ -201,7 +201,7 @@ try{
         BotReply(interaction,null,"<@${transferer}> is transfering ${amount} from <@${fromId}> to <@${toId}>.",false);
 
     } else if (interaction.commandName == "startpot") {
-        let spotsAmount = interaction.options.getInteger("amount");
+        let spotsAmount = interaction.options.getNumber("amount");
 
         if (spotsAmount < 2) {
             BotReply(interaction,null,"Must have atleast 2 spots",true);
@@ -230,7 +230,7 @@ try{
 
     } else if (interaction.commandName == "joinpot") {
         let joinerId = interaction.user.id;
-        let guessNumber = interaction.options.getInteger("number");
+        let guessNumber = interaction.options.getNumber("number");
         //check if pot exists (slots == -1 means not pot exists)
         if (curCoffeePotSlots == -1) {
             BotReply(interaction,null,"No pot currently exists. Create one with **/startpot**!",true);
