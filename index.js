@@ -361,7 +361,7 @@ try{
 }
 catch(e)
 {
-    BotReply(interaction,null,`I'm Sowwy UwU~ <@${interaction.user.id}> \n> but something happened and I'm brokie... ||<@${e.message}> ||`,false)
+    BotReply(interaction,null,`I'm Sowwy UwU~ <@${interaction.user.id}> \n> but something happened and I'm brokie... || ${e.message}${ e.stack?`\nStackTrace:\n=========\n${e.stack}`:`` } ||`,false)
 }
 });
 
