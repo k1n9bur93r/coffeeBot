@@ -201,7 +201,7 @@ try{
         BotReply(interaction,null,"<@${transferer}> is transfering ${amount} from <@${fromId}> to <@${toId}>.",false);
 
     } else if (interaction.commandName == "startpot") {
-        let spotsAmount = interaction.options.getNumber("amount");
+        let spotsAmount = interaction.options.getInteger("amount");
 
         if (spotsAmount < 2) {
             BotReply(interaction,null,"Must have atleast 2 spots",true);
