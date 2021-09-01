@@ -230,7 +230,7 @@ try{
 
     } else if (interaction.commandName == "joinpot") {
         let joinerId = interaction.user.id;
-        let guessNumber = interaction.options.getNumber("number");
+        let guessNumber = interaction.options.getInteger("number");
         //check if pot exists (slots == -1 means not pot exists)
         if (curCoffeePotSlots == -1) {
             BotReply(interaction,null,"No pot currently exists. Create one with **/startpot**!",true);
