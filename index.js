@@ -440,13 +440,8 @@ function RemoveUserCoffee(interactionUser,mentionedUser, amount)
 function GetUserCoffee(interactionUser, mentionedUser)
 {
     let curCoffees;
-    if (coffees[interactionUser] == undefined) {
-        coffees[interactionUser] = {};
-    }
-
-    if (coffees[interactionUser][mentionedUser]) {
-        curCoffees = coffees[interactionUser][mentionedUser];
-    }
+    ValidateUserCoffee(interactionUser,mentionedUser);
+    curCoffees = coffees[interactionUser][mentionedUser];
     return curCoffees
 }
 
