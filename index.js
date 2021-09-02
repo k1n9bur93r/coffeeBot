@@ -198,7 +198,7 @@ try{
         NullifyCoffees(fromId);
         NullifyCoffees(toId);
         UpdateFile(coffeeJSON,coffees);
-        BotReply(interaction,null,"<@${transferer}> is transfering ${amount} from <@${fromId}> to <@${toId}>.",false);
+        BotReply(interaction,null,`<@${transferer}> is transfering ${amount} from <@${fromId}> to <@${toId}>.`,false);
 
     } else if (interaction.commandName == "startpot") {
         let spotsAmount = interaction.options.getInteger("amount");
