@@ -1,11 +1,12 @@
 // Require the necessary discord.js classes
 const { Client, Intents, MessageEmbed, Message } = require("discord.js");
-const { token, coffeeJSON,responseJSON, gCloudJSON } = require("./config.json");
+const { token, coffeeJSON,responseJSON, gCloudJSON, statsJSON } = require("./config.json");
 const fs = require("fs");
 const coffees = require(`./${coffeeJSON}`);
 const gCloud = require(`./${gCloudJSON}`);
 const language = require('@google-cloud/language');
 const fileResponses = require(`./${responseJSON}`);
+const stats= require(`./${statsJSON}`);
 const gCloudOptions={
     projectId:gCloud.project_id,
     email:gCloud.client_email,
@@ -98,6 +99,9 @@ try{
         NullifyCoffees(interaction.user.id);
         UpdateFile(coffeeJSON,coffees);
 
+        UpdateGlobalStats({circulation:parsedCoffeeAmount});
+        UpdateFile(statsJSON,stats);
+
         BotReply(interaction,null,`<@${interaction.user.id}> gave <@${mentionedUser.user.id}> ${parsedCoffeeAmount} coffee${ parsedCoffeeAmount > 1 ? "s" : ""}`,false);
     } else if (interaction.commandName == "redeem") {
         let mentionedUser = getUserFromMention(
@@ -129,6 +133,10 @@ try{
         NullifyCoffees(mentionedUser.user.id);
         NullifyCoffees(interaction.user.id);
         UpdateFile(coffeeJSON,coffees);
+
+        UpdateGlobalStats({redeemed:parsedCoffeeAmount,circulation:-Math.abs(parsedCoffeeAmount)});
+        UpdateFile(statsJSON,stats);
+
         BotReply(interaction,null,`<@${interaction.user.id}> redeemed ${parsedCoffeeAmount} coffee${parsedCoffeeAmount > 1 ? "s" : ""} from <@${mentionedUser.user.id}>`,false);
     } else if (interaction.commandName == "coinflip") {
         if (curCoinflipRequest == "") {
@@ -163,6 +171,12 @@ try{
             NullifyCoffees(winner);
             UpdateFile(coffeeJSON,coffees);
             curCoinflipRequest = "";
+
+            console.log(winner);
+            
+            UpdateGlobalStats({coinflip:1,circulation:1,winnerId:winner});
+            UpdateFile(statsJSON,stats);
+
             BotReply(interaction,null,`<@${winner}> won the coinflip! <@${loser}> paid up 1 coffee.`,false);
 
         }
@@ -198,6 +212,10 @@ try{
         NullifyCoffees(fromId);
         NullifyCoffees(toId);
         UpdateFile(coffeeJSON,coffees);
+
+        UpdateGlobalStats({PotGames:1,PotCoffs:curCoffeePotSlots+1,winnerId:winner});
+        UpdateFile(statsJSON,stats);
+
         BotReply(interaction,null,`<@${transferer}> is transfering ${amount} from <@${fromId}> to <@${toId}>.`,false);
 
     } else if (interaction.commandName == "startpot") {
@@ -284,20 +302,26 @@ try{
                 coffeePotText += `<@${userId}> **${curCoffeePotPlayers[userId]}**\n`;
             }
 
-            //reset slots and players
-            curCoffeePotSlots = -1;
-            curCoffeePotPlayers = {};
+
 
             if (winner != "") {
                 for (let playerId of sortedPlayerIds) {
                     if (playerId != winner) {
                         //playerId owes winner a coffee
                         AddUserCoffee(playerId,winner,1);
+                        NullifyCoffees(playerId);
                     }
                 }
             }
-
+            NullifyCoffees(winner);
             UpdateFile(coffeeJSON,coffees);
+
+            UpdateGlobalStats({PotGames:1,circulation:curCoffeePotSlots-1,PotCoffs:curCoffeePotSlots,winnerId:winner});
+            UpdateFile(statsJSON,stats);
+
+            //reset slots and players
+            curCoffeePotSlots = -1;
+            curCoffeePotPlayers = {};
 
             const embed = new MessageEmbed()
                 .setTitle("Coffee Pot Results")
@@ -357,6 +381,30 @@ try{
         UpdateFile(coffeeJSON,coffees);
         BotReply(interaction,null,`<@${interaction.user.id}> nullified ${coffeeAmount} :coffee:`,false);
     }
+    else if(interaction.commandName=="serverstats")
+    {
+        let embedText =`Total Coffees in Circulation: *${stats.CoffsInCirculation}*\nTotal Coffees Redeemed: *${stats.TotalCoffsRedeemed}*\n Recent Bet Winner: *<@${stats.RecentCoffWinner}>*\nLargest Coffee Pot Win: *${stats.LargestPotWon}*\nTotal Coffees Bet In Pots: *${stats.TotalPotCoffs}*\nTotal Coffee Pots: *${stats.TotalPotGames}*\nTotal Coin Flips: *${stats.TotalCoinFlips}*\n`;
+        const embed = new MessageEmbed()
+        .setTitle("**C O F F E E  S T A T Z**")
+        .setDescription(embedText)
+        .setThumbnail(
+            "https://ipcdn.freshop.com/resize?url=https://images.freshop.com/1564405684703359252/a899a14345410c863a4bfd4541974f69_large.png&width=256&type=webp&quality=80"
+        );
+
+        BotReply(interaction,embed,"",false)
+
+    }
+    else if(interaction.commandName=="test")
+    {
+        UpdateGlobalStats({circulation:10});
+        UpdateGlobalStats({redeemed:5,circulation:-Math.abs(5)});
+
+        UpdateGlobalStats({coinflip:1,circulation:1,winnerId:"163760317963304962"});
+        UpdateGlobalStats({PotGames:1,circulation:2,PotCoffs:3+1,winnerId:"163760317963304962"});
+        UpdateFile(statsJSON,stats);
+        BotReply(interaction,null,`*circ* : add 10, minus 5, add 1 add 2 \n *redeem* : add 5\n *coinflip* : add 1 \n *potCoffs* : add 4 \n *coff pot games* : add 1`,false)
+
+    }
 
 }
 catch(e)
@@ -366,6 +414,39 @@ catch(e)
 });
 
 client.login(token);
+
+function UpdateGlobalStats(options)
+{
+    console.log(options.circulation);
+    // Options = {
+    //options.circulation :"",
+    //options.winnerId: ""
+    //options.redeemed:""
+    //options.coinflip
+    //options.PotGames:""
+    //options.PotCoffs:""
+    // }
+    if(options.circulation)
+        stats.CoffsInCirculation+=options.circulation;
+    if(options.winnerId)
+        stats.RecentCoffWinner=options.winnerId;
+    if((options.PotCoffs)&&(options.PotCoffs>stats.LargestPotWon))
+        stats.LargestPotWon=options.PotCoffs;
+    if(options.redeemed)
+        stats.TotalCoffsRedeemed+=options.redeemed
+    if(options.coinflip)
+        stats.TotalCoinFlips++;
+    if(options.PotGames)
+        stats.TotalPotGames++;
+    if(options.PotCoffs)
+        stats.TotalPotCoffs+=options.PotCoffs
+    
+}
+
+function UpdateUserStats()
+{
+
+}
 
 function NullifyCoffees(userId)
 {
@@ -387,6 +468,10 @@ function NullifyCoffees(userId)
         coffees[debtId][userId] -= minDirectionalOweage
         coffeeAmount += minDirectionalOweage
     }
+
+    UpdateGlobalStats({circulation:-Math.abs(coffeeAmount)});
+    UpdateFile(statsJSON,stats);
+
 return coffeeAmount;
 }
 async function BotReply(interaction,profilEmbed,message,hidden)
