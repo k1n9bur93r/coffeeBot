@@ -192,8 +192,10 @@ try{
         }
 
         RemoveUserCoffee(fromId,transferer,amount);
-        RemoveUserCoffee(transferer,fromId,amount);
-        AddUserCoffee(fromId,toId,amount);
+        RemoveUserCoffee(transferer,toId,amount);
+        //if from = to then coffees cancel out!
+        if (fromId != toId)
+            AddUserCoffee(fromId,toId,amount);
 
         NullifyCoffees(fromId);
         NullifyCoffees(toId);
