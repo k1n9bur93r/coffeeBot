@@ -58,7 +58,15 @@ const commands = [
             option.setName('message')
             .setDescription('What you want to say')
             .setRequired(true)),
-    new SlashCommandBuilder().setName('nullify').setDescription('Nullify your bidirectional coffees')            
+    new SlashCommandBuilder().setName('nullify').setDescription('Nullify your bidirectional coffees'),
+    //new SlashCommandBuilder().setName('serverstats').setDescription('Info for the rich and the poor'),
+    new SlashCommandBuilder().setName('21join').setDescription('Start or join a new game of War!'),
+    new SlashCommandBuilder().setName('21hand').setDescription('See your currnet hand'),
+    new SlashCommandBuilder().setName('21action').setDescription('Stay your hand. Draw no further cards Or Draw a new card to build your hand')
+            .addBooleanOption(option=>
+                option.setName('action')
+                .setDescription('TRUE for draw, FALSE for stay')
+                .setRequired(true))       
 ]
     .map(command => command.toJSON());
 
