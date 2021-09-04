@@ -1,0 +1,34 @@
+{
+ "CoffsInCirculation": 73,
+ "LargestPotWon": 4,
+ "TotalCoffsRedeemed": 33,
+ "TotalCoinFlips": 10,
+ "TotalPotGames": 9,
+ "RecentCoffWinner": "197197155268689920",
+ "TotalPotCoffs": 30,
+ "TotalWarCoffs": 17,
+ "TotalWarGames": 10,
+ "LargestWarWon": 3,
+ "profiles": [
+  {
+   "Id": "",
+   "LifeTimeCoffs": 0,
+   "LifeTimeCoinFlips": 0,
+   "CoinFlipsLost": 0,
+   "CoinFlipsWon": 0,
+   "LifeTimePots": 0,
+   "PotsWon": 0,
+   "PotsLost": 0
+  },
+  {
+   "Id": "",
+   "LifeTimeCoffs": 0,
+   "LifeTimeCoinFlips": 0,
+   "CoinFlipsLost": 0,
+   "CoinFlipsWon": 0,
+   "LifeTimePots": 0,
+   "PotsWon": 0,
+   "PotsLost": 0
+  }
+ ]
+}
