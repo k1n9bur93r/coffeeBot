@@ -38,7 +38,6 @@ isOver:false
 let warTotalPlayersIds=[];
 let warCurPlayers=[];
 let warGameRunning=false;
-let warFirstHandDelt=false;
 let warStartingPlayer=0;
 
 // Create a new client instance
@@ -414,6 +413,7 @@ try{
 
     } else if(interaction.commandName=="21join")
     {
+        console.log(warGameRunning);
         if(warStartingPlayer==interaction.user.id)
         {
            
@@ -426,13 +426,10 @@ try{
                     warCurPlayers[x]=DealCard(warCurPlayers[x]);
                 }
                 warGameRunning=true;
-                return;
             }
             else
             {
-                //add a cancel game thing here 
-                BotReply(interaction,null,`Sorry, there is a game currently on going!`,true)
-                return;
+                BotReply(interaction,null,`Are you trying to cancel this game?`,true);
             }
         }    
         else if(!warGameRunning)
@@ -441,13 +438,23 @@ try{
             {
                 BotReply(interaction,null,`<@${interaction.user.id}> has started a game of 21!`,false)
                 warStartingPlayer=interaction.user.id;
+                warCurPlayers.push(warPlayerObject({userId:interaction.user.id}));
             }
             else
             {
-                BotReply(interaction,null,`<@${interaction.user.id}> has joined the game of 21 started by <@${warStartingPlayer}>!`,false)
+                for(let x=0;x<warCurPlayers.length;x++)
+                {
+                    if(warCurPlayers[x].userId==interaction.user.id)
+                    {
 
+                        BotReply(interaction,null,"You are already in this round!",true);
+                        return; 
+                    }              
+                }
+                BotReply(interaction,null,`<@${interaction.user.id}> has joined the game of 21 started by <@${warStartingPlayer}>!`,false)
+                warCurPlayers.push(warPlayerObject({userId:interaction.user.id,isTie:false}));
             }
-            warCurPlayers.push(warPlayerObject({userId:interaction.user.id}));
+           
         }
         else if(warGameRunning)
         {
@@ -465,6 +472,11 @@ try{
         for(let x=0;x<warCurPlayers.length;x++)
         {
             if(warCurPlayers[x].userId==interaction.user.id){
+                if(warCurPlayers[x].isStayed==true||warCurPlayers[x].isOver==true)
+                {
+                    BotReply(interaction,null,"You cannot make anymore actions this round",true);
+                    return; 
+                }
                 canPlay=true;
                 break;
             }
@@ -488,7 +500,7 @@ try{
                 else
                 {
                     warCurPlayers[x]=DealCard( warCurPlayers[x]);
-                    const embed =NotifyPlayerOfHand(warCurPlayers[x]);
+                    const embed =NotifyPlayerOfHand(warCurPlayers[x],true);
                     BotReply(interaction,embed,"",true);
                 }
                 if(warCurPlayers[x].isStayed)
@@ -546,7 +558,7 @@ try{
              NullifyCoffees(winner[0]);
              UpdateFile(coffeeJSON,coffees);
  
-            // UpdateGlobalStats({warGames:1,circulation:warTotalPlayersIds.length-1,warCoffs:warTotalPlayersIds.length,winnerId:winner[0]});
+            //UpdateGlobalStats({warGames:1,circulation:warTotalPlayersIds.length-1,warCoffs:warTotalPlayersIds.length,winnerId:winner[0]});
              //UpdateFile(statsJSON,stats);
 
             // show guesses
@@ -577,7 +589,7 @@ try{
         }
         for(let x=0;x<warCurPlayers.length;x++){
             if(warCurPlayers[x].userId==interaction.user.id){
-            const embed=NotifyPlayerOfHand(warCurPlayers[x]);
+            const embed=NotifyPlayerOfHand(warCurPlayers[x],false);
             BotReply(interaction,embed,"",true);
             return;
             }
@@ -630,13 +642,14 @@ return true;
 
 }
 
-function NotifyPlayerOfHand(playerObject)
+function NotifyPlayerOfHand(playerObject,newDraw)
 {
     let cardString=``;
     let embedText= `**Your hand is ${playerObject.total}**. Still in the game!\n`;
     if(playerObject.isOver) embedText=`**Your hand is ${playerObject.total}**. You went over!\n`;
-
-    let drawText=` :clubs::hearts::spades::diamonds:*You drew a ${playerObject.cards[playerObject.cards.length-1]}*:diamonds::spades::hearts::clubs: \n\n*Your cards*   `;
+    let drawText;
+    if(newDraw)
+        drawText=` :clubs::hearts::spades::diamonds:*You drew a ${playerObject.cards[playerObject.cards.length-1]}*:diamonds::spades::hearts::clubs: \n\n*Your cards*   `;
     embedText=embedText.concat(drawText);
     for(let x=0;x<playerObject.cards.length;x++)
     {
