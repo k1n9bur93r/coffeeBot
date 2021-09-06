@@ -30,6 +30,11 @@ const commands = [
                 .setDescription('Amount to redeem')
                 .setRequired(true)),
     new SlashCommandBuilder().setName('coinflip').setDescription('Put out offer to coinflip for 1 coffee'),
+    new SlashCommandBuilder().setName('multiflip').setDescription('Put out offer for multiple coinflips!')
+    .addNumberOption(option =>
+        option.setName('amount')
+            .setDescription('Amount of coinflips to make')
+            .setRequired(false)),
     new SlashCommandBuilder().setName('transfer').setDescription('Transfer redeemable coffees to cover owed coffees')
         .addUserOption(option =>
             option.setName('from')

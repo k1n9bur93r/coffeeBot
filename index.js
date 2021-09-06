@@ -18,6 +18,9 @@ const gCloudOptions={
 const gCClient= new language.LanguageServiceClient(gCloudOptions);
 
 let curCoinflipRequest = "";
+
+let curMultiflipRequest = "";
+
 let curCoffeePotPlayers = {};
 let curCoffeePotSlots = -1;
 
@@ -60,7 +63,90 @@ client.once("ready", () => {
 client.on("interactionCreate", async (interaction) => {
     if (!interaction.isCommand()) return;
 try{
-    if (interaction.commandName === "ledger") {
+    if (interaction.commandName==="multiflip")
+    {
+        let flipAmounts = interaction.options.getInteger("amount");
+        if(flipAmounts>100)
+        {
+            BotReply(interaction,null,`You cannot flip more than 5 times in a row`,true);
+            return;
+        }
+        if(!flipAmounts)
+        {
+            BotReply(interaction,null,`Make sure you add the amount of flips you want to do!`,true);
+            return;
+        }
+        if (curMultiflipRequest == "") {
+            curMultiflipRequest = interaction.user.id;
+            BotReply(interaction,null,`<@${interaction.user.id}> is offering **${flipAmounts} coin flip coffee bets** for **${flipAmounts} coffee**.  Do **/multiflip** to take the bet.`,false);
+        } else if (curMultiflipRequest == interaction.user.id) {
+            curMultiflipRequest = "";
+            BotReply(interaction,null,`<@${interaction.user.id}> revoked their multi coin flip offer.`,false);
+        } 
+        else if(interaction.commandName == "multiflip")
+        {
+            let flipper1Count=0;
+            let flipper2Count=0;
+            let responseText=`Results:\n`;
+            for(let x=0;x<flipAmounts;x++)
+            {
+                let result=Coinflip(curMultiflipRequest,interaction.user.id);
+                if(result.coinSide=="side")
+                {
+                    responseText=responseText.concat(`**The coin landed on its side! No coffs won.**\n`);
+                }
+                // else if(result.coinSide=="split")
+                // {
+                //     responseText=responseText.concat(`The coin split in half! <@${result.coinWin}> won two coffs!\n`);
+                // }
+                else
+                {
+                    if(result.coinWin==curMultiflipRequest)
+                    {
+                        flipper1Count++;
+                        flipper2Count--;
+                    }
+                    else
+                    {
+                        flipper1Count--;
+                        flipper2Count++;
+                    }
+                    responseText=responseText.concat(`<@${result.coinWin}> Won!\n`);
+                }
+            }
+            responseText=responseText.concat(`\n\n*<@${curMultiflipRequest}>*`);
+            if(flipper1Count==-1 )
+            responseText=responseText.concat( ` **lost** ${Math.abs(flipper2Count)} coffee.\n*<@${interaction.user.id}>*`);
+            else if(flipper1Count<-1)
+            responseText=responseText.concat( ` **lost** ${Math.abs(flipper2Count)} coffees.\n*<@${interaction.user.id}>*`);
+            else if(flipper1Count==0)
+            responseText=responseText.concat( ` got **0** coffees.\n*<@${interaction.user.id}>*`);
+            else if (flipper1Count==1)
+            responseText=responseText.concat( ` **won** ${flipper1Count} coffee.\n*<@${interaction.user.id}>*`);
+            else if(flipper1Count>1)
+            responseText=responseText.concat( ` **won** ${flipper1Count} coffees.\n*<@${interaction.user.id}>*`);
+
+            if(flipper2Count==-1 )
+            responseText=responseText.concat( ` **lost** ${Math.abs(flipper2Count)} coffee.`);
+            else if(flipper2Count<-1)
+            responseText=responseText.concat( ` **lost** ${Math.abs(flipper2Count)} coffees.`);
+            else if(flipper2Count==0)
+            responseText=responseText.concat( ` got **0** coffees.`);
+            else if (flipper2Count==1)
+            responseText=responseText.concat( ` **won** ${flipper2Count} coffee.`);
+            else if(flipper2Count>1)
+            responseText=responseText.concat( ` **won** ${flipper2Count} coffees.`);
+            
+            UpdateFile(coffeeJSON,coffees);
+            curMultiflipRequest = "";
+                
+            //UpdateGlobalStats({coinflip:1,circulation:1,winnerId:winner});
+            //UpdateFile(statsJSON,stats);
+        
+            BotReply(interaction,null,responseText,false);
+        }
+        
+    }else if (interaction.commandName === "ledger") {
         let coffeeLedger = getCoffeeLedgerString(interaction.channel);
         const ledgerEmbed = new MessageEmbed()
             .setTitle("Coffee Ledger")
@@ -164,38 +250,22 @@ try{
         } else if (curCoinflipRequest == interaction.user.id) {
             curCoinflipRequest = "";
             BotReply(interaction,null,`<@${interaction.user.id}> revoked their coin flip offer.`,false);
-        } else if (interaction.commandName == "coinflip") {
-            let coinFlipper1 = curCoinflipRequest;
-            let coinFlipper2 = interaction.user.id;
-            let winner;
-            let loser;
-
-            if (Math.random() > 0.99) {
-                // easter egg: 1% chance coin lands on side :^)
-                curCoinflipRequest = "";
+        } 
+        else if(interaction.commandName == "coinflip")
+        {
+             let result =Coinflip(curCoinflipRequest,interaction.user.id);
+            if(result.coinSide=="side")
                 BotReply(interaction,null,`The coinflip landed on its side! It is a tie and no coffees are owed!`,false);
-                return;
-            }
 
-            if (Math.random() > 0.5) {
-                winner = coinFlipper1;
-                loser = coinFlipper2;
-            } else {
-                winner = coinFlipper2;
-                loser = coinFlipper1;
-            }
-
-            AddUserCoffee(loser,winner,1);
-            NullifyCoffees(loser);
-            NullifyCoffees(winner);
-            UpdateFile(coffeeJSON,coffees);
-            curCoinflipRequest = "";
-            
+            //else if(result.coinSide=="split")
+           //    BotReply(interaction,null,`The coin split in two and both halves were flipped. <@${result.coinWin}> won those coinflips! <@${result.coinLose}> paid up 2 coffees.`,false);
+            else
+                BotReply(interaction,null,`<@${result.coinWin}> won the coinflip! <@${result.coinLose}> paid up 1 coffee.`,false);
             //UpdateGlobalStats({coinflip:1,circulation:1,winnerId:winner});
             //UpdateFile(statsJSON,stats);
 
-            BotReply(interaction,null,`<@${winner}> won the coinflip! <@${loser}> paid up 1 coffee.`,false);
-
+            UpdateFile(coffeeJSON,coffees);
+            curCoinflipRequest = "";
         }
     } else if (interaction.commandName == "transfer") {
         let transferer = interaction.user.id;
@@ -604,6 +674,43 @@ catch(e)
 });
 
 client.login(token);
+
+function Coinflip(flipper1, flipper2)
+{
+
+        let coinFlipper1 = flipper1;
+        let coinFlipper2 = flipper2;
+        let winner;
+        let loser;
+        let unique="";
+        let flipValue=1;
+
+        if (Math.random() > 0.99) {
+            // easter egg: 1% chance coin lands on side :^)
+            unique="side";
+            flipValue=0;
+        }
+        // if (Math.random() < 0.01) {
+        //  unique="split";
+        //  flipValue=2;
+        // }
+
+        if (Math.random() > 0.5) {
+            winner = coinFlipper1;
+            loser = coinFlipper2;
+        } else {
+            winner = coinFlipper2;
+            loser = coinFlipper1;
+        }
+
+        AddUserCoffee(loser,winner,flipValue);
+        NullifyCoffees(loser);
+        NullifyCoffees(winner);
+    
+        return {coinSide:unique,coinWin:winner,coinLose:loser};
+
+    
+}
 
 function CheckWarWinner()
 {
