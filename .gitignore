@@ -5,3 +5,4 @@ node_modules*
 gCloudJson.json
 statsJSON_test.json
 test_stats.json
+coffees_test.json
