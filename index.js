@@ -32,6 +32,7 @@ let curRPSChoice = "";
 let curCoffeePotPlayers = {};
 let curCoffeePotSlots = -1;
 let maxMultiflipAmount = 5;
+let multiflipRequests = {};
 
 function warPlayerObject(options) {
     if (!options.isTie) warTotalPlayersIds.push(options.userId);
@@ -41,6 +42,9 @@ function warPlayerObject(options) {
         cards: [],
         isStayed: false,
         isOver: false,
+        totalSoft:0,
+        aceCounter:0
+
     };
 }
 let warTotalPlayersIds = [];
@@ -791,6 +795,17 @@ client.on("interactionCreate", async (interaction) => {
                 TotalCheckWinner(channelID);
             }
 
+        }else if (interaction.commandName == "21playes"){
+            let text;
+            for(let x=0;x<warCurPlayers.length;x++)
+            {
+                text=text.concat(`<@${warCurPlayers[x].userId}>\n`);
+            }
+            BotReply(interaction,
+                null,
+                text,
+                false);
+
         } else if (interaction.commandName == "rps") {
             if (curRPSRequest == "") {
                 curRPSRequest = interaction.user.id;
@@ -839,6 +854,7 @@ client.on("interactionCreate", async (interaction) => {
             } else if ((player1Choice + 1) % 3 != player2Choice) {
                 //player1 won
                 AddUserCoffee(player2, player1, 1);
+                UpdateFile(coffeeJSON,coffees);
                 BotReply(
                     interaction,
                     null,
@@ -848,6 +864,7 @@ client.on("interactionCreate", async (interaction) => {
             } else {
                 //player2 won
                 AddUserCoffee(player1, player2, 1);
+                UpdateFile(coffeeJSON,coffees);
                 BotReply(
                     interaction,
                     null,
@@ -874,6 +891,7 @@ client.login(token);
 
 function TotalCheckWinner(channelID)
 {
+    let warText;
     if(gameState=CheckWarDone())
     {
 
@@ -922,19 +940,33 @@ function TotalCheckWinner(channelID)
          //UpdateFile(statsJSON,stats);
 
         // show guesses
-        let warText = `<@${winner[0]}> has won the game of 21! Congrats to them. Everyone else, pays up one :coffee:!\n\n`;
-        warText += `Hands:\n`;
-        for (let x=0;x<warCurPlayers.length;x++) {
-            warText += `<@${warCurPlayers[x].userId}> : **${warCurPlayers[x].total}**\n`;
-        }
-         BotChannelMessage(channelID,null,warText,false);
+         warText = `<@${winner[0]}> has won the game of 21! Congrats to them. Everyone else, pays up one :coffee:!\n\n`;
+
+         
         }
         else
         {
-            //UpdateGlobalStats({warGames:1,warCoffs:warTotalPlayersIds.length});
+              //UpdateGlobalStats({warGames:1,warCoffs:warTotalPlayersIds.length});
             //UpdateFile(statsJSON,stats);
-            BotChannelMessage(channelID,null,`No one won...`,false);
+            warText = `No one won...\n\n`;
         }
+
+        warText += `Hands:\n`;
+        for (let x=0;x<warCurPlayers.length;x++) {
+            warText =warText.concat( `<@${warCurPlayers[x].userId}> - **${warCurPlayers[x].total}** :  `);
+            for (let y = 0; y < warCurPlayers[x].cards.length; y++) {
+                warText = warText.concat(
+                    `*${warCurPlayers[x].cards[y]}* :black_joker: `
+                );
+                if (y + 1 != warCurPlayers[x].cards.length) {
+                    warText = warText.concat(`->`);
+                }
+            }
+            warText=warText.concat('\n');
+        }
+          
+            BotChannelMessage(channelID,null,warText,false);
+        
         warTotalPlayersIds=[];
         warCurPlayers=[];
         warGameRunning=false;
@@ -942,7 +974,6 @@ function TotalCheckWinner(channelID)
         warStartingPlayer=0;  
     }
 }
-
 
 function Coinflip(flipper1, flipper2) {
     let coinFlipper1 = flipper1;
@@ -1008,9 +1039,9 @@ function CheckWarDone() {
 
 function NotifyPlayerOfHand(playerObject, newDraw) {
     let cardString = ``;
-    let embedText = `**Your hand is ${playerObject.total}**. Still in the game!\n`;
+    let embedText = `**${playerObject.total}**. Still in the game!\n`;
     if (playerObject.isOver)
-        embedText = `**Your hand is ${playerObject.total}**. You went over!\n`;
+        embedText = `** ${playerObject.total}**. You went over!\n`;
     let drawText;
     if (newDraw) {
         drawText = ` :clubs::hearts::spades::diamonds:*You drew a ${
@@ -1038,10 +1069,58 @@ function NotifyPlayerOfHand(playerObject, newDraw) {
 function DealCard(warPlayerObject) {
     let deck = [11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10];
     let selection = deck[Math.floor(Math.random() * deck.length)];
-    if (selection == 11 && selection + total > 21) selection = 1;
+    if(selection==11)
+{
+    if((warPlayerObject.total+11)>21&&warPlayerObject.aceCounter==0)
+    {
+        selection=1;
+    }
+    else if((warPlayerObject.total+11)>21&&warPlayerObject.hasAce>0)
+    {
+        aceCounter++;
+        warPlayerObject.total-=10;
+        for(let x=0;x<warPlayerObject.cards.length;x++)
+        {
+            if(warPlayerObject.cards[x]==11)
+            {
+                console.log("I am in here 1!");
+                warPlayerObject.cards[x]=1;
+                aceCounter--;
+                break;
+
+            }
+        }
+    }
+    else
+    {
+        warPlayerObject.aceCounter++;
+    }
+}
     warPlayerObject.cards.push(selection);
     warPlayerObject.total += selection;
-    if (warPlayerObject.total > 21) warPlayerObject.isOver = true;
+    if(warPlayerObject.total>21&&warPlayerObject.aceCounter==0)
+    warPlayerObject.isOver=true;
+    else if(warPlayerObject.total>21&&warPlayerObject.aceCounter>0)
+    {
+        if(warPlayerObject.total-10>21)
+        {
+            warPlayerObject.isOver=true;
+        }
+        else
+        {
+            warPlayerObject.total-=10;
+            for(let x=0;x<warPlayerObject.cards.length;x++)
+            {
+                if(warPlayerObject.cards[x]==11)
+                {
+                    console.log("I am in here 2!");
+                    warPlayerObject.cards[x]=1;
+                    warPlayerObject.aceCounter--;
+                    break;
+                }
+            }
+        }
+    }
     return warPlayerObject;
 }
 

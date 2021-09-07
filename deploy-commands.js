@@ -118,6 +118,9 @@ const commands = [
     new SlashCommandBuilder()
         .setName("21")
         .setDescription("Start or join a new game of 21!"),
+        new SlashCommandBuilder()
+        .setName("21players")
+        .setDescription("Show who is in the current game of 21"),
     new SlashCommandBuilder()
         .setName("hand")
         .setDescription("See your current hand"),
