@@ -7,6 +7,7 @@ const {
     gCloudJSON,
     statsJSON,
 } = require("./config.json");
+
 const fs = require("fs");
 const coffees = require(`./${coffeeJSON}`);
 const gCloud = require(`./${gCloudJSON}`);
@@ -25,16 +26,12 @@ const gCClient = new language.LanguageServiceClient(gCloudOptions);
 
 let curCoinflipRequest = "";
 
-
 let curRPSRequest = "";
 let curRPSChoice = "";
 
-let multiflipRequests = {};
 let curCoffeePotPlayers = {};
 let curCoffeePotSlots = -1;
 let maxMultiflipAmount = 5;
-
-
 
 function warPlayerObject(options) {
     if (!options.isTie) warTotalPlayersIds.push(options.userId);
@@ -159,8 +156,10 @@ client.on("interactionCreate", async (interaction) => {
                     .setThumbnail(
                         "https://justflipacoin.com/img/share-a-coin.png"
                     );
-                BotReply(interaction, embed, "", false);
-
+                BotReply(interaction, 
+                         embed, 
+                         "",
+                         false);
                 return;
             }
 
@@ -618,6 +617,7 @@ client.on("interactionCreate", async (interaction) => {
 
             BotReply(interaction, embed, "", false);
         } else if (interaction.commandName == "21") {
+
             if(warStartingPlayer==interaction.user.id)
             {
                
@@ -942,6 +942,7 @@ function TotalCheckWinner(channelID)
         warStartingPlayer=0;  
     }
 }
+
 
 function Coinflip(flipper1, flipper2) {
     let coinFlipper1 = flipper1;
