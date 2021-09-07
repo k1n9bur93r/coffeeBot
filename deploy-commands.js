@@ -1,7 +1,8 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
 const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v9");
-const { clientId, guildId, token } = require("./test_config.json");
+const { clientId, guildId, token } = require("./config.json");
+
 
 const commands = [
     new SlashCommandBuilder()
@@ -113,6 +114,7 @@ const commands = [
         .setName("nullify")
         .setDescription("Nullify your bidirectional coffees"),
     //new SlashCommandBuilder().setName('serverstats').setDescription('Info for the rich and the poor'),
+
     new SlashCommandBuilder()
         .setName("21")
         .setDescription("Start or join a new game of 21!"),
@@ -125,6 +127,7 @@ const commands = [
     new SlashCommandBuilder()
         .setName("stay")
         .setDescription("Finish your hand"),
+
     new SlashCommandBuilder()
         .setName("rps")
         .setDescription(
@@ -154,3 +157,4 @@ const rest = new REST({ version: "9" }).setToken(token);
         console.error(error);
     }
 })();
+
