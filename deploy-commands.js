@@ -31,7 +31,7 @@ const commands = [
                 .setRequired(true)),
     new SlashCommandBuilder().setName('coinflip').setDescription('Put out offer to coinflip for 1 coffee'),
     new SlashCommandBuilder().setName('multiflip').setDescription('Put out offer for multiple coinflips!')
-    .addNumberOption(option =>
+    .addIntegerOption(option =>
         option.setName('amount')
             .setDescription('Amount of coinflips to make')
             .setRequired(false)),
@@ -65,9 +65,9 @@ const commands = [
             .setRequired(true)),
     new SlashCommandBuilder().setName('nullify').setDescription('Nullify your bidirectional coffees'),
     //new SlashCommandBuilder().setName('serverstats').setDescription('Info for the rich and the poor'),
-    new SlashCommandBuilder().setName('21join').setDescription('Start or join a new game of War!'),
-    new SlashCommandBuilder().setName('21hand').setDescription('See your currnet hand'),
-    new SlashCommandBuilder().setName('21action').setDescription('Stay your hand. Draw no further cards Or Draw a new card to build your hand')
+    new SlashCommandBuilder().setName('21').setDescription('Start or join a new game of 21!'),
+    new SlashCommandBuilder().setName('hand').setDescription('See your currnet hand'),
+    new SlashCommandBuilder().setName('action').setDescription('Stay your hand. Draw no further cards Or Draw a new card to build your hand')
             .addBooleanOption(option=>
                 option.setName('action')
                 .setDescription('TRUE for draw, FALSE for stay')
