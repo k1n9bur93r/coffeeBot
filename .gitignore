@@ -3,4 +3,6 @@ coffees.json
 test_config.json
 node_modules*
 gCloudJson.json
-coffeeJSON.json
+statsJSON_test.json
+test_stats.json
+coffees_test.json
