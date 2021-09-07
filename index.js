@@ -6,7 +6,7 @@ const {
     responseJSON,
     gCloudJSON,
     statsJSON,
-} = require("./test_config.json");
+} = require("./config.json");
 const fs = require("fs");
 const coffees = require(`./${coffeeJSON}`);
 const gCloud = require(`./${gCloudJSON}`);
@@ -791,7 +791,71 @@ client.on("interactionCreate", async (interaction) => {
                 TotalCheckWinner(channelID);
             }
 
-    } 
+        } else if (interaction.commandName == "rps") {
+            if (curRPSRequest == "") {
+                curRPSRequest = interaction.user.id;
+                curRPSChoice = interaction.options.getString("choice");
+                BotReply(
+                    interaction,
+                    null,
+                    `<@${interaction.user.id}> is offering a game of **rock, paper, scissors** for **1 coffee**. Do **/rps [choice]** to take the bet.`,
+                    false
+                );
+                return;
+            }
+
+            if (curRPSRequest == interaction.user.id) {
+                BotReply(
+                    interaction,
+                    null,
+                    `<@${interaction.user.id}> revoked their rock, paper, scissors offer.`,
+                    false
+                );
+                curRPSRequest = "";
+                return;
+            }
+
+            // if still here then execute rps
+            let player1 = curRPSRequest;
+            let player2 = interaction.user.id;
+            let player1Choice = curRPSChoice;
+            let player2Choice = interaction.options.getString("choice");
+
+            let choices = ["Rock", "Paper", "Scissors"];
+            let verbs = ["crushes", "covers", "cuts"];
+            let emojis = [":rock:", ":roll_of_paper:", ":scissors:"];
+
+            player1Choice = choices.indexOf(player1Choice);
+            player2Choice = choices.indexOf(player2Choice);
+            curRPSRequest = "";
+            if (player1Choice == player2Choice) {
+                //tie
+                BotReply(
+                    interaction,
+                    null,
+                    `<@${player1}> and <@${player2}> tied by both choosing ${emojis[player1Choice]}.`,
+                    false
+                );
+            } else if ((player1Choice + 1) % 3 != player2Choice) {
+                //player1 won
+                AddUserCoffee(player2, player1, 1);
+                BotReply(
+                    interaction,
+                    null,
+                    `<@${player1}>'s ${emojis[player1Choice]} ${verbs[player1Choice]} <@${player2}>'s ${emojis[player2Choice]}. <@${player2}> paid up 1 :coffee:.`,
+                    false
+                );
+            } else {
+                //player2 won
+                AddUserCoffee(player1, player2, 1);
+                BotReply(
+                    interaction,
+                    null,
+                    `<@${player2}>'s ${emojis[player2Choice]} ${verbs[player2Choice]} <@${player1}>'s ${emojis[player1Choice]}. <@${player1}> paid up 1 :coffee:.`,
+                    false
+                );
+            }
+        }
 } catch (e) {
         BotReply(
             interaction,
