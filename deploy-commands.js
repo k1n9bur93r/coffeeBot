@@ -67,11 +67,8 @@ const commands = [
     //new SlashCommandBuilder().setName('serverstats').setDescription('Info for the rich and the poor'),
     new SlashCommandBuilder().setName('21').setDescription('Start or join a new game of 21!'),
     new SlashCommandBuilder().setName('hand').setDescription('See your currnet hand'),
-    new SlashCommandBuilder().setName('action').setDescription('Stay your hand. Draw no further cards Or Draw a new card to build your hand')
-            .addBooleanOption(option=>
-                option.setName('action')
-                .setDescription('TRUE for draw, FALSE for stay')
-                .setRequired(true))       
+    new SlashCommandBuilder().setName('draw').setDescription('Add a new card to your hand'),
+    new SlashCommandBuilder().setName('stay').setDescription('Finish your hand in the current game')     
 ]
     .map(command => command.toJSON());
 

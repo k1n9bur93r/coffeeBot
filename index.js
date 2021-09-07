@@ -32,9 +32,12 @@ if(!options.isTie)
 return {    
 userId:options.userId,
 total:0,
+totalSoft:0,
+totalHard:0,
 cards: [],
 isStayed: false,
-isOver:false
+isOver:false,
+aceCounter:0
 
 }
 }
@@ -483,18 +486,20 @@ try{
 
     } else if(interaction.commandName=="21")
     {
-        console.log(warGameRunning);
         if(warStartingPlayer==interaction.user.id)
         {
            
-            if(!warGameRunning)
+            if(!warGameRunning )//&&warCurPlayers.length!=1)
             {
-                BotReply(interaction,null,`The game of 21 is starting! Players see your hand with /21hand and use /21action to draw or stay!`,false)
+                let startText=`The game of 21 is starting! Players see your hand with /hand and use /action to draw or stay!\n`;
+                
                 for(let x=0;x<warCurPlayers.length;x++)
                 {
                     warCurPlayers[x]=DealCard(warCurPlayers[x]);
                     warCurPlayers[x]=DealCard(warCurPlayers[x]);
+                    startText += `<@${warCurPlayers[x].userId}> \n`;
                 }
+                BotReply(interaction,null,startText,false);
                 warGameRunning=true;
             }
             else
@@ -506,7 +511,8 @@ try{
         {
             if(warCurPlayers.length==0)
             {
-                BotReply(interaction,null,`<@${interaction.user.id}> has started a game of 21!`,false)
+
+                BotReply(interaction,null,`<@${interaction.user.id}> Is starting a round of 21, use /21 to join!`,false);
                 warStartingPlayer=interaction.user.id;
                 warCurPlayers.push(warPlayerObject({userId:interaction.user.id}));
             }
@@ -530,128 +536,76 @@ try{
         {
             BotReply(interaction,null,`Sorry, there is a game currently on going!`,true)
         }
+    }else if(interaction.commandName=="draw"){
+    if(!warGameRunning) 
+    { BotReply(interaction,null,"There is no game currently running!",true);
+        return;
+    }
+    let channelID=interaction.channelId;
+    let canPlay=false;
+    let playerIndex=0;
 
-    } else if(interaction.commandName=="action")
+    for(let x=0;x<warCurPlayers.length;x++)
     {
-        let channelID=interaction.channelId;
-        let drawFlag=interaction.options.getBoolean('action');
-
-        if(!warGameRunning) return;
-        let canPlay=false;
-
-        for(let x=0;x<warCurPlayers.length;x++)
-        {
-            if(warCurPlayers[x].userId==interaction.user.id){
-                if(warCurPlayers[x].isStayed==true||warCurPlayers[x].isOver==true)
-                {
-                    BotReply(interaction,null,"You cannot make anymore actions this round",true);
-                    return; 
-                }
-                canPlay=true;
-                break;
-            }
-        }
-
-        if(!canPlay)
-        {
-            BotReply(interaction,null,"You are not in this game, wait till the next one",true);
-            return;
-        }
-
-
-        for(let x=0;x<warCurPlayers.length;x++)
-        {
-            if(warCurPlayers[x].userId==interaction.user.id)
+        if(warCurPlayers[x].userId==interaction.user.id){
+            if(warCurPlayers[x].isStayed==true||warCurPlayers[x].isOver==true)
             {
-                if(!drawFlag)
-                {
-                    warCurPlayers[x].isStayed=true;                  
-                }
-                else
-                {
-                    warCurPlayers[x]=DealCard( warCurPlayers[x]);
-                    const embed =NotifyPlayerOfHand(warCurPlayers[x],true);
-                    BotReply(interaction,embed,"",true);
-                }
-                if(warCurPlayers[x].isStayed)
-                {
-                    BotReply(interaction,null,`<@${warCurPlayers[x].userId}> is done with their hand in the current game of 21.`,false);
-                }
-                else if(warCurPlayers[x].isOver)//this message is here because there needs to be a bot reply before exiting, or the interaction throws an error. if the player goes over that means they already did a bot reply and a channel messege is required
-                {
-                    BotChannelMessage(channelID,null,`<@${warCurPlayers[x].userId}> is done with their hand in the current game of 21.`,false);  
-                }
-                break;
+                BotReply(interaction,null,"You cannot make anymore actions this round",true);
+                return; 
             }
+            playerIndex=x;
+            canPlay=true;
+            break;
         }
-        if(gameState=CheckWarDone())
-        {
+    }
+    if(!canPlay)
+    {
+        BotReply(interaction,null,"You are not in this game, wait till the next one",true);
+        return;
+    }
+    warCurPlayers[playerIndex]=DealCard( warCurPlayers[playerIndex]);
+    const embed =NotifyPlayerOfHand(warCurPlayers[playerIndex],true);
+    BotReply(interaction,embed,"",true);
+    if(warCurPlayers[playerIndex].isOver)
+    {
+        BotChannelMessage(channelID,null,`<@${warCurPlayers[playerIndex].userId}> is done with their hand in the current game of 21.`,false);  
+        TotalCheckWinner(channelID);
+    }
 
-            let winner=CheckWarWinner();
-            if(winner.length>1)
+}else if(interaction.commandName=="stay")
+{
+    if(!warGameRunning) 
+    { BotReply(interaction,null,"There is no game currently running!",true);
+        return;
+    }
+    let channelID=interaction.channelId;
+    let canPlay=false;
+    let playerIndex=0;
+
+    for(let x=0;x<warCurPlayers.length;x++)
+    {
+        if(warCurPlayers[x].userId==interaction.user.id){
+            if(warCurPlayers[x].isStayed==true||warCurPlayers[x].isOver==true)
             {
-                let warText = ` Wow there is a tie between players! `
-                for(let x=0;x<winner.length;x++)
-                {
-                    warText=warText.concat(` <@${winner[x]}> `)
-                }
-                warText=warText.concat(`Starting up a new round.\n Past round's results\n`);
-                warText += `Hands:\n`;
-                for (let x=0;x<warCurPlayers.length;x++) 
-                {
-                    warText += `<@${warCurPlayers[x].userId}> : **${warCurPlayers[x].total}**\n`;
-                }
-                warText=warText.concat(` Play again with /21hand and /21action`);
-                BotChannelMessage(channelID,null,warText,false)
-
-                warCurPlayers=[];
-                for(let x=0;x<winner.length;x++)
-                {
-                    warCurPlayers.push(warPlayerObject({userId:winner[x],isTie:true}));
-                    warCurPlayers[x]=DealCard(warCurPlayers[x]);
-                    warCurPlayers[x]=DealCard(warCurPlayers[x]);
-                }
-                return;
-            }   
-            else if(winner.length==1)
-            {
-                for ( let x=0;x<warTotalPlayersIds.length;x++) 
-                {
-                    
-                    if (warTotalPlayersIds[x] != winner[0]) {
-                        AddUserCoffee(warTotalPlayersIds[x],winner[0],1);
-                        NullifyCoffees(warTotalPlayersIds[x]);
-                    }
-                }
-
-
-             NullifyCoffees(winner[0]);
-             UpdateFile(coffeeJSON,coffees);
- 
-            //UpdateGlobalStats({warGames:1,circulation:warTotalPlayersIds.length-1,warCoffs:warTotalPlayersIds.length,winnerId:winner[0]});
-             //UpdateFile(statsJSON,stats);
-
-            // show guesses
-            let warText = `<@${winner[0]}> has won the game of 21! Congrats to them. Everyone else, pays up one :coffee:!\n\n`;
-            warText += `Hands:\n`;
-            for (let x=0;x<warCurPlayers.length;x++) {
-                warText += `<@${warCurPlayers[x].userId}> : **${warCurPlayers[x].total}**\n`;
+                BotReply(interaction,null,"You cannot make anymore actions this round",true);
+                return; 
             }
-             BotChannelMessage(channelID,null,warText,false);
-            }
-            else
-            {
-                //UpdateGlobalStats({warGames:1,warCoffs:warTotalPlayersIds.length});
-                //UpdateFile(statsJSON,stats);
-                BotChannelMessage(channelID,null,`No one won...`,false);
-            }
-            warTotalPlayersIds=[];
-            warCurPlayers=[];
-            warGameRunning=false;
-            warFirstHandDelt=false;
-            warStartingPlayer=0;  
+            playerIndex=x;
+            canPlay=true;
+            break;
         }
-    } else if (interaction.commandName="hand")
+    }
+    if(!canPlay)
+    {
+        BotReply(interaction,null,"You are not in this game, wait till the next one",true);
+        return;
+    }
+    warCurPlayers[playerIndex].isStayed=true;   
+    BotReply(interaction,null,`You have stayed`,true);
+    BotChannelMessage(channelID,null,`<@${warCurPlayers[playerIndex].userId}> is done with their hand in the current game of 21.`,false);  
+    TotalCheckWinner(channelID);
+
+} else if (interaction.commandName="hand")
     {
         if(!warGameRunning) {
             BotReply(interaction,null,"Game has not yet started ",true);
@@ -666,7 +620,7 @@ try{
         }
         BotReply(interaction,null,"You are not in the current game",true);
     }
-    }
+}   
 catch(e)
 {
     BotReply(interaction,null,`I'm Sowwy UwU~ <@${interaction.user.id}> \n> but something happened and I'm brokie... || ${e.message}${ e.stack?`\nStackTrace:\n=========\n${e.stack}`:`` } ||`,false)
@@ -708,8 +662,77 @@ function Coinflip(flipper1, flipper2)
         NullifyCoffees(winner);
     
         return {coinSide:unique,coinWin:winner,coinLose:loser};
+}
 
-    
+function TotalCheckWinner(channelID)
+{
+    if(gameState=CheckWarDone())
+    {
+
+        let winner=CheckWarWinner();
+        if(winner.length>1)
+        {
+            let warText = ` Wow there is a tie between players! `
+            for(let x=0;x<winner.length;x++)
+            {
+                warText=warText.concat(` <@${winner[x]}> `)
+            }
+            warText=warText.concat(`Starting up a new round.\n Past round's results\n`);
+            warText += `Hands:\n`;
+            for (let x=0;x<warCurPlayers.length;x++) 
+            {
+                warText += `<@${warCurPlayers[x].userId}> : **${warCurPlayers[x].total}**\n`;
+            }
+            warText=warText.concat(` Play again with /hand and /action`);
+            BotChannelMessage(channelID,null,warText,false)
+
+            warCurPlayers=[];
+            for(let x=0;x<winner.length;x++)
+            {
+                warCurPlayers.push(warPlayerObject({userId:winner[x],isTie:true}));
+                warCurPlayers[x]=DealCard(warCurPlayers[x]);
+                warCurPlayers[x]=DealCard(warCurPlayers[x]);
+            }
+            return;
+        }   
+        else if(winner.length==1)
+        {
+            for ( let x=0;x<warTotalPlayersIds.length;x++) 
+            {
+                
+                if (warTotalPlayersIds[x] != winner[0]) {
+                    AddUserCoffee(warTotalPlayersIds[x],winner[0],1);
+                    NullifyCoffees(warTotalPlayersIds[x]);
+                }
+            }
+
+
+         NullifyCoffees(winner[0]);
+         UpdateFile(coffeeJSON,coffees);
+
+        //UpdateGlobalStats({warGames:1,circulation:warTotalPlayersIds.length-1,warCoffs:warTotalPlayersIds.length,winnerId:winner[0]});
+         //UpdateFile(statsJSON,stats);
+
+        // show guesses
+        let warText = `<@${winner[0]}> has won the game of 21! Congrats to them. Everyone else, pays up one :coffee:!\n\n`;
+        warText += `Hands:\n`;
+        for (let x=0;x<warCurPlayers.length;x++) {
+            warText += `<@${warCurPlayers[x].userId}> : **${warCurPlayers[x].total}**\n`;
+        }
+         BotChannelMessage(channelID,null,warText,false);
+        }
+        else
+        {
+            //UpdateGlobalStats({warGames:1,warCoffs:warTotalPlayersIds.length});
+            //UpdateFile(statsJSON,stats);
+            BotChannelMessage(channelID,null,`No one won...`,false);
+        }
+        warTotalPlayersIds=[];
+        warCurPlayers=[];
+        warGameRunning=false;
+        warFirstHandDelt=false;
+        warStartingPlayer=0;  
+    }
 }
 
 function CheckWarWinner()
@@ -752,8 +775,8 @@ return true;
 function NotifyPlayerOfHand(playerObject,newDraw)
 {
     let cardString=``;
-    let embedText= `**Your hand is ${playerObject.total}**. Still in the game!\n`;
-    if(playerObject.isOver) embedText=`**Your hand is ${playerObject.total}**. You went over!\n`;
+    let embedText= `** ${playerObject.total}**. Still in the game!\n`;
+    if(playerObject.isOver) embedText=`**${playerObject.total}**. You went over!\n`;
     let drawText;
     if(newDraw)
     {
@@ -780,12 +803,59 @@ function DealCard(warPlayerObject)
 {
 let deck=[11,2,3,4,5,6,7,8,9,10,10,10,10];
 let selection= deck[(Math.floor(Math.random() * deck.length))];
-if(selection==11&&selection+total>21)
-    selection=1;
+if(selection==11)
+{
+    if((warPlayerObject.total+11)>21&&warPlayerObject.aceCounter==0)
+    {
+        selection=1;
+    }
+    else if((warPlayerObject.total+11)>21&&warPlayerObject.hasAce>0)
+    {
+        aceCounter++;
+        warPlayerObject.total-=10;
+        for(let x=0;x<warPlayerObject.cards.length;x++)
+        {
+            if(warPlayerObject.cards[x]==11)
+            {
+                console.log("I am in here 1!");
+                warPlayerObject.cards[x]=1;
+                aceCounter--;
+                break;
+
+            }
+        }
+    }
+    else
+    {
+        warPlayerObject.aceCounter++;
+    }
+}
 warPlayerObject.cards.push(selection);
 warPlayerObject.total+=selection;
-if(warPlayerObject.total>21)
+if(warPlayerObject.total>21&&warPlayerObject.aceCounter==0)
     warPlayerObject.isOver=true;
+else if(warPlayerObject.total>21&&warPlayerObject.aceCounter>0)
+{
+    if(warPlayerObject.total-10>21)
+    {
+        warPlayerObject.isOver=true;
+    }
+    else
+    {
+        warPlayerObject.total-=10;
+        for(let x=0;x<warPlayerObject.cards.length;x++)
+        {
+            if(warPlayerObject.cards[x]==11)
+            {
+                console.log("I am in here 2!");
+                warPlayerObject.cards[x]=1;
+                warPlayerObject.aceCounter--;
+                break;
+            }
+        }
+    }
+}
+
 return warPlayerObject;
 }
 
