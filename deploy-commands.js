@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
 const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v9");
-const { clientId, guildId, token } = require("./test_config.json");
+const { clientId, guildId, token } = require("./config.json");
 
 const commands = [
     new SlashCommandBuilder()
@@ -51,7 +51,7 @@ const commands = [
         ),
     new SlashCommandBuilder()
         .setName("coinflip")
-        .setDescription("Put out offer to coinflip for 1 coffee"),
+        .setDescription("Coinflip for 1 coffee"),
     new SlashCommandBuilder()
         .setName("multiflip")
         .setDescription("Put out offer for multiple coinflips!")
@@ -129,6 +129,20 @@ const commands = [
                 .setName("action")
                 .setDescription("TRUE for draw, FALSE for stay")
                 .setRequired(true)
+        ),
+    new SlashCommandBuilder()
+        .setName("rps")
+        .setDescription(
+            "RPS for 1 coffee"
+        )
+        .addStringOption((option) =>
+            option
+                .setName("choice")
+                .setDescription("Rock, papper, or scissors")
+                .setRequired(true)
+                .addChoice("Rock", "Rock")
+                .addChoice("Paper", "Paper")
+                .addChoice("Scissors", "Scissors")
         ),
 ].map((command) => command.toJSON());
 
