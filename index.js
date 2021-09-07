@@ -854,6 +854,7 @@ client.on("interactionCreate", async (interaction) => {
             } else if ((player1Choice + 1) % 3 != player2Choice) {
                 //player1 won
                 AddUserCoffee(player2, player1, 1);
+                UpdateFile(coffeeJSON,coffees);
                 BotReply(
                     interaction,
                     null,
@@ -863,6 +864,7 @@ client.on("interactionCreate", async (interaction) => {
             } else {
                 //player2 won
                 AddUserCoffee(player1, player2, 1);
+                UpdateFile(coffeeJSON,coffees);
                 BotReply(
                     interaction,
                     null,
