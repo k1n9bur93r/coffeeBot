@@ -3,6 +3,7 @@ const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v9");
 const { clientId, guildId, token } = require("./config.json");
 
+
 const commands = [
     new SlashCommandBuilder()
         .setName("ledger")
@@ -113,23 +114,23 @@ const commands = [
         .setName("nullify")
         .setDescription("Nullify your bidirectional coffees"),
     //new SlashCommandBuilder().setName('serverstats').setDescription('Info for the rich and the poor'),
+
     new SlashCommandBuilder()
         .setName("21")
         .setDescription("Start or join a new game of 21!"),
+        new SlashCommandBuilder()
+        .setName("21players")
+        .setDescription("Show who is in the current game of 21"),
     new SlashCommandBuilder()
         .setName("hand")
         .setDescription("See your current hand"),
     new SlashCommandBuilder()
-        .setName("action")
-        .setDescription(
-            "Stay your hand. Draw no further cards Or Draw a new card to build your hand"
-        )
-        .addBooleanOption((option) =>
-            option
-                .setName("action")
-                .setDescription("TRUE for draw, FALSE for stay")
-                .setRequired(true)
-        ),
+        .setName("draw")
+        .setDescription("Add a new card to your hand"),
+    new SlashCommandBuilder()
+        .setName("stay")
+        .setDescription("Finish your hand"),
+
     new SlashCommandBuilder()
         .setName("rps")
         .setDescription(
@@ -159,3 +160,4 @@ const rest = new REST({ version: "9" }).setToken(token);
         console.error(error);
     }
 })();
+
