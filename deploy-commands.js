@@ -138,7 +138,7 @@ const commands = [
         .addStringOption((option) =>
             option
                 .setName("choice")
-                .setDescription("Rock, papper, or scissors")
+                .setDescription("Rock, paper, or scissors")
                 .setRequired(true)
                 .addChoice("Rock", "Rock")
                 .addChoice("Paper", "Paper")
