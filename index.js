@@ -71,7 +71,7 @@ try{
             BotReply(interaction,null,`You cannot flip more than 5 times in a row`,true);
             return;
         }
-        if(!flipAmounts)
+        if(!flipAmounts && curMultiflipRequest=="")
         {
             BotReply(interaction,null,`Make sure you add the amount of flips you want to do!`,true);
             return;
@@ -79,12 +79,12 @@ try{
         if (curMultiflipRequest == "") {
             curMultiflipRequest = interaction.user.id;
             BotReply(interaction,null,`<@${interaction.user.id}> is offering **${flipAmounts} coin flip coffee bets** for **${flipAmounts} coffee**.  Do **/multiflip** to take the bet.`,false);
+            return;
         } else if (curMultiflipRequest == interaction.user.id) {
             curMultiflipRequest = "";
             BotReply(interaction,null,`<@${interaction.user.id}> revoked their multi coin flip offer.`,false);
+            return;
         } 
-        else if(interaction.commandName == "multiflip")
-        {
             let flipper1Count=0;
             let flipper2Count=0;
             let responseText=`Results:\n`;
@@ -144,7 +144,7 @@ try{
             //UpdateFile(statsJSON,stats);
         
             BotReply(interaction,null,responseText,false);
-        }
+        
         
     }else if (interaction.commandName === "ledger") {
         let coffeeLedger = getCoffeeLedgerString(interaction.channel);
@@ -481,7 +481,7 @@ try{
 
         BotReply(interaction,embed,"",false)
 
-    } else if(interaction.commandName=="21join")
+    } else if(interaction.commandName=="21")
     {
         console.log(warGameRunning);
         if(warStartingPlayer==interaction.user.id)
@@ -531,7 +531,7 @@ try{
             BotReply(interaction,null,`Sorry, there is a game currently on going!`,true)
         }
 
-    } else if(interaction.commandName=="21action")
+    } else if(interaction.commandName=="action")
     {
         let channelID=interaction.channelId;
         let drawFlag=interaction.options.getBoolean('action');
@@ -651,7 +651,7 @@ try{
             warFirstHandDelt=false;
             warStartingPlayer=0;  
         }
-    } else if (interaction.commandName="21hand")
+    } else if (interaction.commandName="hand")
     {
         if(!warGameRunning) {
             BotReply(interaction,null,"Game has not yet started ",true);
@@ -756,8 +756,10 @@ function NotifyPlayerOfHand(playerObject,newDraw)
     if(playerObject.isOver) embedText=`**Your hand is ${playerObject.total}**. You went over!\n`;
     let drawText;
     if(newDraw)
+    {
         drawText=` :clubs::hearts::spades::diamonds:*You drew a ${playerObject.cards[playerObject.cards.length-1]}*:diamonds::spades::hearts::clubs: \n\n*Your cards*   `;
-    embedText=embedText.concat(drawText);
+        embedText=embedText.concat(drawText);
+    }
     for(let x=0;x<playerObject.cards.length;x++)
     {
         cardString=cardString.concat(`**${playerObject.cards[x]}** :black_joker: `);
@@ -776,8 +778,10 @@ function NotifyPlayerOfHand(playerObject,newDraw)
 
 function DealCard(warPlayerObject)
 {
-let deck=[1,2,3,4,5,6,7,8,9,10,10,10,10];
+let deck=[11,2,3,4,5,6,7,8,9,10,10,10,10];
 let selection= deck[(Math.floor(Math.random() * deck.length))];
+if(selection==11&&selection+total>21)
+    selection=1;
 warPlayerObject.cards.push(selection);
 warPlayerObject.total+=selection;
 if(warPlayerObject.total>21)
