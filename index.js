@@ -1,17 +1,19 @@
 // Require the necessary discord.js classes
-const { Client, Intents, MessageEmbed, Message } = require("discord.js");
+const { Client, Intents, MessageEmbed } = require("discord.js");
 const {
     token,
     coffeeJSON,
     responseJSON,
     gCloudJSON,
     statsJSON,
+    logTXT
 } = require("./config.json");
 
 const fs = require("fs");
 const coffees = require(`./${coffeeJSON}`);
 const gCloud = require(`./${gCloudJSON}`);
 const language = require("@google-cloud/language");
+const { parse } = require("path");
 const fileResponses = require(`./${responseJSON}`);
 const stats = require(`./${statsJSON}`);
 const gCloudOptions = {
@@ -124,7 +126,7 @@ client.on("interactionCreate", async (interaction) => {
                 let player1wins = 0;
                 let player2wins = 0;
                 let responseText = ``;
-
+                WriteToLog(`MULTI FLIP:`,false);
                 for (let x = 0; x < flipAmount; x++) {
                     let result = Coinflip(player1, player2);
                     if (result.coinSide == "side") {
@@ -232,7 +234,7 @@ client.on("interactionCreate", async (interaction) => {
                 BotReply(interaction, null, `Nice try hax0r man`, true);
                 return;
             }
-
+            WriteToLog(`GIVE: `+ interaction.user.id+` + `+parsedCoffeeAmount+` from `+mentionedUser,true);
             AddUserCoffee(
                 interaction.user.id,
                 mentionedUser.user.id,
@@ -293,7 +295,7 @@ client.on("interactionCreate", async (interaction) => {
                 );
                 return;
             }
-
+            WriteToLog(`REDEEM: `+ interaction.user.id+` - `+parsedCoffeeAmount+` from `+mentionedUser,true);
             RemoveUserCoffee(
                 mentionedUser.user.id,
                 interaction.user.id,
@@ -401,7 +403,7 @@ client.on("interactionCreate", async (interaction) => {
                 );
                 return;
             }
-
+            WriteToLog(`TRANSFER: ${transferer} ,  ${amount} ${fromId} to ${toId}`,true);
             RemoveUserCoffee(fromId, transferer, amount);
             RemoveUserCoffee(transferer, toId, amount);
             //if from = to then coffees cancel out!
@@ -432,7 +434,6 @@ client.on("interactionCreate", async (interaction) => {
             curCoffeePotPlayers = {};
             // set pot amount
             curCoffeePotSlots = spotsAmount;
-
             let coffeePotText =
                 `<@${interaction.user.id}> is starting a :coffee: pot with ***${spotsAmount}*** spots!\n\n` +
                 `**How it works:**\n` +
@@ -517,16 +518,18 @@ client.on("interactionCreate", async (interaction) => {
                 for (let userId in curCoffeePotPlayers) {
                     coffeePotText += `<@${userId}> **${curCoffeePotPlayers[userId]}**\n`;
                 }
-
                 if (winner != "") {
                     for (let playerId of sortedPlayerIds) {
                         if (playerId != winner) {
                             //playerId owes winner a coffee
                             AddUserCoffee(playerId, winner, 1);
                             NullifyCoffees(playerId);
+                            WriteToLog(`COFFEEPOT: ${winner}  +1  from ${playerId} `,true);
                         }
                     }
                 }
+                
+               
                 NullifyCoffees(winner);
                 UpdateFile(coffeeJSON, coffees);
 
@@ -795,7 +798,7 @@ client.on("interactionCreate", async (interaction) => {
                 TotalCheckWinner(channelID);
             }
 
-        }else if (interaction.commandName == "21playes"){
+        }else if (interaction.commandName == "21players"){
             let text;
             for(let x=0;x<warCurPlayers.length;x++)
             {
@@ -845,6 +848,7 @@ client.on("interactionCreate", async (interaction) => {
             curRPSRequest = "";
             if (player1Choice == player2Choice) {
                 //tie
+                WriteToLog(`RPS: TIE`,true);
                 BotReply(
                     interaction,
                     null,
@@ -855,6 +859,7 @@ client.on("interactionCreate", async (interaction) => {
                 //player1 won
                 AddUserCoffee(player2, player1, 1);
                 UpdateFile(coffeeJSON,coffees);
+                WriteToLog(`RPS: ${player1}  +1  from ${player2}`,true);
                 BotReply(
                     interaction,
                     null,
@@ -863,8 +868,10 @@ client.on("interactionCreate", async (interaction) => {
                 );
             } else {
                 //player2 won
+
                 AddUserCoffee(player1, player2, 1);
                 UpdateFile(coffeeJSON,coffees);
+                WriteToLog(`RPS: ${player2}  +1  from ${player1}`,true);
                 BotReply(
                     interaction,
                     null,
@@ -892,7 +899,15 @@ client.login(token);
 function TotalCheckWinner(channelID)
 {
     let warText;
-    if(gameState=CheckWarDone())
+    let gameState=true;
+    for (let x = 0; x < warCurPlayers.length; x++) {
+        if (warCurPlayers[x].isOver==false  && warCurPlayers[x].isStayed==false){
+              gameState=false;
+              return;
+        }
+    }
+   
+    if(gameState)
     {
 
         let winner=CheckWarWinner();
@@ -927,11 +942,11 @@ function TotalCheckWinner(channelID)
             {
                 
                 if (warTotalPlayersIds[x] != winner[0]) {
+                    WriteToLog(`21: ${winner[0]}  +1  from ${warTotalPlayersIds[x]} `,false);
                     AddUserCoffee(warTotalPlayersIds[x],winner[0],1);
                     NullifyCoffees(warTotalPlayersIds[x]);
                 }
             }
-
 
          NullifyCoffees(winner[0]);
          UpdateFile(coffeeJSON,coffees);
@@ -1005,6 +1020,7 @@ function Coinflip(flipper1, flipper2) {
         AddUserCoffee(loser, winner, flipValue);
         NullifyCoffees(loser);
         NullifyCoffees(winner);
+        WriteToLog(`COINFLIP `+winner+` +`+flipValue+` from `+loser,true);
         UpdateFile(coffeeJSON, coffees);
     }
 
@@ -1027,14 +1043,6 @@ function CheckWarWinner() {
         }
     }
     return winningPlayers;
-}
-
-function CheckWarDone() {
-    for (let x = 0; x < warCurPlayers.length; x++) {
-        if (!warCurPlayers[x].isOver && !warCurPlayers[x].isStayed)
-            return false;
-    }
-    return true;
 }
 
 function NotifyPlayerOfHand(playerObject, newDraw) {
@@ -1631,4 +1639,27 @@ function getDebts(userId) {
     }
     debts.totalAmount = debts.receivedAmount - debts.owedAmount;
     return debts;
+}
+
+function WriteToLog(message,endCommand)
+{
+    try
+    {
+        let logMessage=``;
+        let logFileStream= fs.createWriteStream(logTXT,{flags:'a'});
+        let timestamp= new Date().toISOString();
+        logMessage+=timestamp+` - `+message+`\n`;
+        if(endCommand)
+        {
+            logMessage+=`-------------------------------------------------------\n`;
+        }
+        logFileStream.write(logMessage);
+        logFileStream.end();
+
+    }
+    catch(e)
+    {
+        //think of some logging error event here
+        throw(e);
+    }
 }
