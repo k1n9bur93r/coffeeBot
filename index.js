@@ -14,6 +14,7 @@ const coffees = require(`./${coffeeJSON}`);
 const gCloud = require(`./${gCloudJSON}`);
 const language = require("@google-cloud/language");
 const { parse } = require("path");
+const { removeAllListeners } = require("process");
 const fileResponses = require(`./${responseJSON}`);
 const stats = require(`./${statsJSON}`);
 const gCloudOptions = {
@@ -624,8 +625,26 @@ client.on("interactionCreate", async (interaction) => {
                 );
 
             BotReply(interaction, embed, "", false);
+        } else if (interaction.commandName == "21End") {
+            if(interaction.userId==warStartingPlayer&&warGameRunning==false)
+            {
+                BotReply(interaction,null,`${interaction.userId} Is revoking their game offer`,true);
+                return;
+            }
+
         } else if (interaction.commandName == "21") {
 
+            let coffAmount = interaction.options.getInteger("amount");
+            
+            if(!coffAmount)
+            {
+                coffAmount=1;
+            }
+            else if(coffAmount>5)
+            {
+                BotReply(interaction,null,"Can't have a buy in great than 5!",true);
+                return;
+            }
             if(warStartingPlayer==interaction.user.id)
             {
                
@@ -633,16 +652,16 @@ client.on("interactionCreate", async (interaction) => {
                 {
                     const embed=new MessageEmbed()
                     .setTitle("21 Round Starting")
+                    .setColor("DARK_RED")
                     .setThumbnail(
                         "https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg"
                     );
-                    let startText=`The game of 21 is starting! Players see your hand with **/hand** and use **/draw** to draw or **/stay** stay!\n`;
+                    let startText=`The game of 21 is starting with ${(warCurPlayers.length-1)*warUserPotAmt} coffs on the line! Players see your hand with **/hand** and use **/draw** to draw or **/stay** stay!\n`;
                     
                     for(let x=0;x<warCurPlayers.length;x++)
                     {
-                        warCurPlayers[x]=DealCard(warCurPlayers[x]);
-                        warCurPlayers[x]=DealCard(warCurPlayers[x]);
-                        startText += `<@${warCurPlayers[x].userId}> \n`;
+
+                        embed.addField(`Player ${x+1}`,`<@${warCurPlayers[x].userId}>`,true);
                     }
                     embed.setDescription(startText);
                     BotReply(interaction,
@@ -653,46 +672,58 @@ client.on("interactionCreate", async (interaction) => {
                 }
                 else
                 {
+
+
                     BotReply(interaction,
                         null,
-                        `Are you trying to cancel this game?`,
-                        true);
+                        `You cannot cancel a game after it has started `,
+                        false);
+                        return;
                 }
             }    
             else if(!warGameRunning)
             {
                 if(warCurPlayers.length==0)
                 {
-                    const embed=new MessageEmbed()
+                    warUserPotAmt=coffAmount;
+                    let embed=new MessageEmbed()
                     .setTitle("21 New Round")
-                    .setDescription(`<@${interaction.user.id}> Is starting a round of 21, use /21 to join!`)
+                    .setDescription(`<@${interaction.user.id}> Is starting a round of 21 with a ${warUserPotAmt} coff buy in, use /21 to join!`)
+                    .setColor("DARK_RED")
                     .setThumbnail(
                         "https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg"
                     );
-                    BotReply(interaction,
+                     BotChannelMessage(interaction.channelId,
                         embed,
                         ""
                         ,false);
-
                     warStartingPlayer=interaction.user.id;
                     warCurPlayers.push(warPlayerObject({userId:interaction.user.id}));
+                    warCurPlayers[0]=DealCard(warCurPlayers[0]);
+                    warCurPlayers[0]=DealCard(warCurPlayers[0]);
+                    embed = NotifyPlayerOfHand(warCurPlayers[0], false);
+                        
+                   
+                    BotReply(interaction,
+                        embed,
+                        "",
+                        true);    
+
                 }
                 else
                 {
-                    for(let x=0;x<warCurPlayers.length;x++)
-                    {
-                        if(warCurPlayers[x].userId==interaction.user.id)
-                        {
-    
-                            BotReply(interaction,
-                                null,
-                                "You are already in this round!",
-                                true);
-                            return; 
-                        }              
-                    }
-                    BotReply(interaction,null,`<@${interaction.user.id}> has joined the game of 21 started by <@${warStartingPlayer}>!`,false)
+
+                    BotChannelMessage(interaction.channelId,null,`<@${interaction.user.id}> has joined the game of 21 started by <@${warStartingPlayer}>!`,false)
                     warCurPlayers.push(warPlayerObject({userId:interaction.user.id,isTie:false}));
+                    warCurPlayers[warCurPlayers.length-1]=DealCard(warCurPlayers[warCurPlayers.length-1]);
+                    warCurPlayers[warCurPlayers.length-1]=DealCard(warCurPlayers[warCurPlayers.length-1]);
+                   const embed = NotifyPlayerOfHand(warCurPlayers[warCurPlayers.length-1], false);
+                        
+                   
+                    BotReply(interaction,
+                        embed,
+                        "",
+                        true);    
                 }
                
             }
@@ -746,7 +777,7 @@ client.on("interactionCreate", async (interaction) => {
         
         } else if (interaction.commandName== "hand") {
             if (!warGameRunning) {
-                BotReply(interaction, null, "Game has not yet started ", true);
+                BotReply(interaction, null, "There is no game currently running!", true);
                 return;
             }
             for (let x = 0; x < warCurPlayers.length; x++) {
@@ -811,17 +842,22 @@ client.on("interactionCreate", async (interaction) => {
             }
 
         }else if (interaction.commandName == "players"){
-            let text=``;
-            for(let x=0;x<warCurPlayers.length;x++)
-            {
-                text+=`<@${warCurPlayers[x].userId}>\n`;
+            if (!warGameRunning) {
+                BotReply(interaction, null, "There is no game currently running! ", true);
+                return;
             }
             const embed=new MessageEmbed()
             .setTitle("21 Current Players")
-            .setDescription(text)
+            .setColor("DARK_RED")
+            .setDescription(`There are *${(warCurPlayers.length-1)*warUserPotAmt}* coffs on the line`)
             .setThumbnail(
                 "https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg"
             );
+            for(let x=0;x<warCurPlayers.length;x++)
+            {
+
+                embed.addField(`Player ${x+1}`,`<@${warCurPlayers[x].userId}>`,true);
+            }
             BotReply(interaction,
                 embed,
                 "",
@@ -919,7 +955,6 @@ function TotalCheckWinner(channelID)
     let warText;
     let gameState=true;
     for (let x = 0; x < warCurPlayers.length; x++) {
-        console.log(`Over: ${warCurPlayers[x].isOver} Stay: ${warCurPlayers[x].isStay}`);
         if (warCurPlayers[x].isOver==false  && warCurPlayers[x].isStayed==false){
             console.log(`Bazinga`);
               gameState=false;
@@ -963,7 +998,7 @@ function TotalCheckWinner(channelID)
                 
                 if (warTotalPlayersIds[x] != winner[0]) {
                     WriteToLog(`21: ${winner[0]}  +1  from ${warTotalPlayersIds[x]} `,false);
-                    AddUserCoffee(warTotalPlayersIds[x],winner[0],1);
+                    AddUserCoffee(warTotalPlayersIds[x],winner[0],warUserPotAmt);
                     NullifyCoffees(warTotalPlayersIds[x]);
                 }
             }
@@ -976,7 +1011,7 @@ function TotalCheckWinner(channelID)
 
         // show guesses
         
-         warText = `<@${winner[0]}> has won the game of 21! Congrats to them. Everyone else, pays up one :coffee:!\n\n`;
+         warText = `<@${winner[0]}> has won the game of 21! They won **${(warTotalPlayersIds.length-1)*warUserPotAmt}** :coffee:!\n\n`;
 
          
         }
@@ -988,21 +1023,33 @@ function TotalCheckWinner(channelID)
         }
         let embed= new MessageEmbed()
          .setTitle("21 Round Result")
+         .setColor('DARK_RED')
          .setThumbnail(
              "https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg"
          );
-        warText += `Hands:\n`;
+          warCurPlayers= warCurPlayers.sort((a,b)=>(a.total<b.total)? 1 : -1);
         for (let x=0;x<warCurPlayers.length;x++) {
-            warText =warText.concat( `<@${warCurPlayers[x].userId}> - **${warCurPlayers[x].total}** :  `);
+            let cardText="Cards:";
+            let totalText=`Total:`;
+            if(warCurPlayers[x].total>21)
+            {
+                totalText+=` **Over** ~~**${warCurPlayers[x].total}**~~`;
+            }
+            else
+            {
+                totalText+=`**${warCurPlayers[x].total}**`;
+            }
             for (let y = 0; y < warCurPlayers[x].cards.length; y++) {
-                warText = warText.concat(
+
+                cardText = cardText.concat(
                     `*${warCurPlayers[x].cards[y]}* :black_joker: `
                 );
                 if (y + 1 != warCurPlayers[x].cards.length) {
-                    warText = warText.concat(`->`);
+                    cardText = cardText.concat(`->`);
                 }
+               
             }
-            warText=warText.concat('\n');
+            embed.addField(`Player ${x+1}`,`<@${warCurPlayers[x].userId}> - ${totalText} , ${cardText} `,false);
         }
           embed.setDescription(warText);
             BotChannelMessage(channelID,embed,"",false);
@@ -1011,7 +1058,8 @@ function TotalCheckWinner(channelID)
         warCurPlayers=[];
         warGameRunning=false;
         warFirstHandDelt=false;
-        warStartingPlayer=0;  
+        warStartingPlayer=0; 
+        warUserPotAmt=1; 
     }
 }
 
@@ -1072,31 +1120,36 @@ function CheckWarWinner() {
 
 function NotifyPlayerOfHand(playerObject, newDraw) {
     let cardString = ``;
-    let embedText = `**${playerObject.total}**. Still in the game!\n`;
+    let embedText = `Still in the game!\n`;
     if (playerObject.isOver)
-        embedText = `** ${playerObject.total}**. You went over!\n`;
+        embedText = `You went over!\n`;
     let drawText;
     if (newDraw) {
-        drawText = ` :clubs::hearts::spades::diamonds:*You drew a ${
+        drawText = ` :hearts::diamonds:You drew a **${
             playerObject.cards[playerObject.cards.length - 1]
-        }*:diamonds::spades::hearts::clubs: \n\n*Your cards*   `;
+        }**:diamonds::hearts:`;
         embedText = embedText.concat(drawText);
     }
     for (let x = 0; x < playerObject.cards.length; x++) {
         cardString = cardString.concat(
-            `**${playerObject.cards[x]}** :black_joker: `
+            `*${playerObject.cards[x]}* :black_joker: `
         );
         if (x + 1 != playerObject.cards.length) {
             cardString = cardString.concat(`->`);
         }
     }
+    let embed =new MessageEmbed()
+    .setTitle("Your Hand")
+    .setColor("ORANGE")
+    .setDescription(embedText)
+    .addField("Total:",`*${playerObject.total}*`,true)
+    .addField("Cards :",cardString,true)
+    .setThumbnail(
+        "https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg"
+    );
+
     embedText = embedText.concat(cardString);
-    return new MessageEmbed()
-        .setTitle("Your Hand")
-        .setDescription(embedText)
-        .setThumbnail(
-            "https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg"
-        );
+    return embed;
 }
 
 function DealCard(warPlayerObject) {
@@ -1116,7 +1169,6 @@ function DealCard(warPlayerObject) {
         {
             if(warPlayerObject.cards[x]==11)
             {
-                console.log("I am in here 1!");
                 warPlayerObject.cards[x]=1;
                 aceCounter--;
                 break;
@@ -1146,7 +1198,6 @@ function DealCard(warPlayerObject) {
             {
                 if(warPlayerObject.cards[x]==11)
                 {
-                    console.log("I am in here 2!");
                     warPlayerObject.cards[x]=1;
                     warPlayerObject.aceCounter--;
                     break;
