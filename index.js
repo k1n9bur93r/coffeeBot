@@ -1,22 +1,14 @@
 // Require the necessary discord.js classes
 const { Client, Intents, MessageEmbed } = require("discord.js");
-const {
-    token,
-    coffeeJSON,
-    responseJSON,
-    gCloudJSON,
-    statsJSON,
-    logTXT
-} = require("./config.json");
-
-const fs = require("fs");
-const coffees = require(`./${coffeeJSON}`);
+const { token, responseJSON, gCloudJSON} = require("./config.json");
+const cardGame= require("./CardGame");
+const fileIO= require("./FileIO");
 const gCloud = require(`./${gCloudJSON}`);
 const language = require("@google-cloud/language");
 const { parse } = require("path");
 const { removeAllListeners } = require("process");
 const fileResponses = require(`./${responseJSON}`);
-const stats = require(`./${statsJSON}`);
+
 const gCloudOptions = {
     projectId: gCloud.project_id,
     email: gCloud.client_email,
@@ -37,24 +29,6 @@ let curCoffeePotSlots = -1;
 let maxMultiflipAmount = 5;
 let multiflipRequests = {};
 
-function warPlayerObject(options) {
-    if (!options.isTie) warTotalPlayersIds.push(options.userId);
-    return {
-        userId: options.userId,
-        total: 0,
-        cards: [],
-        isStayed: false,
-        isOver: false,
-        totalSoft:0,
-        aceCounter:0
-
-    };
-}
-let warTotalPlayersIds = [];
-let warCurPlayers = [];
-let warGameRunning = false;
-let warStartingPlayer = 0;
-let warUserPotAmt=1;
 
 // Create a new client instance
 const client = new Client({
@@ -128,7 +102,6 @@ client.on("interactionCreate", async (interaction) => {
                 let player1wins = 0;
                 let player2wins = 0;
                 let responseText = ``;
-                WriteToLog(`MULTI FLIP:`,false);
                 for (let x = 0; x < flipAmount; x++) {
                     let result = Coinflip(player1, player2);
                     if (result.coinSide == "side") {
@@ -236,18 +209,16 @@ client.on("interactionCreate", async (interaction) => {
                 BotReply(interaction, null, `Nice try hax0r man`, true);
                 return;
             }
-            WriteToLog(`GIVE: `+ interaction.user.id+` + `+parsedCoffeeAmount+` from `+mentionedUser,true);
-            AddUserCoffee(
+            fileIO.AddUserCoffee(
                 interaction.user.id,
                 mentionedUser.user.id,
-                parsedCoffeeAmount
+                parsedCoffeeAmount,
+                "GIVE"
             );
-            NullifyCoffees(mentionedUser.user.id);
-            NullifyCoffees(interaction.user.id);
-            UpdateFile(coffeeJSON, coffees);
+            fileIO.UpdateFile("c");
 
             //lStats({circulation:parsedCoffeeAmount});
-            //UpdateFile(statsJSON,stats);
+            //fileIO.UpdateFile(statsJSON,stats);
 
             BotReply(
                 interaction,
@@ -297,18 +268,16 @@ client.on("interactionCreate", async (interaction) => {
                 );
                 return;
             }
-            WriteToLog(`REDEEM: `+ interaction.user.id+` - `+parsedCoffeeAmount+` from `+mentionedUser,true);
-            RemoveUserCoffee(
+            fileIO.RemoveUserCoffee(
                 mentionedUser.user.id,
                 interaction.user.id,
-                parsedCoffeeAmount
+                parsedCoffeeAmount,
+                "REDEEM"
             );
-            NullifyCoffees(mentionedUser.user.id);
-            NullifyCoffees(interaction.user.id);
-            UpdateFile(coffeeJSON, coffees);
+            fileIO.UpdateFile("c");
 
             //UpdateGlobalStats({redeemed:parsedCoffeeAmount,circulation:-Math.abs(parsedCoffeeAmount)});
-            //UpdateFile(statsJSON,stats);
+            //fileIO.UpdateFile(statsJSON,stats);
 
             BotReply(
                 interaction,
@@ -356,9 +325,9 @@ client.on("interactionCreate", async (interaction) => {
                         false
                     );
                 //UpdateGlobalStats({coinflip:1,circulation:1,winnerId:winner});
-                //UpdateFile(statsJSON,stats);
+                //fileIO.UpdateFile(statsJSON,stats);
 
-                UpdateFile(coffeeJSON, coffees);
+                fileIO.UpdateFile("c");
                 curCoinflipRequest = "";
             }
         } else if (interaction.commandName == "transfer") {
@@ -405,18 +374,15 @@ client.on("interactionCreate", async (interaction) => {
                 );
                 return;
             }
-            WriteToLog(`TRANSFER: ${transferer} ,  ${amount} ${fromId} to ${toId}`,true);
-            RemoveUserCoffee(fromId, transferer, amount);
-            RemoveUserCoffee(transferer, toId, amount);
+            fileIO.RemoveUserCoffee(fromId, transferer, amount,"TRANSFER");
+            fileIO.RemoveUserCoffee(transferer, toId, amount,"TRANSFER");
             //if from = to then coffees cancel out!
-            if (fromId != toId) AddUserCoffee(fromId, toId, amount);
+            if (fromId != toId) fileIO.AddUserCoffee(fromId, toId, amount,"TRANSFER");
 
-            NullifyCoffees(fromId);
-            NullifyCoffees(toId);
-            UpdateFile(coffeeJSON, coffees);
+            fileIO.UpdateFile("c");
 
             //UpdateGlobalStats({PotGames:1,PotCoffs:curCoffeePotSlots+1,winnerId:winner});
-            //UpdateFile(statsJSON,stats);
+            //fileIO.UpdateFile(statsJSON,stats);
 
             BotReply(
                 interaction,
@@ -524,19 +490,17 @@ client.on("interactionCreate", async (interaction) => {
                     for (let playerId of sortedPlayerIds) {
                         if (playerId != winner) {
                             //playerId owes winner a coffee
-                            AddUserCoffee(playerId, winner, 1);
-                            NullifyCoffees(playerId);
-                            WriteToLog(`COFFEEPOT: ${winner}  +1  from ${playerId} `,true);
+                            fileIO.AddUserCoffee(playerId, winner, 1,"COFFEPOT");
                         }
                     }
                 }
                 
                
                 NullifyCoffees(winner);
-                UpdateFile(coffeeJSON, coffees);
+                fileIO.UpdateFile("c");
 
                 //UpdateGlobalStats({PotGames:1,circulation:curCoffeePotSlots-1,PotCoffs:curCoffeePotSlots,winnerId:winner});
-                //UpdateFile(statsJSON,stats);
+                //fileIO.UpdateFile(statsJSON,stats);
 
                 //reset slots and players
                 curCoffeePotSlots = -1;
@@ -608,7 +572,7 @@ client.on("interactionCreate", async (interaction) => {
             return;
         } else if (interaction.commandName == "nullify") {
             let coffeeAmount = NullifyCoffees(interaction.member.id);
-            UpdateFile(coffeeJSON, coffees);
+            fileIO.UpdateFile("c");
             BotReply(
                 interaction,
                 null,
@@ -626,243 +590,17 @@ client.on("interactionCreate", async (interaction) => {
 
             BotReply(interaction, embed, "", false);
         } else if (interaction.commandName == "21End") {
-            if(interaction.userId==warStartingPlayer&&warGameRunning==false)
-            {
-                BotReply(interaction,null,`${interaction.userId} Is revoking their game offer`,true);
-                return;
-            }
-
+            BulkReplyHandler(cardGame.CommandEndGame(interaction.user.Id));
         } else if (interaction.commandName == "21") {
-
-            let coffAmount = interaction.options.getInteger("amount");
-            
-            if(!coffAmount)
-            {
-                coffAmount=1;
-            }
-            else if(coffAmount>5)
-            {
-                BotReply(interaction,null,"Can't have a buy in great than 5!",true);
-                return;
-            }
-            if(warStartingPlayer==interaction.user.id)
-            {
-               
-                if(!warGameRunning)
-                {
-                    const embed=new MessageEmbed()
-                    .setTitle("21 Round Starting")
-                    .setColor("DARK_RED")
-                    .setThumbnail(
-                        "https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg"
-                    );
-                    let startText=`The game of 21 is starting with ${(warCurPlayers.length-1)*warUserPotAmt} coffs on the line! Players see your hand with **/hand** and use **/draw** to draw or **/stay** stay!\n`;
-                    
-                    for(let x=0;x<warCurPlayers.length;x++)
-                    {
-
-                        embed.addField(`Player ${x+1}`,`<@${warCurPlayers[x].userId}>`,true);
-                    }
-                    embed.setDescription(startText);
-                    BotReply(interaction,
-                        embed,
-                        "",
-                        false);
-                    warGameRunning=true;
-                }
-                else
-                {
-
-
-                    BotReply(interaction,
-                        null,
-                        `You cannot cancel a game after it has started `,
-                        false);
-                        return;
-                }
-            }    
-            else if(!warGameRunning)
-            {
-                if(warCurPlayers.length==0)
-                {
-                    warUserPotAmt=coffAmount;
-                    let embed=new MessageEmbed()
-                    .setTitle("21 New Round")
-                    .setDescription(`<@${interaction.user.id}> Is starting a round of 21 with a ${warUserPotAmt} coff buy in, use /21 to join!`)
-                    .setColor("DARK_RED")
-                    .setThumbnail(
-                        "https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg"
-                    );
-                     BotChannelMessage(interaction.channelId,
-                        embed,
-                        ""
-                        ,false);
-                    warStartingPlayer=interaction.user.id;
-                    warCurPlayers.push(warPlayerObject({userId:interaction.user.id}));
-                    warCurPlayers[0]=DealCard(warCurPlayers[0]);
-                    warCurPlayers[0]=DealCard(warCurPlayers[0]);
-                    embed = NotifyPlayerOfHand(warCurPlayers[0], false);
-                        
-                   
-                    BotReply(interaction,
-                        embed,
-                        "",
-                        true);    
-
-                }
-                else
-                {
-
-                    BotChannelMessage(interaction.channelId,null,`<@${interaction.user.id}> has joined the game of 21 started by <@${warStartingPlayer}>!`,false)
-                    warCurPlayers.push(warPlayerObject({userId:interaction.user.id,isTie:false}));
-                    warCurPlayers[warCurPlayers.length-1]=DealCard(warCurPlayers[warCurPlayers.length-1]);
-                    warCurPlayers[warCurPlayers.length-1]=DealCard(warCurPlayers[warCurPlayers.length-1]);
-                   const embed = NotifyPlayerOfHand(warCurPlayers[warCurPlayers.length-1], false);
-                        
-                   
-                    BotReply(interaction,
-                        embed,
-                        "",
-                        true);    
-                }
-               
-            }
-            else if(warGameRunning)
-            {
-                BotReply(interaction,null,`Sorry, there is a game currently on going!`,true)
-            }
+            BulkReplyHandler(cardGame.CommandStartJoinGame(interaction.user.Id,interaction.options.getInteger("amount")));
         } else if (interaction.commandName=="stay") {
-            if(!warGameRunning) 
-            { BotReply(interaction,
-                null,
-                "There is no game currently running!",
-                true);
-                return;
-            }
-            let channelID=interaction.channelId;
-            let canPlay=false;
-            let playerIndex=0;
-        
-            for(let x=0;x<warCurPlayers.length;x++)
-            {
-                if(warCurPlayers[x].userId==interaction.user.id){
-                    if(warCurPlayers[x].isStayed==true||warCurPlayers[x].isOver==true)
-                    {
-                        BotReply(interaction,
-                            null,
-                            "You cannot make anymore actions this round",
-                            true);
-                        return; 
-                    }
-                    playerIndex=x;
-                    canPlay=true;
-                    break;
-                }
-            }
-            if(!canPlay)
-            {
-                BotReply(interaction,
-                    null,
-                    "You are not in this game, wait till the next one",
-                    true);
-                return;
-            }
-            warCurPlayers[playerIndex].isStayed=true;   
-            BotReply(interaction,null,`You have stayed`,true);
-            BotChannelMessage(channelID,
-                null,
-                `<@${warCurPlayers[playerIndex].userId}> is done with their hand in the current game of 21.`,
-                false);  
-            TotalCheckWinner(channelID);
-        
+            BulkReplyHandler(cardGame.CommnadStay(interaction.user.Id));
         } else if (interaction.commandName== "hand") {
-            if (!warGameRunning) {
-                BotReply(interaction, null, "There is no game currently running!", true);
-                return;
-            }
-            for (let x = 0; x < warCurPlayers.length; x++) {
-                if (warCurPlayers[x].userId == interaction.user.id) {
-                    const embed = NotifyPlayerOfHand(warCurPlayers[x], false);
-                    BotReply(interaction, embed, "", true);
-                    return;
-                }
-            }
-            BotReply(
-                interaction,
-                null,
-                "You are not in the current game",
-                true
-            );
+            BulkReplyHandler(cardGame.CommandHand(interaction.user.Id));
         } else if (interaction.commandName=="draw") {
-            if(!warGameRunning) 
-            { BotReply(interaction,
-                null,
-                "There is no game currently running!",
-                true);
-                return;
-            }
-            let channelID=interaction.channelId;
-            let canPlay=false;
-            let playerIndex=0;
-        
-            for(let x=0;x<warCurPlayers.length;x++)
-            {
-                if(warCurPlayers[x].userId==interaction.user.id){
-                    if(warCurPlayers[x].isStayed==true||warCurPlayers[x].isOver==true)
-                    {
-                        BotReply(interaction,
-                            null,
-                            "You cannot make anymore actions this round",
-                            true);
-                        return; 
-                    }
-                    playerIndex=x;
-                    canPlay=true;
-                    break;
-                }
-            }
-            if(!canPlay)
-            {
-                BotReply(interaction,
-                    null,
-                    "You are not in this game, wait till the next one",
-                    true);
-                return;
-            }
-            warCurPlayers[playerIndex]=DealCard( warCurPlayers[playerIndex]);
-            const embed =NotifyPlayerOfHand(warCurPlayers[playerIndex],true);
-            BotReply(interaction,embed,"",true);
-            if(warCurPlayers[playerIndex].isOver)
-            {
-                BotChannelMessage(channelID,
-                    null,
-                    `<@${warCurPlayers[playerIndex].userId}> is done with their hand in the current game of 21.`,
-                    false);  
-                TotalCheckWinner(channelID);
-            }
-
+            BulkReplyHandler(cardGame.CommnadDraw(interaction.user.Id));
         }else if (interaction.commandName == "players"){
-            if (!warGameRunning) {
-                BotReply(interaction, null, "There is no game currently running! ", true);
-                return;
-            }
-            const embed=new MessageEmbed()
-            .setTitle("21 Current Players")
-            .setColor("DARK_RED")
-            .setDescription(`There are *${(warCurPlayers.length-1)*warUserPotAmt}* coffs on the line`)
-            .setThumbnail(
-                "https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg"
-            );
-            for(let x=0;x<warCurPlayers.length;x++)
-            {
-
-                embed.addField(`Player ${x+1}`,`<@${warCurPlayers[x].userId}>`,true);
-            }
-            BotReply(interaction,
-                embed,
-                "",
-                false);
-
+            BulkReplyHandler(cardGame.CommandPlayerList(interaction.user.Id));
         } else if (interaction.commandName == "rps") {
             if (curRPSRequest == "") {
                 curRPSRequest = interaction.user.id;
@@ -902,7 +640,6 @@ client.on("interactionCreate", async (interaction) => {
             curRPSRequest = "";
             if (player1Choice == player2Choice) {
                 //tie
-                WriteToLog(`RPS: TIE`,true);
                 BotReply(
                     interaction,
                     null,
@@ -911,9 +648,8 @@ client.on("interactionCreate", async (interaction) => {
                 );
             } else if ((player1Choice + 1) % 3 != player2Choice) {
                 //player1 won
-                AddUserCoffee(player2, player1, 1);
-                UpdateFile(coffeeJSON,coffees);
-                WriteToLog(`RPS: ${player1}  +1  from ${player2}`,true);
+                fileIO.AddUserCoffee(player2, player1, 1,"RPS");
+                fileIO.UpdateFile("c");
                 BotReply(
                     interaction,
                     null,
@@ -923,9 +659,8 @@ client.on("interactionCreate", async (interaction) => {
             } else {
                 //player2 won
 
-                AddUserCoffee(player1, player2, 1);
-                UpdateFile(coffeeJSON,coffees);
-                WriteToLog(`RPS: ${player2}  +1  from ${player1}`,true);
+                fileIO.AddUserCoffee(player1, player2, 1,"RPS");
+                fileIO.UpdateFile("c");
                 BotReply(
                     interaction,
                     null,
@@ -950,116 +685,28 @@ client.on("interactionCreate", async (interaction) => {
 
 client.login(token);
 
-function TotalCheckWinner(channelID)
+
+function BulkReplyHandler(communicationRequests)
 {
-    let warText;
-    let gameState=true;
-    for (let x = 0; x < warCurPlayers.length; x++) {
-        if (warCurPlayers[x].isOver==false  && warCurPlayers[x].isStayed==false){
-            console.log(`Bazinga`);
-              gameState=false;
-              return;
-        }
-    }
-   
-    if(gameState)
+    for(let x=0;x<communicationRequests.length;x++)
     {
-
-        let winner=CheckWarWinner();
-        if(winner.length>1)
+        if(communicationRequests[x].reply==true)
         {
-            let warText = ` Wow there is a tie between players! `
-            for(let x=0;x<winner.length;x++)
-            {
-                warText=warText.concat(` <@${winner[x]}> `)
-            }
-            warText=warText.concat(`Starting up a new round.\n Past round's results\n`);
-            warText += `Hands:\n`;
-            for (let x=0;x<warCurPlayers.length;x++) 
-            {
-                warText += `<@${warCurPlayers[x].userId}> : **${warCurPlayers[x].total}**\n`;
-            }
-            warText=warText.concat(` Play again with /hand and /action`);
-            BotChannelMessage(channelID,null,warText,false)
-
-            warCurPlayers=[];
-            for(let x=0;x<winner.length;x++)
-            {
-                warCurPlayers.push(warPlayerObject({userId:winner[x],isTie:true}));
-                warCurPlayers[x]=DealCard(warCurPlayers[x]);
-                warCurPlayers[x]=DealCard(warCurPlayers[x]);
-            }
-            return;
-        }   
-        else if(winner.length==1)
-        {
-            for ( let x=0;x<warTotalPlayersIds.length;x++) 
-            {
-                
-                if (warTotalPlayersIds[x] != winner[0]) {
-                    WriteToLog(`21: ${winner[0]}  +1  from ${warTotalPlayersIds[x]} `,false);
-                    AddUserCoffee(warTotalPlayersIds[x],winner[0],warUserPotAmt);
-                    NullifyCoffees(warTotalPlayersIds[x]);
-                }
-            }
-
-         NullifyCoffees(winner[0]);
-         UpdateFile(coffeeJSON,coffees);
-
-        //UpdateGlobalStats({warGames:1,circulation:warTotalPlayersIds.length-1,warCoffs:warTotalPlayersIds.length,winnerId:winner[0]});
-         //UpdateFile(statsJSON,stats);
-
-        // show guesses
-        
-         warText = `<@${winner[0]}> has won the game of 21! They won **${(warTotalPlayersIds.length-1)*warUserPotAmt}** :coffee:!\n\n`;
-
-         
+            BotReply(
+                interaction,
+                communicationRequests[x].embed,
+                communicationRequests[x].message,
+                communicationRequests[x].ishidden
+            );
         }
         else
         {
-              //UpdateGlobalStats({warGames:1,warCoffs:warTotalPlayersIds.length});
-            //UpdateFile(statsJSON,stats);
-            warText = `No one won...\n\n`;
+        BotChannelMessage(
+            interaction,
+            communicationRequests[x].embed,
+            communicationRequests[x].message
+        );
         }
-        let embed= new MessageEmbed()
-         .setTitle("21 Round Result")
-         .setColor('DARK_RED')
-         .setThumbnail(
-             "https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg"
-         );
-          warCurPlayers= warCurPlayers.sort((a,b)=>(a.total<b.total)? 1 : -1);
-        for (let x=0;x<warCurPlayers.length;x++) {
-            let cardText="Cards:";
-            let totalText=`Total:`;
-            if(warCurPlayers[x].total>21)
-            {
-                totalText+=` **Over** ~~**${warCurPlayers[x].total}**~~`;
-            }
-            else
-            {
-                totalText+=`**${warCurPlayers[x].total}**`;
-            }
-            for (let y = 0; y < warCurPlayers[x].cards.length; y++) {
-
-                cardText = cardText.concat(
-                    `*${warCurPlayers[x].cards[y]}* :black_joker: `
-                );
-                if (y + 1 != warCurPlayers[x].cards.length) {
-                    cardText = cardText.concat(`->`);
-                }
-               
-            }
-            embed.addField(`Player ${x+1}`,`<@${warCurPlayers[x].userId}> - ${totalText} , ${cardText} `,false);
-        }
-          embed.setDescription(warText);
-            BotChannelMessage(channelID,embed,"",false);
-        
-        warTotalPlayersIds=[];
-        warCurPlayers=[];
-        warGameRunning=false;
-        warFirstHandDelt=false;
-        warStartingPlayer=0; 
-        warUserPotAmt=1; 
     }
 }
 
@@ -1090,184 +737,29 @@ function Coinflip(flipper1, flipper2) {
     }
 
     if (unique != "side") {
-        AddUserCoffee(loser, winner, flipValue);
-        NullifyCoffees(loser);
-        NullifyCoffees(winner);
-        WriteToLog(`COINFLIP `+winner+` +`+flipValue+` from `+loser,true);
-        UpdateFile(coffeeJSON, coffees);
+        fileIO.AddUserCoffee(loser, winner, flipValue,"COINFLIP");
+        fileIO.UpdateFile("c");
     }
 
     return { coinSide: unique, coinWin: winner, coinLose: loser };
 }
 
-function CheckWarWinner() {
-    let highestStay = 0;
-    let winningPlayers = [];
-    for (let x = 0; x < warCurPlayers.length; x++) {
-        if (warCurPlayers[x].isStayed) {
-            if (warCurPlayers[x].total == highestStay) {
-                isTie = true;
-                winningPlayers.push(warCurPlayers[x].userId);
-            } else if (warCurPlayers[x].total > highestStay) {
-                winningPlayers = [];
-                highestStay = warCurPlayers[x].total;
-                winningPlayers.push(warCurPlayers[x].userId);
-            }
-        }
-    }
-    return winningPlayers;
-}
 
-function NotifyPlayerOfHand(playerObject, newDraw) {
-    let cardString = ``;
-    let embedText = `Still in the game!\n`;
-    if (playerObject.isOver)
-        embedText = `You went over!\n`;
-    let drawText;
-    if (newDraw) {
-        drawText = ` :hearts::diamonds:You drew a **${
-            playerObject.cards[playerObject.cards.length - 1]
-        }**:diamonds::hearts:`;
-        embedText = embedText.concat(drawText);
-    }
-    for (let x = 0; x < playerObject.cards.length; x++) {
-        cardString = cardString.concat(
-            `*${playerObject.cards[x]}* :black_joker: `
-        );
-        if (x + 1 != playerObject.cards.length) {
-            cardString = cardString.concat(`->`);
-        }
-    }
-    let embed =new MessageEmbed()
-    .setTitle("Your Hand")
-    .setColor("ORANGE")
-    .setDescription(embedText)
-    .addField("Total:",`*${playerObject.total}*`,true)
-    .addField("Cards :",cardString,true)
-    .setThumbnail(
-        "https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg"
-    );
 
-    embedText = embedText.concat(cardString);
-    return embed;
-}
-
-function DealCard(warPlayerObject) {
-    let deck = [11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10];
-    let selection = deck[Math.floor(Math.random() * deck.length)];
-    if(selection==11)
-{
-    if((warPlayerObject.total+11)>21&&warPlayerObject.aceCounter==0)
-    {
-        selection=1;
-    }
-    else if((warPlayerObject.total+11)>21&&warPlayerObject.hasAce>0)
-    {
-        aceCounter++;
-        warPlayerObject.total-=10;
-        for(let x=0;x<warPlayerObject.cards.length;x++)
-        {
-            if(warPlayerObject.cards[x]==11)
-            {
-                warPlayerObject.cards[x]=1;
-                aceCounter--;
-                break;
-
-            }
-        }
-    }
-    else
-    {
-        warPlayerObject.aceCounter++;
-    }
-}
-    warPlayerObject.cards.push(selection);
-    warPlayerObject.total += selection;
-    if(warPlayerObject.total>21&&warPlayerObject.aceCounter==0)
-    warPlayerObject.isOver=true;
-    else if(warPlayerObject.total>21&&warPlayerObject.aceCounter>0)
-    {
-        if(warPlayerObject.total-10>21)
-        {
-            warPlayerObject.isOver=true;
-        }
-        else
-        {
-            warPlayerObject.total-=10;
-            for(let x=0;x<warPlayerObject.cards.length;x++)
-            {
-                if(warPlayerObject.cards[x]==11)
-                {
-                    warPlayerObject.cards[x]=1;
-                    warPlayerObject.aceCounter--;
-                    break;
-                }
-            }
-        }
-    }
-    return warPlayerObject;
-}
-
-function UpdateGlobalStats(options) {
-    // Options = {
-    //options.circulation :"",
-    //options.winnerId: ""
-    //options.redeemed:""
-    //options.coinflip
-    //options.PotGames:""
-    //options.PotCoffs:""
-    //options.warGames:""
-    //options.warCoffs:""
-    // }
-    if (options.circulation) stats.CoffsInCirculation += options.circulation;
-    if (options.winnerId) stats.RecentCoffWinner = options.winnerId;
-    if (options.PotCoffs && options.PotCoffs > stats.LargestPotWon)
-        stats.LargestPotWon = options.PotCoffs;
-    if (options.redeemed) stats.TotalCoffsRedeemed += options.redeemed;
-    if (options.coinflip) stats.TotalCoinFlips++;
-    if (options.PotGames) stats.TotalPotGames++;
-    if (options.PotCoffs) stats.TotalPotCoffs += options.PotCoffs;
-    if (options.warCoffs && options.warCoffs > stats.LargestWarWon)
-        stats.LargestWarWon = options.warCoffs;
-    if (options.warCoffs) stats.TotalWarCoffs += options.warCoffs;
-    if (options.warGames) stats.TotalWarGames++;
-}
 
 function UpdateUserStats() {}
 
-function NullifyCoffees(userId) {
-    let coffeeAmount = 0;
-    if (coffees[userId] == undefined) {
-        coffees[userId] = {};
-    }
 
-    for (let debtId in coffees[userId]) {
-        let oweToDebt = coffees[userId][debtId];
-        if (coffees[debtId] == undefined) coffees[debtId] = {};
-        if (coffees[debtId][userId] == undefined) coffees[debtId][userId] = 0;
-        let debtOweToUser = coffees[debtId][userId];
-        let minDirectionalOweage = Math.min(oweToDebt, debtOweToUser);
-
-        coffees[userId][debtId] -= minDirectionalOweage;
-        coffees[debtId][userId] -= minDirectionalOweage;
-        coffeeAmount += minDirectionalOweage;
-    }
-
-    //UpdateGlobalStats({circulation:-Math.abs(coffeeAmount)});
-    //UpdateFile(statsJSON,stats);
-
-    return coffeeAmount;
-}
-function BotChannelMessage(channelID, embed, message) {
+function BotChannelMessage(interaction, embed, message) {
     if (embed && message == "") {
-        client.channels.cache.get(channelID).send({ embeds: [embed] });
+        client.channels.cache.get(interaction.channelId).send({ embeds: [embed] });
     } else if (embed) {
-        client.channels.cache.get(channelID).send({
+        client.channels.cache.get(interaction.channelId).send({
             content: message,
             embeds: [embed],
         });
     } else {
-        client.channels.cache.get(channelID).send(message);
+        client.channels.cache.get(interaction.channelId).send(message);
     }
 }
 async function BotReply(interaction, embed, message, ishidden) {
@@ -1290,40 +782,9 @@ async function BotReply(interaction, embed, message, ishidden) {
     }
 }
 
-function AddUserCoffee(interactionUser, mentionedUser, amount) {
-    ValidateUserCoffee(interactionUser, mentionedUser);
-    coffees[interactionUser][mentionedUser] += amount;
-}
 
-function ValidateUserCoffee(interactionUser, mentionedUser) {
-    if (coffees[interactionUser] == undefined) {
-        coffees[interactionUser] = {};
-    }
-    if (coffees[mentionedUser] == undefined) {
-        coffees[mentionedUser] = {};
-    }
 
-    if (coffees[interactionUser][mentionedUser] == undefined) {
-        coffees[interactionUser][mentionedUser] = 0;
-    }
-}
-function RemoveUserCoffee(interactionUser, mentionedUser, amount) {
-    ValidateUserCoffee(interactionUser, mentionedUser);
-    coffees[interactionUser][mentionedUser] -= amount;
-}
 
-function GetUserCoffee(interactionUser, mentionedUser) {
-    let curCoffees;
-    ValidateUserCoffee(interactionUser, mentionedUser);
-    curCoffees = coffees[interactionUser][mentionedUser];
-    return curCoffees;
-}
-
-function UpdateFile(FileName, FileObject) {
-    fs.writeFile(`${FileName}`, JSON.stringify(FileObject, null, 1), (err) => {
-        if (err) throw err;
-    });
-}
 
 function getSortedKeys(obj) {
     var keys = Object.keys(obj);
@@ -1717,25 +1178,3 @@ function getDebts(userId) {
     return debts;
 }
 
-function WriteToLog(message,endCommand)
-{
-    try
-    {
-        let logMessage=``;
-        let logFileStream= fs.createWriteStream(logTXT,{flags:'a'});
-        let timestamp= new Date().toISOString();
-        logMessage+=timestamp+` - `+message+`\n`;
-        if(endCommand)
-        {
-            logMessage+=`-------------------------------------------------------\n`;
-        }
-        logFileStream.write(logMessage);
-        logFileStream.end();
-
-    }
-    catch(e)
-    {
-        //think of some logging error event here
-        throw(e);
-    }
-}
