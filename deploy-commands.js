@@ -117,15 +117,9 @@ const commands = [
 
     new SlashCommandBuilder()
         .setName("21")
-        .setDescription("Start or join a new game of 21!")
-        .addIntegerOption((option) =>
-        option
-            .setName("amount")
-            .setDescription("Set the buy in amount if starting a new game")
-            .setRequired(false)
-    ),
+        .setDescription("Start or join a new game of 21!"),
         new SlashCommandBuilder()
-        .setName("players")
+        .setName("21players")
         .setDescription("Show who is in the current game of 21"),
     new SlashCommandBuilder()
         .setName("hand")

@@ -1,14 +1,19 @@
 // Require the necessary discord.js classes
-const { Client, Intents, MessageEmbed } = require("discord.js");
-const { token, responseJSON, gCloudJSON} = require("./config.json");
-const cardGame= require("./CardGame");
-const fileIO= require("./FileIO");
+const { Client, Intents, MessageEmbed, Message } = require("discord.js");
+const {
+    token,
+    coffeeJSON,
+    responseJSON,
+    gCloudJSON,
+    statsJSON,
+} = require("./config.json");
+
+const fs = require("fs");
+const coffees = require(`./${coffeeJSON}`);
 const gCloud = require(`./${gCloudJSON}`);
 const language = require("@google-cloud/language");
-const { parse } = require("path");
-const { removeAllListeners } = require("process");
 const fileResponses = require(`./${responseJSON}`);
-
+const stats = require(`./${statsJSON}`);
 const gCloudOptions = {
     projectId: gCloud.project_id,
     email: gCloud.client_email,
@@ -29,6 +34,23 @@ let curCoffeePotSlots = -1;
 let maxMultiflipAmount = 5;
 let multiflipRequests = {};
 
+function warPlayerObject(options) {
+    if (!options.isTie) warTotalPlayersIds.push(options.userId);
+    return {
+        userId: options.userId,
+        total: 0,
+        cards: [],
+        isStayed: false,
+        isOver: false,
+        totalSoft:0,
+        aceCounter:0
+
+    };
+}
+let warTotalPlayersIds = [];
+let warCurPlayers = [];
+let warGameRunning = false;
+let warStartingPlayer = 0;
 
 // Create a new client instance
 const client = new Client({
@@ -102,6 +124,7 @@ client.on("interactionCreate", async (interaction) => {
                 let player1wins = 0;
                 let player2wins = 0;
                 let responseText = ``;
+
                 for (let x = 0; x < flipAmount; x++) {
                     let result = Coinflip(player1, player2);
                     if (result.coinSide == "side") {
@@ -209,16 +232,18 @@ client.on("interactionCreate", async (interaction) => {
                 BotReply(interaction, null, `Nice try hax0r man`, true);
                 return;
             }
-            fileIO.AddUserCoffee(
+
+            AddUserCoffee(
                 interaction.user.id,
                 mentionedUser.user.id,
-                parsedCoffeeAmount,
-                "GIVE"
+                parsedCoffeeAmount
             );
-            fileIO.UpdateFile("c");
+            NullifyCoffees(mentionedUser.user.id);
+            NullifyCoffees(interaction.user.id);
+            UpdateFile(coffeeJSON, coffees);
 
             //lStats({circulation:parsedCoffeeAmount});
-            //fileIO.UpdateFile(statsJSON,stats);
+            //UpdateFile(statsJSON,stats);
 
             BotReply(
                 interaction,
@@ -268,16 +293,18 @@ client.on("interactionCreate", async (interaction) => {
                 );
                 return;
             }
-            fileIO.RemoveUserCoffee(
+
+            RemoveUserCoffee(
                 mentionedUser.user.id,
                 interaction.user.id,
-                parsedCoffeeAmount,
-                "REDEEM"
+                parsedCoffeeAmount
             );
-            fileIO.UpdateFile("c");
+            NullifyCoffees(mentionedUser.user.id);
+            NullifyCoffees(interaction.user.id);
+            UpdateFile(coffeeJSON, coffees);
 
             //UpdateGlobalStats({redeemed:parsedCoffeeAmount,circulation:-Math.abs(parsedCoffeeAmount)});
-            //fileIO.UpdateFile(statsJSON,stats);
+            //UpdateFile(statsJSON,stats);
 
             BotReply(
                 interaction,
@@ -325,9 +352,9 @@ client.on("interactionCreate", async (interaction) => {
                         false
                     );
                 //UpdateGlobalStats({coinflip:1,circulation:1,winnerId:winner});
-                //fileIO.UpdateFile(statsJSON,stats);
+                //UpdateFile(statsJSON,stats);
 
-                fileIO.UpdateFile("c");
+                UpdateFile(coffeeJSON, coffees);
                 curCoinflipRequest = "";
             }
         } else if (interaction.commandName == "transfer") {
@@ -374,15 +401,18 @@ client.on("interactionCreate", async (interaction) => {
                 );
                 return;
             }
-            fileIO.RemoveUserCoffee(fromId, transferer, amount,"TRANSFER");
-            fileIO.RemoveUserCoffee(transferer, toId, amount,"TRANSFER");
-            //if from = to then coffees cancel out!
-            if (fromId != toId) fileIO.AddUserCoffee(fromId, toId, amount,"TRANSFER");
 
-            fileIO.UpdateFile("c");
+            RemoveUserCoffee(fromId, transferer, amount);
+            RemoveUserCoffee(transferer, toId, amount);
+            //if from = to then coffees cancel out!
+            if (fromId != toId) AddUserCoffee(fromId, toId, amount);
+
+            NullifyCoffees(fromId);
+            NullifyCoffees(toId);
+            UpdateFile(coffeeJSON, coffees);
 
             //UpdateGlobalStats({PotGames:1,PotCoffs:curCoffeePotSlots+1,winnerId:winner});
-            //fileIO.UpdateFile(statsJSON,stats);
+            //UpdateFile(statsJSON,stats);
 
             BotReply(
                 interaction,
@@ -402,6 +432,7 @@ client.on("interactionCreate", async (interaction) => {
             curCoffeePotPlayers = {};
             // set pot amount
             curCoffeePotSlots = spotsAmount;
+
             let coffeePotText =
                 `<@${interaction.user.id}> is starting a :coffee: pot with ***${spotsAmount}*** spots!\n\n` +
                 `**How it works:**\n` +
@@ -486,21 +517,21 @@ client.on("interactionCreate", async (interaction) => {
                 for (let userId in curCoffeePotPlayers) {
                     coffeePotText += `<@${userId}> **${curCoffeePotPlayers[userId]}**\n`;
                 }
+
                 if (winner != "") {
                     for (let playerId of sortedPlayerIds) {
                         if (playerId != winner) {
                             //playerId owes winner a coffee
-                            fileIO.AddUserCoffee(playerId, winner, 1,"COFFEPOT");
+                            AddUserCoffee(playerId, winner, 1);
+                            NullifyCoffees(playerId);
                         }
                     }
                 }
-                
-               
                 NullifyCoffees(winner);
-                fileIO.UpdateFile("c");
+                UpdateFile(coffeeJSON, coffees);
 
                 //UpdateGlobalStats({PotGames:1,circulation:curCoffeePotSlots-1,PotCoffs:curCoffeePotSlots,winnerId:winner});
-                //fileIO.UpdateFile(statsJSON,stats);
+                //UpdateFile(statsJSON,stats);
 
                 //reset slots and players
                 curCoffeePotSlots = -1;
@@ -572,7 +603,7 @@ client.on("interactionCreate", async (interaction) => {
             return;
         } else if (interaction.commandName == "nullify") {
             let coffeeAmount = NullifyCoffees(interaction.member.id);
-            fileIO.UpdateFile("c");
+            UpdateFile(coffeeJSON, coffees);
             BotReply(
                 interaction,
                 null,
@@ -589,18 +620,192 @@ client.on("interactionCreate", async (interaction) => {
                 );
 
             BotReply(interaction, embed, "", false);
-        } else if (interaction.commandName == "21End") {
-            BulkReplyHandler(cardGame.CommandEndGame(interaction.user.Id));
         } else if (interaction.commandName == "21") {
-            BulkReplyHandler(cardGame.CommandStartJoinGame(interaction.user.Id,interaction.options.getInteger("amount")));
+
+            if(warStartingPlayer==interaction.user.id)
+            {
+               
+                if(!warGameRunning)
+                {
+                    let startText=`The game of 21 is starting! Players see your hand with **/hand** and use **/draw** to draw or **/stay** stay!\n`;
+                    
+                    for(let x=0;x<warCurPlayers.length;x++)
+                    {
+                        warCurPlayers[x]=DealCard(warCurPlayers[x]);
+                        warCurPlayers[x]=DealCard(warCurPlayers[x]);
+                        startText += `<@${warCurPlayers[x].userId}> \n`;
+                    }
+                    BotReply(interaction,
+                        null,
+                        startText,
+                        false);
+                    warGameRunning=true;
+                }
+                else
+                {
+                    BotReply(interaction,
+                        null,
+                        `Are you trying to cancel this game?`,
+                        true);
+                }
+            }    
+            else if(!warGameRunning)
+            {
+                if(warCurPlayers.length==0)
+                {
+    
+                    BotReply(interaction,
+                        null,
+                        `<@${interaction.user.id}> Is starting a round of 21, use /21 to join!`
+                        ,false);
+
+                    warStartingPlayer=interaction.user.id;
+                    warCurPlayers.push(warPlayerObject({userId:interaction.user.id}));
+                }
+                else
+                {
+                    for(let x=0;x<warCurPlayers.length;x++)
+                    {
+                        if(warCurPlayers[x].userId==interaction.user.id)
+                        {
+    
+                            BotReply(interaction,
+                                null,
+                                "You are already in this round!",
+                                true);
+                            return; 
+                        }              
+                    }
+                    BotReply(interaction,null,`<@${interaction.user.id}> has joined the game of 21 started by <@${warStartingPlayer}>!`,false)
+                    warCurPlayers.push(warPlayerObject({userId:interaction.user.id,isTie:false}));
+                }
+               
+            }
+            else if(warGameRunning)
+            {
+                BotReply(interaction,null,`Sorry, there is a game currently on going!`,true)
+            }
         } else if (interaction.commandName=="stay") {
-            BulkReplyHandler(cardGame.CommnadStay(interaction.user.Id));
+            if(!warGameRunning) 
+            { BotReply(interaction,
+                null,
+                "There is no game currently running!",
+                true);
+                return;
+            }
+            let channelID=interaction.channelId;
+            let canPlay=false;
+            let playerIndex=0;
+        
+            for(let x=0;x<warCurPlayers.length;x++)
+            {
+                if(warCurPlayers[x].userId==interaction.user.id){
+                    if(warCurPlayers[x].isStayed==true||warCurPlayers[x].isOver==true)
+                    {
+                        BotReply(interaction,
+                            null,
+                            "You cannot make anymore actions this round",
+                            true);
+                        return; 
+                    }
+                    playerIndex=x;
+                    canPlay=true;
+                    break;
+                }
+            }
+            if(!canPlay)
+            {
+                BotReply(interaction,
+                    null,
+                    "You are not in this game, wait till the next one",
+                    true);
+                return;
+            }
+            warCurPlayers[playerIndex].isStayed=true;   
+            BotReply(interaction,null,`You have stayed`,true);
+            BotChannelMessage(channelID,
+                null,
+                `<@${warCurPlayers[playerIndex].userId}> is done with their hand in the current game of 21.`,
+                false);  
+            TotalCheckWinner(channelID);
+        
         } else if (interaction.commandName== "hand") {
-            BulkReplyHandler(cardGame.CommandHand(interaction.user.Id));
+            if (!warGameRunning) {
+                BotReply(interaction, null, "Game has not yet started ", true);
+                return;
+            }
+            for (let x = 0; x < warCurPlayers.length; x++) {
+                if (warCurPlayers[x].userId == interaction.user.id) {
+                    const embed = NotifyPlayerOfHand(warCurPlayers[x], false);
+                    BotReply(interaction, embed, "", true);
+                    return;
+                }
+            }
+            BotReply(
+                interaction,
+                null,
+                "You are not in the current game",
+                true
+            );
         } else if (interaction.commandName=="draw") {
-            BulkReplyHandler(cardGame.CommnadDraw(interaction.user.Id));
-        }else if (interaction.commandName == "players"){
-            BulkReplyHandler(cardGame.CommandPlayerList(interaction.user.Id));
+            if(!warGameRunning) 
+            { BotReply(interaction,
+                null,
+                "There is no game currently running!",
+                true);
+                return;
+            }
+            let channelID=interaction.channelId;
+            let canPlay=false;
+            let playerIndex=0;
+        
+            for(let x=0;x<warCurPlayers.length;x++)
+            {
+                if(warCurPlayers[x].userId==interaction.user.id){
+                    if(warCurPlayers[x].isStayed==true||warCurPlayers[x].isOver==true)
+                    {
+                        BotReply(interaction,
+                            null,
+                            "You cannot make anymore actions this round",
+                            true);
+                        return; 
+                    }
+                    playerIndex=x;
+                    canPlay=true;
+                    break;
+                }
+            }
+            if(!canPlay)
+            {
+                BotReply(interaction,
+                    null,
+                    "You are not in this game, wait till the next one",
+                    true);
+                return;
+            }
+            warCurPlayers[playerIndex]=DealCard( warCurPlayers[playerIndex]);
+            const embed =NotifyPlayerOfHand(warCurPlayers[playerIndex],true);
+            BotReply(interaction,embed,"",true);
+            if(warCurPlayers[playerIndex].isOver)
+            {
+                BotChannelMessage(channelID,
+                    null,
+                    `<@${warCurPlayers[playerIndex].userId}> is done with their hand in the current game of 21.`,
+                    false);  
+                TotalCheckWinner(channelID);
+            }
+
+        }else if (interaction.commandName == "21playes"){
+            let text;
+            for(let x=0;x<warCurPlayers.length;x++)
+            {
+                text=text.concat(`<@${warCurPlayers[x].userId}>\n`);
+            }
+            BotReply(interaction,
+                null,
+                text,
+                false);
+
         } else if (interaction.commandName == "rps") {
             if (curRPSRequest == "") {
                 curRPSRequest = interaction.user.id;
@@ -648,8 +853,8 @@ client.on("interactionCreate", async (interaction) => {
                 );
             } else if ((player1Choice + 1) % 3 != player2Choice) {
                 //player1 won
-                fileIO.AddUserCoffee(player2, player1, 1,"RPS");
-                fileIO.UpdateFile("c");
+                AddUserCoffee(player2, player1, 1);
+                UpdateFile(coffeeJSON,coffees);
                 BotReply(
                     interaction,
                     null,
@@ -658,9 +863,8 @@ client.on("interactionCreate", async (interaction) => {
                 );
             } else {
                 //player2 won
-
-                fileIO.AddUserCoffee(player1, player2, 1,"RPS");
-                fileIO.UpdateFile("c");
+                AddUserCoffee(player1, player2, 1);
+                UpdateFile(coffeeJSON,coffees);
                 BotReply(
                     interaction,
                     null,
@@ -685,28 +889,89 @@ client.on("interactionCreate", async (interaction) => {
 
 client.login(token);
 
-
-function BulkReplyHandler(communicationRequests)
+function TotalCheckWinner(channelID)
 {
-    for(let x=0;x<communicationRequests.length;x++)
+    let warText;
+    if(gameState=CheckWarDone())
     {
-        if(communicationRequests[x].reply==true)
+
+        let winner=CheckWarWinner();
+        if(winner.length>1)
         {
-            BotReply(
-                interaction,
-                communicationRequests[x].embed,
-                communicationRequests[x].message,
-                communicationRequests[x].ishidden
-            );
+            let warText = ` Wow there is a tie between players! `
+            for(let x=0;x<winner.length;x++)
+            {
+                warText=warText.concat(` <@${winner[x]}> `)
+            }
+            warText=warText.concat(`Starting up a new round.\n Past round's results\n`);
+            warText += `Hands:\n`;
+            for (let x=0;x<warCurPlayers.length;x++) 
+            {
+                warText += `<@${warCurPlayers[x].userId}> : **${warCurPlayers[x].total}**\n`;
+            }
+            warText=warText.concat(` Play again with /hand and /action`);
+            BotChannelMessage(channelID,null,warText,false)
+
+            warCurPlayers=[];
+            for(let x=0;x<winner.length;x++)
+            {
+                warCurPlayers.push(warPlayerObject({userId:winner[x],isTie:true}));
+                warCurPlayers[x]=DealCard(warCurPlayers[x]);
+                warCurPlayers[x]=DealCard(warCurPlayers[x]);
+            }
+            return;
+        }   
+        else if(winner.length==1)
+        {
+            for ( let x=0;x<warTotalPlayersIds.length;x++) 
+            {
+                
+                if (warTotalPlayersIds[x] != winner[0]) {
+                    AddUserCoffee(warTotalPlayersIds[x],winner[0],1);
+                    NullifyCoffees(warTotalPlayersIds[x]);
+                }
+            }
+
+
+         NullifyCoffees(winner[0]);
+         UpdateFile(coffeeJSON,coffees);
+
+        //UpdateGlobalStats({warGames:1,circulation:warTotalPlayersIds.length-1,warCoffs:warTotalPlayersIds.length,winnerId:winner[0]});
+         //UpdateFile(statsJSON,stats);
+
+        // show guesses
+         warText = `<@${winner[0]}> has won the game of 21! Congrats to them. Everyone else, pays up one :coffee:!\n\n`;
+
+         
         }
         else
         {
-        BotChannelMessage(
-            interaction,
-            communicationRequests[x].embed,
-            communicationRequests[x].message
-        );
+              //UpdateGlobalStats({warGames:1,warCoffs:warTotalPlayersIds.length});
+            //UpdateFile(statsJSON,stats);
+            warText = `No one won...\n\n`;
         }
+
+        warText += `Hands:\n`;
+        for (let x=0;x<warCurPlayers.length;x++) {
+            warText =warText.concat( `<@${warCurPlayers[x].userId}> - **${warCurPlayers[x].total}** :  `);
+            for (let y = 0; y < warCurPlayers[x].cards.length; y++) {
+                warText = warText.concat(
+                    `*${warCurPlayers[x].cards[y]}* :black_joker: `
+                );
+                if (y + 1 != warCurPlayers[x].cards.length) {
+                    warText = warText.concat(`->`);
+                }
+            }
+            warText=warText.concat('\n');
+        }
+          
+            BotChannelMessage(channelID,null,warText,false);
+        
+        warTotalPlayersIds=[];
+        warCurPlayers=[];
+        warGameRunning=false;
+        warFirstHandDelt=false;
+        warStartingPlayer=0;  
     }
 }
 
@@ -737,29 +1002,188 @@ function Coinflip(flipper1, flipper2) {
     }
 
     if (unique != "side") {
-        fileIO.AddUserCoffee(loser, winner, flipValue,"COINFLIP");
-        fileIO.UpdateFile("c");
+        AddUserCoffee(loser, winner, flipValue);
+        NullifyCoffees(loser);
+        NullifyCoffees(winner);
+        UpdateFile(coffeeJSON, coffees);
     }
 
     return { coinSide: unique, coinWin: winner, coinLose: loser };
 }
 
+function CheckWarWinner() {
+    let highestStay = 0;
+    let winningPlayers = [];
+    for (let x = 0; x < warCurPlayers.length; x++) {
+        if (warCurPlayers[x].isStayed) {
+            if (warCurPlayers[x].total == highestStay) {
+                isTie = true;
+                winningPlayers.push(warCurPlayers[x].userId);
+            } else if (warCurPlayers[x].total > highestStay) {
+                winningPlayers = [];
+                highestStay = warCurPlayers[x].total;
+                winningPlayers.push(warCurPlayers[x].userId);
+            }
+        }
+    }
+    return winningPlayers;
+}
 
+function CheckWarDone() {
+    for (let x = 0; x < warCurPlayers.length; x++) {
+        if (!warCurPlayers[x].isOver && !warCurPlayers[x].isStayed)
+            return false;
+    }
+    return true;
+}
 
+function NotifyPlayerOfHand(playerObject, newDraw) {
+    let cardString = ``;
+    let embedText = `**${playerObject.total}**. Still in the game!\n`;
+    if (playerObject.isOver)
+        embedText = `** ${playerObject.total}**. You went over!\n`;
+    let drawText;
+    if (newDraw) {
+        drawText = ` :clubs::hearts::spades::diamonds:*You drew a ${
+            playerObject.cards[playerObject.cards.length - 1]
+        }*:diamonds::spades::hearts::clubs: \n\n*Your cards*   `;
+        embedText = embedText.concat(drawText);
+    }
+    for (let x = 0; x < playerObject.cards.length; x++) {
+        cardString = cardString.concat(
+            `**${playerObject.cards[x]}** :black_joker: `
+        );
+        if (x + 1 != playerObject.cards.length) {
+            cardString = cardString.concat(`->`);
+        }
+    }
+    embedText = embedText.concat(cardString);
+    return new MessageEmbed()
+        .setTitle("Your Hand")
+        .setDescription(embedText)
+        .setThumbnail(
+            "https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg"
+        );
+}
+
+function DealCard(warPlayerObject) {
+    let deck = [11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10];
+    let selection = deck[Math.floor(Math.random() * deck.length)];
+    if(selection==11)
+{
+    if((warPlayerObject.total+11)>21&&warPlayerObject.aceCounter==0)
+    {
+        selection=1;
+    }
+    else if((warPlayerObject.total+11)>21&&warPlayerObject.hasAce>0)
+    {
+        aceCounter++;
+        warPlayerObject.total-=10;
+        for(let x=0;x<warPlayerObject.cards.length;x++)
+        {
+            if(warPlayerObject.cards[x]==11)
+            {
+                console.log("I am in here 1!");
+                warPlayerObject.cards[x]=1;
+                aceCounter--;
+                break;
+
+            }
+        }
+    }
+    else
+    {
+        warPlayerObject.aceCounter++;
+    }
+}
+    warPlayerObject.cards.push(selection);
+    warPlayerObject.total += selection;
+    if(warPlayerObject.total>21&&warPlayerObject.aceCounter==0)
+    warPlayerObject.isOver=true;
+    else if(warPlayerObject.total>21&&warPlayerObject.aceCounter>0)
+    {
+        if(warPlayerObject.total-10>21)
+        {
+            warPlayerObject.isOver=true;
+        }
+        else
+        {
+            warPlayerObject.total-=10;
+            for(let x=0;x<warPlayerObject.cards.length;x++)
+            {
+                if(warPlayerObject.cards[x]==11)
+                {
+                    console.log("I am in here 2!");
+                    warPlayerObject.cards[x]=1;
+                    warPlayerObject.aceCounter--;
+                    break;
+                }
+            }
+        }
+    }
+    return warPlayerObject;
+}
+
+function UpdateGlobalStats(options) {
+    // Options = {
+    //options.circulation :"",
+    //options.winnerId: ""
+    //options.redeemed:""
+    //options.coinflip
+    //options.PotGames:""
+    //options.PotCoffs:""
+    //options.warGames:""
+    //options.warCoffs:""
+    // }
+    if (options.circulation) stats.CoffsInCirculation += options.circulation;
+    if (options.winnerId) stats.RecentCoffWinner = options.winnerId;
+    if (options.PotCoffs && options.PotCoffs > stats.LargestPotWon)
+        stats.LargestPotWon = options.PotCoffs;
+    if (options.redeemed) stats.TotalCoffsRedeemed += options.redeemed;
+    if (options.coinflip) stats.TotalCoinFlips++;
+    if (options.PotGames) stats.TotalPotGames++;
+    if (options.PotCoffs) stats.TotalPotCoffs += options.PotCoffs;
+    if (options.warCoffs && options.warCoffs > stats.LargestWarWon)
+        stats.LargestWarWon = options.warCoffs;
+    if (options.warCoffs) stats.TotalWarCoffs += options.warCoffs;
+    if (options.warGames) stats.TotalWarGames++;
+}
 
 function UpdateUserStats() {}
 
+function NullifyCoffees(userId) {
+    let coffeeAmount = 0;
+    if (coffees[userId] == undefined) {
+        coffees[userId] = {};
+    }
 
-function BotChannelMessage(interaction, embed, message) {
+    for (let debtId in coffees[userId]) {
+        let oweToDebt = coffees[userId][debtId];
+        if (coffees[debtId] == undefined) coffees[debtId] = {};
+        if (coffees[debtId][userId] == undefined) coffees[debtId][userId] = 0;
+        let debtOweToUser = coffees[debtId][userId];
+        let minDirectionalOweage = Math.min(oweToDebt, debtOweToUser);
+
+        coffees[userId][debtId] -= minDirectionalOweage;
+        coffees[debtId][userId] -= minDirectionalOweage;
+        coffeeAmount += minDirectionalOweage;
+    }
+
+    //UpdateGlobalStats({circulation:-Math.abs(coffeeAmount)});
+    //UpdateFile(statsJSON,stats);
+
+    return coffeeAmount;
+}
+function BotChannelMessage(channelID, embed, message) {
     if (embed && message == "") {
-        client.channels.cache.get(interaction.channelId).send({ embeds: [embed] });
+        client.channels.cache.get(channelID).send({ embeds: [embed] });
     } else if (embed) {
-        client.channels.cache.get(interaction.channelId).send({
+        client.channels.cache.get(channelID).send({
             content: message,
             embeds: [embed],
         });
     } else {
-        client.channels.cache.get(interaction.channelId).send(message);
+        client.channels.cache.get(channelID).send(message);
     }
 }
 async function BotReply(interaction, embed, message, ishidden) {
@@ -782,9 +1206,40 @@ async function BotReply(interaction, embed, message, ishidden) {
     }
 }
 
+function AddUserCoffee(interactionUser, mentionedUser, amount) {
+    ValidateUserCoffee(interactionUser, mentionedUser);
+    coffees[interactionUser][mentionedUser] += amount;
+}
 
+function ValidateUserCoffee(interactionUser, mentionedUser) {
+    if (coffees[interactionUser] == undefined) {
+        coffees[interactionUser] = {};
+    }
+    if (coffees[mentionedUser] == undefined) {
+        coffees[mentionedUser] = {};
+    }
 
+    if (coffees[interactionUser][mentionedUser] == undefined) {
+        coffees[interactionUser][mentionedUser] = 0;
+    }
+}
+function RemoveUserCoffee(interactionUser, mentionedUser, amount) {
+    ValidateUserCoffee(interactionUser, mentionedUser);
+    coffees[interactionUser][mentionedUser] -= amount;
+}
 
+function GetUserCoffee(interactionUser, mentionedUser) {
+    let curCoffees;
+    ValidateUserCoffee(interactionUser, mentionedUser);
+    curCoffees = coffees[interactionUser][mentionedUser];
+    return curCoffees;
+}
+
+function UpdateFile(FileName, FileObject) {
+    fs.writeFile(`${FileName}`, JSON.stringify(FileObject, null, 1), (err) => {
+        if (err) throw err;
+    });
+}
 
 function getSortedKeys(obj) {
     var keys = Object.keys(obj);
@@ -1177,4 +1632,3 @@ function getDebts(userId) {
     debts.totalAmount = debts.receivedAmount - debts.owedAmount;
     return debts;
 }
-
