@@ -117,9 +117,15 @@ const commands = [
 
     new SlashCommandBuilder()
         .setName("21")
-        .setDescription("Start or join a new game of 21!"),
+        .setDescription("Start or join a new game of 21!")
+        .addIntegerOption((option) =>
+        option
+            .setName("amount")
+            .setDescription("Set the buy in amount if starting a new game")
+            .setRequired(false)
+    ),
         new SlashCommandBuilder()
-        .setName("21players")
+        .setName("players")
         .setDescription("Show who is in the current game of 21"),
     new SlashCommandBuilder()
         .setName("hand")
@@ -160,4 +166,3 @@ const rest = new REST({ version: "9" }).setToken(token);
         console.error(error);
     }
 })();
-
