@@ -701,12 +701,9 @@ client.on("interactionCreate", async (interaction) => {
                     warCurPlayers.push(warPlayerObject({userId:interaction.user.id}));
                     warCurPlayers[0]=DealCard(warCurPlayers[0]);
                     warCurPlayers[0]=DealCard(warCurPlayers[0]);
-                    embed = NotifyPlayerOfHand(warCurPlayers[0], false);
-                        
-                   
                     BotReply(interaction,
-                        embed,
-                        "",
+                        null,
+                        "You joined the game!",
                         true);    
 
                 }
@@ -717,12 +714,9 @@ client.on("interactionCreate", async (interaction) => {
                     warCurPlayers.push(warPlayerObject({userId:interaction.user.id,isTie:false}));
                     warCurPlayers[warCurPlayers.length-1]=DealCard(warCurPlayers[warCurPlayers.length-1]);
                     warCurPlayers[warCurPlayers.length-1]=DealCard(warCurPlayers[warCurPlayers.length-1]);
-                   const embed = NotifyPlayerOfHand(warCurPlayers[warCurPlayers.length-1], false);
-                        
-                   
                     BotReply(interaction,
-                        embed,
-                        "",
+                        null,
+                        "You joined the game!",
                         true);    
                 }
                
