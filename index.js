@@ -2,11 +2,9 @@
 const { Client, Intents, MessageEmbed } = require("discord.js");
 const { token, responseJSON, gCloudJSON} = require("./config.json");
 const cardGame= require("./CardGame");
-const fileIO= require("./FileIO");
+const fileIO= require("./fileIO");
 const gCloud = require(`./${gCloudJSON}`);
 const language = require("@google-cloud/language");
-const { parse } = require("path");
-const { removeAllListeners } = require("process");
 const fileResponses = require(`./${responseJSON}`);
 
 const gCloudOptions = {
@@ -257,7 +255,7 @@ client.on("interactionCreate", async (interaction) => {
             }
 
             if (
-                GetUserCoffee(mentionedUser.user.id, interaction.user.id) <
+                fileIO.GetUserCoffeeDebt(mentionedUser.user.id, interaction.user.id) <
                 parsedCoffeeAmount
             ) {
                 BotReply(
@@ -337,8 +335,8 @@ client.on("interactionCreate", async (interaction) => {
             let amount = interaction.options.getNumber("amount");
 
             //check if from user owes less than amount to transferer or that transferer owes less than amount to toId
-            if (coffees[fromId][transferer] < amount) {
-                // if so, then ephemeral error and return
+           if(fileIO.GetUserCoffeeDebt(fromId,transferer)<amount)
+            {    // if so, then ephemeral error and return
                 BotReply(
                     interaction,
                     null,
@@ -347,7 +345,8 @@ client.on("interactionCreate", async (interaction) => {
                 );
                 return;
             }
-            if (coffees[transferer][toId] < amount) {
+            if(fileIO.GetUserCoffeeDebt(transferer,toId)<amount)
+            {
                 BotReply(
                     interaction,
                     null,
@@ -494,9 +493,6 @@ client.on("interactionCreate", async (interaction) => {
                         }
                     }
                 }
-                
-               
-                NullifyCoffees(winner);
                 fileIO.UpdateFile("c");
 
                 //UpdateGlobalStats({PotGames:1,circulation:curCoffeePotSlots-1,PotCoffs:curCoffeePotSlots,winnerId:winner});
@@ -570,16 +566,7 @@ client.on("interactionCreate", async (interaction) => {
             );
 
             return;
-        } else if (interaction.commandName == "nullify") {
-            let coffeeAmount = NullifyCoffees(interaction.member.id);
-            fileIO.UpdateFile("c");
-            BotReply(
-                interaction,
-                null,
-                `<@${interaction.user.id}> nullified ${coffeeAmount} :coffee:`,
-                false
-            );
-        } else if (interaction.commandName == "serverstats") {
+        }  else if (interaction.commandName == "serverstats") {
             let embedText = `Total Coffees in Circulation: *${stats.CoffsInCirculation}*\nTotal Coffees Redeemed: *${stats.TotalCoffsRedeemed}*\n Recent Bet Winner: *<@${stats.RecentCoffWinner}>*\nLargest Coffee Pot Win: *${stats.LargestPotWon}*\nTotal Coffees Bet In Pots: *${stats.TotalPotCoffs}*\nTotal Coffee Pots: *${stats.TotalPotGames}*\nTotal Coin Flips: *${stats.TotalCoinFlips}*\nTotal Coffees Bet In Wars: *${stats.TotalWarCoffs}*\nTotal Games of War: *${stats.TotalWarGames}*\n Highest War Game Pot: *${stats.LargestWarWon}*\n`;
             const embed = new MessageEmbed()
                 .setTitle("**C O F F E E  S T A T Z**")
@@ -590,17 +577,29 @@ client.on("interactionCreate", async (interaction) => {
 
             BotReply(interaction, embed, "", false);
         } else if (interaction.commandName == "21End") {
-            BulkReplyHandler(cardGame.CommandEndGame(interaction.user.Id));
+            BulkReplyHandler(
+                interaction,
+                cardGame.CommandEndGame(interaction.user.id));
         } else if (interaction.commandName == "21") {
-            BulkReplyHandler(cardGame.CommandStartJoinGame(interaction.user.Id,interaction.options.getInteger("amount")));
+            BulkReplyHandler(
+                interaction,
+                cardGame.CommandStartJoinGame(interaction.user.id,interaction.options.getInteger("amount")));
         } else if (interaction.commandName=="stay") {
-            BulkReplyHandler(cardGame.CommnadStay(interaction.user.Id));
+            BulkReplyHandler(
+                interaction,
+                cardGame.CommandStay(interaction.user.id));
         } else if (interaction.commandName== "hand") {
-            BulkReplyHandler(cardGame.CommandHand(interaction.user.Id));
+            BulkReplyHandler(
+                interaction,
+                cardGame.CommandHand(interaction.user.id));
         } else if (interaction.commandName=="draw") {
-            BulkReplyHandler(cardGame.CommnadDraw(interaction.user.Id));
+            BulkReplyHandler(
+                interaction,
+                cardGame.CommandDraw(interaction.user.id));
         }else if (interaction.commandName == "players"){
-            BulkReplyHandler(cardGame.CommandPlayerList(interaction.user.Id));
+            BulkReplyHandler(
+                interaction,
+                cardGame.CommandPlayerList(interaction.user.id));
         } else if (interaction.commandName == "rps") {
             if (curRPSRequest == "") {
                 curRPSRequest = interaction.user.id;
@@ -685,26 +684,54 @@ client.on("interactionCreate", async (interaction) => {
 
 client.login(token);
 
+function TimeOutHandler(options)
+{
+    if(options.timeOutType=='CARDGAME')
+    {
+        BulkReplyHandler(options.interaction,cardGame.CommandTimeOut());
+    }
+}
 
-function BulkReplyHandler(communicationRequests)
+function BulkReplyHandler(interaction,communicationRequests)
 {
     for(let x=0;x<communicationRequests.length;x++)
     {
+        console.log(communicationRequests[x]);
+        if(communicationRequests[x].isTimer==true)
+        {
+            setTimeout(TimeOutHandler, 300000 , {timeOutType:'CARDGAME',interaction:interaction});
+            break;
+        }
+        let embed= null;
+        if(communicationRequests[x].embed)
+        {
+          embed= new MessageEmbed();
+                embed.setTitle(communicationRequests[x].embed.title);
+                embed.setDescription(communicationRequests[x].embed.text);
+                embed.setColor(communicationRequests[x].embed.color);
+                embed.setThumbnail(communicationRequests[x].embed.setThumbnail);
+                if(communicationRequests[x].embed.fields)
+                {
+                    for(let y=0;y<communicationRequests[x].embed.fields.length;y++){
+                        embed.addField(communicationRequests[x].embed.fields[y].title,communicationRequests[x].embed.fields[y].content,communicationRequests[x].embed.fields[y].fieldsAlign);
+                    }
+                }
+        }
         if(communicationRequests[x].reply==true)
         {
             BotReply(
                 interaction,
-                communicationRequests[x].embed,
+                embed,
                 communicationRequests[x].message,
-                communicationRequests[x].ishidden
+                communicationRequests[x].hidden
             );
         }
         else
         {
-        BotChannelMessage(
-            interaction,
-            communicationRequests[x].embed,
-            communicationRequests[x].message
+            BotChannelMessage(
+                interaction,
+                embed,
+                communicationRequests[x].message
         );
         }
     }
@@ -782,10 +809,6 @@ async function BotReply(interaction, embed, message, ishidden) {
     }
 }
 
-
-
-
-
 function getSortedKeys(obj) {
     var keys = Object.keys(obj);
     return keys.sort(function (a, b) {
@@ -812,22 +835,23 @@ function getProfileString(userId, channel) {
     let receivingCoffs = "";
     let receivedAmount = 0;
 
-    for (let ower in coffees) {
-        for (let receiver in coffees[ower]) {
+    for (let ower in fileIO.coffees()) {
+        for (let receiver in fileIO.coffees()[ower]) {
             // only write profile line if both users exist in channel and the amount != 0
+            let coffeeDebt=fileIO.GetUserCoffeeDebt(ower,receiver);
             if (
                 channel.members.get(ower) != undefined &&
                 channel.members.get(receiver) != undefined &&
-                coffees[ower][receiver] != 0
+                coffeeDebt != 0
             ) {
                 let owerMention = `<@${ower}>`;
                 let receiverMention = `<@${receiver}>`;
                 if (ower == userId) {
-                    owedCoffs += `**${coffees[ower][receiver]}** ${receiverMention}\n`;
-                    owedAmount += coffees[ower][receiver];
+                    owedCoffs += `**${coffeeDebt}** ${receiverMention}\n`;
+                    owedAmount += coffeeDebt;
                 } else if (receiver == userId) {
-                    receivingCoffs += `**${coffees[ower][receiver]}** ${owerMention}\n`;
-                    receivedAmount += coffees[ower][receiver];
+                    receivingCoffs += `**${coffeeDebt}** ${owerMention}\n`;
+                    receivedAmount += coffeeDebt;
                 }
             }
         }
@@ -848,18 +872,19 @@ function getProfileString(userId, channel) {
 function getCoffeeLedgerString(channel) {
     let coffeeLedgerString = "";
 
-    for (let ower in coffees) {
-        for (let receiver in coffees[ower]) {
+    for (let ower in fileIO.coffees()) {
+        for (let receiver in fileIO.coffees()[ower]) {
+            let coffeeDebt=fileIO.GetUserCoffeeDebt(ower,receiver);
             // only write ledger line if both users exist in channel and the amount != 0
             if (
                 channel.members.get(ower) != undefined &&
                 channel.members.get(receiver) != undefined &&
-                coffees[ower][receiver] != 0
+                coffeeDebt != 0
             ) {
                 let owerMention = `<@${ower}>`;
                 let receiverMention = `<@${receiver}>`;
 
-                let oweLine = `**${coffees[ower][receiver]}** ${owerMention} -> ${receiverMention}`;
+                let oweLine = `**${coffeeDebt}** ${owerMention} -> ${receiverMention}`;
                 if (coffeeLedgerString != "") {
                     coffeeLedgerString += "\n\n";
                 }
@@ -872,12 +897,14 @@ function getCoffeeLedgerString(channel) {
 
 function getLeaderboardString(channel) {
     let coffeeReceivers = {};
-    for (let ower in coffees) {
-        for (let receiver in coffees[ower]) {
+    for (let ower in fileIO.coffees()) {
+        console.log (ower);
+        for (let receiver in fileIO.coffees()[ower]) {
+            let coffeeDebt=fileIO.GetUserCoffeeDebt(ower,receiver);
             if (
                 channel.members.get(ower) != undefined &&
                 channel.members.get(receiver) != undefined &&
-                coffees[ower][receiver] != 0
+                coffeeDebt!= 0
             ) {
                 if (receiver in coffeeReceivers == false) {
                     coffeeReceivers[receiver] = 0;
@@ -885,8 +912,8 @@ function getLeaderboardString(channel) {
                 if (ower in coffeeReceivers == false) {
                     coffeeReceivers[ower] = 0;
                 }
-                coffeeReceivers[receiver] += coffees[ower][receiver];
-                coffeeReceivers[ower] -= coffees[ower][receiver];
+                coffeeReceivers[receiver] += coffeeDebt;
+                coffeeReceivers[ower] -= coffeeDebt;
             }
         }
     }
@@ -907,7 +934,12 @@ function getLeaderboardString(channel) {
                 coffeeReceivers[sortedPlayers[sortedPlayers.length - 2]]
         ) {
             coffeeLeaderboardString += `**${coffeeReceivers[player]}** <@${player}> :hot_face:\n\n`;
-        } else {
+        }else if(player=="887002671947595836")
+        {
+            coffeeLeaderboardString += `**${coffeeReceivers[player]}** <@${player}> :hamburger:\n\n`;
+
+        } 
+        else {
             coffeeLeaderboardString += `**${coffeeReceivers[player]}** <@${player}>\n\n`;
         }
     }
@@ -1161,14 +1193,15 @@ function getDebts(userId) {
         uniqueHold: 0,
         totalAmount: 0,
     };
-    for (let ower in coffees) {
-        for (let receiver in coffees[ower]) {
-            if (coffees[ower][receiver] != 0) {
+    for (let ower in fileIO.coffees()) {
+        for (let receiver in fileIO.coffees()[ower]) {
+            let coffeeDebt= fileIO.GetUserCoffeeDebt(ower,receiver);
+            if (coffeeDebt != 0) {
                 if (ower == userId) {
-                    debts.owedAmount += coffees[ower][receiver];
+                    debts.owedAmount +=coffeeDebt;
                     debts.uniqueOwe++;
                 } else if (receiver == userId) {
-                    debts.receivedAmount += coffees[ower][receiver];
+                    debts.receivedAmount += coffeeDebt;
                     debts.uniqueHold++;
                 }
             }
