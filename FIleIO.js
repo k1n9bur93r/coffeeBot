@@ -44,13 +44,18 @@ module.exports =
         WriteToLog(action,amount,interactionUser,mentionedUser);
     },
     
-    GetUserCoffee: function (interactionUser, mentionedUser) {
+    GetUserCoffeeDebt: function (interactionUser, mentionedUser) {
         let curCoffees;
         ValidateUserCoffee(interactionUser, mentionedUser);
         curCoffees = coffees[interactionUser][mentionedUser];
         return curCoffees;
     },
-     UpdateFile:function (FileObject) {
+    GetUserCoffeeRow:function (interactionUser)
+    {
+        let value= coffees[interactionUser]
+        return value;
+    },
+    UpdateFile:function (FileObject) {
         if(FileObject=="c")
         fs.writeFile(`${coffeeJSON}`, JSON.stringify(coffees, null, 1), (err) => {
             if (err) throw err;
@@ -59,7 +64,9 @@ module.exports =
         fs.writeFile(`${statsJSON}`, JSON.stringify(stats, null, 1), (err) => {
             if (err) throw err;
         });
-    }
+    },
+    coffees: function() { return coffees;}
+    
 }
 
 function NullifyCoffees(userId) {
