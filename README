@@ -9,8 +9,7 @@ How to use:
     "guildId": "guildid of server (only for deploying commands)",
     "coffeeJSON": "filename of .json file to use",
     "responseJSON": "talk-responses.json",
-    "gCloudJSON" : "filename of .json file to use",
-    "logTXT":"filename of the .txt file toe use, will auto generate if not avaliable"
+    "gCloudJSON" : "filename of .json file to use"
 }
 
 - add bot to a server for testing following https://discordjs.guide/preparations/adding-your-bot-to-servers.html
