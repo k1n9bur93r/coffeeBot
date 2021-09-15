@@ -10,6 +10,7 @@ How to use:
     "coffeeJSON": "filename of .json file to use",
     "responseJSON": "talk-responses.json",
     "gCloudJSON" : "filename of .json file to use"
+    "logTXT":"file name of the .txt file to use"
 }
 
 - add bot to a server for testing following https://discordjs.guide/preparations/adding-your-bot-to-servers.html
