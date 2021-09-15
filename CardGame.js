@@ -17,7 +17,6 @@ function communicationObject(isReply, embedObject, botMessage,isHidden,isTimer)
     
 }
 
-
 function cardGame()
 {
     this.CardDeck=[11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10];
@@ -379,7 +378,6 @@ module.exports =
     "ORANGE"
     )
 }
-
 
 function CheckWinner ()
 {
