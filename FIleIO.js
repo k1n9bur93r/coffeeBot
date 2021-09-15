@@ -65,7 +65,33 @@ module.exports =
             if (err) throw err;
         });
     },
-    coffees: function() { return coffees;}
+    coffees: function() { return coffees;},
+
+    GetDebts:function(userId) {
+        let debts = {
+            owedAmount: 0,
+            receivedAmount: 0,
+            uniqueOwe: 0,
+            uniqueHold: 0,
+            totalAmount: 0,
+        };
+        for (let ower in coffees) {
+            for (let receiver in coffees[ower]) {
+                let coffeeDebt= coffees[ower][receiver];
+                if (coffeeDebt != 0) {
+                    if (ower == userId) {
+                        debts.owedAmount +=coffeeDebt;
+                        debts.uniqueOwe++;
+                    } else if (receiver == userId) {
+                        debts.receivedAmount += coffeeDebt;
+                        debts.uniqueHold++;
+                    }
+                }
+            }
+        }
+        debts.totalAmount = debts.receivedAmount - debts.owedAmount;
+        return debts;
+}
     
 }
 
