@@ -15,6 +15,15 @@ let curCoffeePotSlots = -1;
 let maxMultiflipAmount = 5;
 let multiflipRequests = {};
 
+let GlobalTimers=[];
+function TimerObject(timer,timerName,callbackMethod)
+{
+    return{
+        Timer:timer,
+        functionCall:callbackMethod,
+        Name:timerName
+    }
+}
 
 // Create a new client instance
 const client = new Client({
@@ -25,6 +34,8 @@ const client = new Client({
         Intents.FLAGS.GUILD_MEMBERS,
     ],
 });
+
+client.login(token);
 
 // When the client is ready, run this code (only once)
 client.once("ready", () => {
@@ -517,7 +528,7 @@ client.on("interactionCreate", async (interaction) => {
         } else if (interaction.commandName == "talk") {
             let responseObject=await response.CommandTalk(interaction.user.id,interaction.options.getString("message"))
             BulkReplyHandler(interaction,responseObject);
-        }  else if (interaction.commandName == "serverstats") {
+        } else if (interaction.commandName == "serverstats") {
             let embedText = `Total Coffees in Circulation: *${stats.CoffsInCirculation}*\nTotal Coffees Redeemed: *${stats.TotalCoffsRedeemed}*\n Recent Bet Winner: *<@${stats.RecentCoffWinner}>*\nLargest Coffee Pot Win: *${stats.LargestPotWon}*\nTotal Coffees Bet In Pots: *${stats.TotalPotCoffs}*\nTotal Coffee Pots: *${stats.TotalPotGames}*\nTotal Coin Flips: *${stats.TotalCoinFlips}*\nTotal Coffees Bet In Wars: *${stats.TotalWarCoffs}*\nTotal Games of War: *${stats.TotalWarGames}*\n Highest War Game Pot: *${stats.LargestWarWon}*\n`;
             const embed = new MessageEmbed()
                 .setTitle("**C O F F E E  S T A T Z**")
@@ -547,7 +558,7 @@ client.on("interactionCreate", async (interaction) => {
             BulkReplyHandler(
                 interaction,
                 cardGame.CommandDraw(interaction.user.id));
-        }else if (interaction.commandName == "players"){
+        } else if (interaction.commandName == "players"){
             BulkReplyHandler(
                 interaction,
                 cardGame.CommandPlayerList(interaction.user.id));
@@ -633,26 +644,45 @@ client.on("interactionCreate", async (interaction) => {
     }
 });
 
-client.login(token);
-
 function TimeOutHandler(options)
 {
-    if(options.timeOutType=='CARDGAME')
+    if(options.actionName.includes('CG-'))
     {
-        BulkReplyHandler(options.interaction,cardGame.CommandTimeOut());
+        if(options.actionName=="CG-End"||options.actionName=="CG-Init")
+        {
+            if(options.actionName=="CG-Init")
+            {
+                BulkReplyHandler(options.interaction,cardGame.CommandTimerEvent(GlobalTimers[options.index].functionCall))
+
+            }
+            for(let x=0;x<GlobalTimers.length;x++)
+            {
+                if(GlobalTimers[x].Name.includes("CG-"))
+                {
+                    clearTimeout(GlobalTimers[x].Timer);
+                    GlobalTimers.splice(x,1);// I don't think this will break things now, but this might mess with the indexing of the array when looping
+                }
+                console.log ("Left over timers after ending a round");
+                for(let x=0;x<GlobalTimers.length;x++)
+                {
+                    console.log(x+". ----------------------------------------------- ");
+                    console.log(GlobalTimers[x]);
+                    console.log(x+". ----------------------------------------------- ");
+                }
+            }
+        }
+        else
+        {
+            BulkReplyHandler(options.interaction,cardGame.CommandTimerEvent(GlobalTimers[options.index].functionCall))
+        }
     }
+    GlobalTimers.splice(options.index,1);
 }
 
 function BulkReplyHandler(interaction,communicationRequests)
 {
     for(let x=0;x<communicationRequests.length;x++)
     {
-        console.log(communicationRequests[x]);
-        if(communicationRequests[x].isTimer==true)
-        {
-            setTimeout(TimeOutHandler, 300000 , {timeOutType:'CARDGAME',interaction:interaction});
-            break;
-        }
         let embed= null;
         if(communicationRequests[x].embed)
         {
@@ -683,50 +713,47 @@ function BulkReplyHandler(interaction,communicationRequests)
                 interaction,
                 embed,
                 communicationRequests[x].message
-        );
+            );
         }
+        if(communicationRequests[x].TimerSettings!=null)
+        {
+            if(communicationRequests[x].TimerSettings.Replace.length!=0&&GlobalTimers.length>0)
+            {
+                for(let z=0;z<communicationRequests[x].TimerSettings.Replace.length;z++)
+                {
+                    console.log("Name of the replace I am checking "+communicationRequests[x].TimerSettings.Replace[z]);
+                    for(let y=0;y<GlobalTimers.length;y++)
+                    {
+                        console.log(`Currently looking to replace timer: ${communicationRequests[x].TimerSettings.Replace[z]} Currently looking at : ${GlobalTimers[y].Name}`);
+                        if(communicationRequests[x].TimerSettings.Replace[z]==GlobalTimers[y].Name)
+                        {
+                            console.log(`REPLACED A CURRENT TIMER  '${GlobalTimers[y].Name}' with: ${communicationRequests[x].TimerSettings.Action}`);
+                            clearTimeout(GlobalTimers[y].Timer);
+                            GlobalTimers.splice(y,1);
+                            break;
+                        }
+                    }
+                }
+            }
+                console.log("ADDED A NEW TIMER: "+communicationRequests[x].TimerSettings.Action);
+                GlobalTimers.push(
+                    TimerObject(
+                        setTimeout(
+                            TimeOutHandler, 
+                            communicationRequests[x].TimerSettings.Length , 
+                            {
+                            index:GlobalTimers.length,
+                            actionName:communicationRequests[x].TimerSettings.Action,interaction:interaction
+                            }
+                            ),
+                        communicationRequests[x].TimerSettings.Action,
+                        communicationRequests[x].TimerSettings.functionCall
+                        )
+                    );
+        }
+
     }
 }
-
-function Coinflip(flipper1, flipper2) {
-    let coinFlipper1 = flipper1;
-    let coinFlipper2 = flipper2;
-    let winner;
-    let loser;
-    let unique = "";
-    let flipValue = 1;
-
-    if (Math.random() > 0.99) {
-        // easter egg: 1% chance coin lands on side :^)
-        unique = "side";
-        flipValue = 0;
-    }
-    // if (Math.random() < 0.01) {
-    //  unique="split";
-    //  flipValue=2;
-    // }
-
-    if (Math.random() > 0.5) {
-        winner = coinFlipper1;
-        loser = coinFlipper2;
-    } else {
-        winner = coinFlipper2;
-        loser = coinFlipper1;
-    }
-
-    if (unique != "side") {
-        fileIO.AddUserCoffee(loser, winner, flipValue,"COINFLIP");
-        fileIO.UpdateFile("c");
-    }
-
-    return { coinSide: unique, coinWin: winner, coinLose: loser };
-}
-
-
-
-
-function UpdateUserStats() {}
-
 
 function BotChannelMessage(interaction, embed, message) {
     if (embed && message == "") {
@@ -849,7 +876,6 @@ function getCoffeeLedgerString(channel) {
 function getLeaderboardString(channel) {
     let coffeeReceivers = {};
     for (let ower in fileIO.coffees()) {
-        console.log (ower);
         for (let receiver in fileIO.coffees()[ower]) {
             let coffeeDebt=fileIO.GetUserCoffeeDebt(ower,receiver);
             if (
@@ -898,5 +924,36 @@ function getLeaderboardString(channel) {
     return coffeeLeaderboardString;
 }
 
+function Coinflip(flipper1, flipper2) {
+    let coinFlipper1 = flipper1;
+    let coinFlipper2 = flipper2;
+    let winner;
+    let loser;
+    let unique = "";
+    let flipValue = 1;
 
+    if (Math.random() > 0.99) {
+        // easter egg: 1% chance coin lands on side :^)
+        unique = "side";
+        flipValue = 0;
+    }
+    // if (Math.random() < 0.01) {
+    //  unique="split";
+    //  flipValue=2;
+    // }
 
+    if (Math.random() > 0.5) {
+        winner = coinFlipper1;
+        loser = coinFlipper2;
+    } else {
+        winner = coinFlipper2;
+        loser = coinFlipper1;
+    }
+
+    if (unique != "side") {
+        fileIO.AddUserCoffee(loser, winner, flipValue,"COINFLIP");
+        fileIO.UpdateFile("c");
+    }
+
+    return { coinSide: unique, coinWin: winner, coinLose: loser };
+}
