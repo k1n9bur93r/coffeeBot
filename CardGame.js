@@ -458,7 +458,7 @@ if( currentGame.Winners.length>1)
 {
     warText = ` Wow there is a tie between players! `
     for(let x=0;x<currentGame.Winners.length;x++)
-        warfields.push({title:`Winner ${x+1}`,content:`<@${currentGame.PlayerObjects[x].userId}> - ${currentGame.PlayerObjects[x].total} , ${cardText} `});     
+        warfields.push({title:`Winner ${x+1}`,content:`<@${currentGame.PlayerObjects[x].userId}> - ${currentGame.PlayerObjects[x].total} `});     
     warText=warText.concat(`Starting up a new round.\n Past round's results\n`);
     warText=warText.concat(` Play again with /hand and /action`);
     currentGame.PlayerObjects=[];
