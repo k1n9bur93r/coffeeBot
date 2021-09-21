@@ -110,10 +110,7 @@ const commands = [
                 .setDescription("What you want to say")
                 .setRequired(true)
         ),
-    new SlashCommandBuilder()
-        .setName("nullify")
-        .setDescription("Nullify your bidirectional coffees"),
-    //new SlashCommandBuilder().setName('serverstats').setDescription('Info for the rich and the poor'),
+    //new  SlashCommandBuilder().setName('serverstats').setDescription('Info for the rich and the poor'),
 
     new SlashCommandBuilder()
         .setName("21")
@@ -166,3 +163,4 @@ const rest = new REST({ version: "9" }).setToken(token);
         console.error(error);
     }
 })();
+
