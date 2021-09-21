@@ -170,13 +170,13 @@ function cardGame()
                 if ( this.PlayerObjects[x].total == highestStay) 
                 {
                     this.TieGame = true;
-                    this.Winners.push( this.PlayerObjects[x].userId);
+                    this.Winners.push( this.PlayerObjects[x]);
                 } 
                 else if ( this.PlayerObjects[x].total > highestStay) 
                 {
                     this.Winners = [];
                     highestStay =  this.PlayerObjects[x].total;
-                    currentGame.Winners.push( this.PlayerObjects[x].userId);
+                    currentGame.Winners.push( this.PlayerObjects[x]);
                 }
             }
         }
@@ -451,30 +451,37 @@ function TimeOutLongWait()
 
 function CheckWinner ()
 {
+let returnObject;
 let warText;
 let warfields=[];
+let tempPlayerObject=[]
+let isTie=false;
 if(currentGame.GameWon==false) return;
-if( currentGame.Winners.length>1)
+if(currentGame.Winners.length>1)
 {
-    warText = ` Wow there is a tie between players! `
+    isTie=true;
+    warText = ` Wow there is a tie between players! \n`
     for(let x=0;x<currentGame.Winners.length;x++)
-        warfields.push({title:`Winner ${x+1}`,content:`<@${currentGame.PlayerObjects[x].userId}> - ${currentGame.PlayerObjects[x].total} `});     
-    warText=warText.concat(`Starting up a new round.\n Past round's results\n`);
-    warText=warText.concat(` Play again with /hand and /action`);
+        warText += `<@${currentGame.Winners[x].userId}> has tied with a total of ${currentGame.Winners[x].total} \n`;   
+    warText+=`Starting up a new round.\n **Total past results**:\n`;
+
+    currentGame.GameRunning=true;
+    tempPlayerObject=currentGame.PlayerObjects;
     currentGame.PlayerObjects=[];
     for(let x=0;x<currentGame.Winners.length;x++)
     {
-        currentGame.AddPlayer(currentGame.Winners[x]);
+        currentGame.AddPlayer(currentGame.Winners[x].userId);
         currentGame.DealCard(x);
         currentGame.DealCard(x);
-    }  
+    } 
+    currentGame.Winners=[]; 
 }   
 else if(currentGame.Winners.length==1)
 {
-    warText = `<@${currentGame.Winners[0]}> has won the game of 21! They won **${(currentGame.PlayerIds.length-1)*currentGame.PotSize}** :coffee:!\n\n`;
+    warText = `<@${currentGame.Winners[0].userId}> has won the game of 21! They won **${(currentGame.PlayerIds.length-1)*currentGame.PotSize}** :coffee:!\n\n`;
         for ( let x=0;x<currentGame.PlayerIds.length;x++) 
         {
-            
+            tempPlayerObject=currentGame.PlayerObjects;
             if (currentGame.PlayerIds[x] != currentGame.Winners[0]) 
             {
                 fileIO.AddUserCoffee(currentGame.PlayerIds[x],currentGame.Winners[0],currentGame.PotSize,"21");
@@ -486,25 +493,26 @@ else if(currentGame.Winners.length==1)
 else
 {
     warText = `No one won...\n\n`; 
+    tempPlayerObject=currentGame.PlayerObjects;
 }
-currentGame.PlayerObjects= currentGame.PlayerObjects.sort((a,b)=>(a.total<b.total)? 1 : -1);
-for (let x=0;x<currentGame.PlayerObjects.length;x++) 
+tempPlayerObject= tempPlayerObject.sort((a,b)=>(a.total<b.total)? 1 : -1);
+for (let x=0;x<tempPlayerObject.length;x++) 
 {
    
     let cardText="Cards:";
     let totalText=`Total:`;
-    if(currentGame.PlayerObjects[x].total>21)
-        totalText+=` **Over** ~~**${currentGame.PlayerObjects[x].total}**~~`; 
+    if(tempPlayerObject[x].total>21)
+        totalText+=` **Over** ~~**${tempPlayerObject[x].total}**~~`; 
     else
-        totalText+=`**${currentGame.PlayerObjects[x].total}**`;
-    for (let y = 0; y < currentGame.PlayerObjects[x].cards.length; y++) 
+        totalText+=`**${tempPlayerObject[x].total}**`;
+    for (let y = 0; y < tempPlayerObject[x].cards.length; y++) 
     {
-        cardText = cardText.concat(`*${currentGame.PlayerObjects[x].cards[y]}* :black_joker: `);
-        if (y + 1 != currentGame.PlayerObjects[x].cards.length) 
+        cardText = cardText.concat(`*${tempPlayerObject[x].cards[y]}* :black_joker: `);
+        if (y + 1 != tempPlayerObject[x].cards.length) 
             cardText = cardText.concat(`->`);
               
     }
-    warfields.push({title:`Player ${x+1}`,content:`<@${currentGame.PlayerObjects[x].userId}> - ${totalText} , ${cardText} `,fieldsAlign:false});
+    warfields.push({title:`Player ${x+1}`,content:`<@${tempPlayerObject[x].userId}> - ${totalText} , ${cardText} `,fieldsAlign:false});
 }
     let embed= CreateEmbed(
         "21 Round Result",
@@ -513,13 +521,14 @@ for (let x=0;x<currentGame.PlayerObjects.length;x++)
         false,
         'DARK_RED'
     );                        
-    currentGame.ResetGame();
-    let object ;
-    if(currentGame.Winners<2)
-        object=communicationObject(false,embed,"",false,TimerSettings(Events.GameEnd,0,0));
+    if(isTie)
+    returnObject=communicationObject(false,embed,"",false,null);
     else
-        object=communicationObject(false,embed,"");
-    return object
+    {
+        returnObject=communicationObject(false,embed,"",false,TimerSettings(Events.GameEnd,0,0));
+        currentGame.ResetGame();
+    }
+    return  returnObject;
 }
 
 function CreateEmbed(setTitle,setText,setFields,setFieldsAlign,setColor)
