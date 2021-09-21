@@ -662,13 +662,6 @@ function TimeOutHandler(options)
                     clearTimeout(GlobalTimers[x].Timer);
                     GlobalTimers.splice(x,1);// I don't think this will break things now, but this might mess with the indexing of the array when looping
                 }
-                console.log ("Left over timers after ending a round");
-                for(let x=0;x<GlobalTimers.length;x++)
-                {
-                    console.log(x+". ----------------------------------------------- ");
-                    console.log(GlobalTimers[x]);
-                    console.log(x+". ----------------------------------------------- ");
-                }
             }
         }
         else
@@ -690,7 +683,7 @@ function BulkReplyHandler(interaction,communicationRequests)
                 embed.setTitle(communicationRequests[x].embed.title);
                 embed.setDescription(communicationRequests[x].embed.text);
                 embed.setColor(communicationRequests[x].embed.color);
-                embed.setThumbnail(communicationRequests[x].embed.setThumbnail);
+                embed.setThumbnail(communicationRequests[x].embed.thumbnail);
                 if(communicationRequests[x].embed.fields)
                 {
                     for(let y=0;y<communicationRequests[x].embed.fields.length;y++){
