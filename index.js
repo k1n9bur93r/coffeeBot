@@ -3,6 +3,7 @@ const { Client, Intents, MessageEmbed } = require("discord.js");
 const { token} = require("./config.json");
 const cardGame= require("./CardGame");
 const fileIO= require("./fileIO");
+const bestOf= require("./BestOf");
 const response=require("./Response.js");
 
 let curCoinflipRequest = "";
@@ -180,7 +181,7 @@ client.on("interactionCreate", async (interaction) => {
                 interaction.options.get("user").user.id,
                 interaction.channel
             );
-            let parsedCoffeeAmount = interaction.options.getNumber("amount");
+            let parsedCoffeeAmount = interaction.options.getInteger("amount");//num
 
             if (mentionedUser) {
                 if (mentionedUser == undefined) {
@@ -233,7 +234,7 @@ client.on("interactionCreate", async (interaction) => {
                 interaction.channel
             );
 
-            let parsedCoffeeAmount = interaction.options.getNumber("amount");
+            let parsedCoffeeAmount = interaction.options.getInteger("amount");//num
 
             if (mentionedUser) {
                 if (mentionedUser == undefined) {
@@ -331,7 +332,7 @@ client.on("interactionCreate", async (interaction) => {
             let transferer = interaction.user.id;
             let fromId = interaction.options.get("from").user.id;
             let toId = interaction.options.get("to").user.id;
-            let amount = interaction.options.getNumber("amount");
+            let amount = interaction.options.getInteger("amount");//num
 
             //check if from user owes less than amount to transferer or that transferer owes less than amount to toId
            if(fileIO.GetUserCoffeeDebt(fromId,transferer)<amount)
@@ -546,15 +547,15 @@ client.on("interactionCreate", async (interaction) => {
             BulkReplyHandler(
                 interaction,
                 cardGame.CommandStartJoinGame(interaction.user.id,interaction.options.getInteger("amount")));
-        } else if (interaction.commandName=="stay") {
+        } else if (interaction.commandName =="stay") {
             BulkReplyHandler(
                 interaction,
                 cardGame.CommandStay(interaction.user.id));
-        } else if (interaction.commandName== "hand") {
+        } else if (interaction.commandName == "hand") {
             BulkReplyHandler(
                 interaction,
                 cardGame.CommandHand(interaction.user.id));
-        } else if (interaction.commandName=="draw") {
+        } else if (interaction.commandName =="draw") {
             BulkReplyHandler(
                 interaction,
                 cardGame.CommandDraw(interaction.user.id));
@@ -629,6 +630,19 @@ client.on("interactionCreate", async (interaction) => {
                     false
                 );
             }
+        } else if (interaction.commandName == "bestjoin"){
+            BulkReplyHandler(
+                interaction,
+                bestOf.CommandAddPlayer(interaction.user.id));
+        }else if (interaction.commandName == "bestcreate"){
+            BulkReplyHandler(
+                interaction,
+                bestOf.CommandNewBestOf(interaction.user.id,interaction.options.getString("game"),interaction.options.getInteger("coffs"),interaction.options.getInteger("rounds")));
+        }else if (interaction.commandName == "bestplayers"){
+            BulkReplyHandler(
+                interaction,
+                bestOf.CommandBestOfPlayerMessage());
+            
         }
 } catch (e) {
         BotReply(
@@ -677,7 +691,7 @@ function BulkReplyHandler(interaction,communicationRequests)
     for(let x=0;x<communicationRequests.length;x++)
     {
         let embed= null;
-        if(communicationRequests[x].embed)
+        if(communicationRequests[x].embed!=null)
         {
           embed= new MessageEmbed();
                 embed.setTitle(communicationRequests[x].embed.title);
