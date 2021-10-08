@@ -1,5 +1,6 @@
  
 const fileIO= require("./FileIO");
+const BestOf= require("./BestOf");
 
 function communicationObject(isReply, embedObject, botMessage,isHidden,TimerObject)
 {
@@ -223,17 +224,19 @@ let currentGame=new cardGame();
 
 module.exports = 
 {
-
-    CommandStartJoinGame: function (interactionID, amount)
+    CommandStartJoinGame: function (interactionID, amount, messageReply=true)
     {
         let communicationRequests=[]
+
+     communicationRequests= BestOfAddUsers("21",messageReply);
+
         let coffAmount = amount;
             
         if(!coffAmount)
             coffAmount=1;
         else if(coffAmount>5)
         {
-            return  communicationRequests.push(communicationObject(true,null,"Can't have a buy in great than 5!",true))
+            return  communicationRequests.push(communicationObject(messageReply,null,"Can't have a buy in great than 5!",true))
         }
         if(currentGame.StartingPlayer==interactionID)
         {
@@ -250,12 +253,12 @@ module.exports =
                     "DARK_RED"
                 );
                 
-                communicationRequests.push(communicationObject(true,embed,"",false,TimerSettings(Events.GameStart,4,2)));
+                communicationRequests.push(communicationObject(messageReply,embed,"",false,TimerSettings(Events.GameStart,4,2)));
                 currentGame.GameRunning=true;
             }
             else
             {
-                communicationRequests.push(communicationObject(true,null,`Sorry, there is a game currently on going!`,true));
+                communicationRequests.push(communicationObject(messageReply,null,`Sorry, there is a game currently on going!`,true));
             }
         }    
         else if(currentGame.GameRunning==false)
@@ -277,7 +280,7 @@ module.exports =
                     "DARK_RED"
                 );
                 
-                communicationRequests.push(communicationObject(true,embed,"",false,TimerSettings(Events.GameInit,5,1)));
+                communicationRequests.push(communicationObject(messageReply,embed,"",false,TimerSettings(Events.GameInit,5,1)));
 
             }
             else
@@ -285,18 +288,18 @@ module.exports =
                 let result =currentGame.AddPlayer(interactionID);
                 if(result==false)
                 {
-                    communicationRequests.push(communicationObject(true,null,`You are already in this game!`,true));
+                    communicationRequests.push(communicationObject(messageReply,null,`You are already in this game!`,true));
                     return communicationRequests;
                 }
                 currentGame.DealCard(interactionID);
                 currentGame.DealCard(interactionID);
-                communicationRequests.push(communicationObject(true,null,`<@${interactionID}> has joined the game of 21 started by <@${currentGame.StartingPlayer}>!`,false));
+                communicationRequests.push(communicationObject(messageReply,null,`<@${interactionID}> has joined the game of 21 started by <@${currentGame.StartingPlayer}>!`,false));
             }
            
         }
         else if(currentGame.GameRunning==true)
         {
-            communicationRequests.push(communicationObject(true,null,`Sorry, there is a game currently on going!`,true));
+            communicationRequests.push(communicationObject(messageReply,null,`Sorry, there is a game currently on going!`,true));
         }
         return communicationRequests;
     },
@@ -340,7 +343,7 @@ module.exports =
     },
 
     CommandDraw: function (interactionID)
-    {   
+    {              
         let playerIndex=ValidateAction(interactionID);
         let communicationRequests=playerIndex.requets;
         if(playerIndex.index==-1) return communicationRequests;
@@ -355,10 +358,7 @@ module.exports =
                 `<@${currentGame.PlayerObjects[playerIndex.index].userId}> is done with their hand in the current game of 21.`,
             ));  
         }
-        let response= CheckWinner();
-        if (response==undefined) return communicationRequests;
-        communicationRequests.push(response);
-        return communicationRequests
+        return GameEnd(communicationRequests);
     },
 
     CommandStay: function (interactionID)
@@ -373,10 +373,7 @@ module.exports =
             null,
             `<@${currentGame.PlayerObjects[playerIndex.index].userId}> is done with their hand in the current game of 21.`
         ));  
-        let response= CheckWinner();
-        if (response==undefined) return communicationRequests;
-        communicationRequests.push(response);
-        return communicationRequests
+        return GameEnd(communicationRequests);
     },
 
     CommandHand: function(interactionID)
@@ -412,19 +409,17 @@ function TimeOutNoStart()
     currentGame.ResetGame();
     return communicationRequests;
 }
+
 function TimeOutLongWait()
 {
     let communicationRequests=[];
+    
     for(let x=0;x<currentGame.PlayerObjects.length;x++)
     {
         currentGame.StayHand(x);
     }
     communicationRequests.push(communicationObject(false,null,"The current game of 21 has gone stale! No one has played an action in over two minutes. Wrapping up the game!"));
-    let response= CheckWinner();
-    if (response!=undefined) 
-        communicationRequests.push(response);
-    currentGame.ResetGame();
-    return communicationRequests;
+    return GameEnd(communicationRequests);
 }
 
  function CreatePlayerHandEmbed (playerObject, newDraw) {
@@ -456,7 +451,7 @@ let warText;
 let warfields=[];
 let tempPlayerObject=[]
 let isTie=false;
-if(currentGame.GameWon==false) return;
+if(currentGame.GameWon==false) return returnObject;
 if(currentGame.Winners.length>1)
 {
     isTie=true;
@@ -526,7 +521,6 @@ for (let x=0;x<tempPlayerObject.length;x++)
     else
     {
         returnObject=communicationObject(false,embed,"",false,TimerSettings(Events.GameEnd,0,0));
-        currentGame.ResetGame();
     }
     return  returnObject;
 }
@@ -578,3 +572,56 @@ function ValidateAction(interactionID)
     return returnObject;
 
 }
+
+function GameEnd(communicationRequests)
+{
+    var returnObject=CheckWinner();
+    if(returnObject)
+    {
+        console.log("Hello1");
+        communicationRequests.push(returnObject);
+        console.log("Hello2");
+        if(BestOf.CommandBestOfRunning()==true)
+        {
+            console.log("Hello3");
+            communicationRequests.concat(BestOf.CommandAddWinner(currentGame.Winners[0].userId));
+            currentGame.ResetGame();
+            if(BestOf.CommandBestOfRunning==true)
+            {
+                BestOfAddUsers();
+            }
+        }
+        console.log("Hello4");
+    }
+    console.log(communicationRequests);
+    return communicationRequests;
+}
+
+function BestOfAddUsers(gameType,recurse)
+{   var x=0;
+    var communicationRequests=[];
+    if(BestOf.CommandBestOfExists()&&!BestOf.CommandBestOfRunning()&&(BestOf.CommandBestOfType()==gameType)&&recurse)
+    {
+        BestOf.CommandBestOfStart();
+        x++
+    }
+    if(BestOf.CommandBestOfExists()&&(BestOf.CommandBestOfType()==gameType))
+    {
+        var players=BestOf.CommandBestOfPlayerList();
+        for(x;x<players.length;x++)
+        {
+            communicationRequests.concat(this.CommandStartJoinGame(players[x],5,false));
+        }
+        communicationRequests.concat(this.CommandStartJoinGame(players[0],5,false));
+    }
+    return communicationRequests();
+}
+
+
+    //        return  communicationRequests.push(communicationObject(messageReply,null,"Can't start a new game when there is a Best Of set in progress",true));
+    //}else if(BestOf.CommandBestOfPlayerList().length>0)
+   // {
+    //    return  communicationRequests.push(communicationObject(messageReply,null,"Can't start a new game when people are creating a Best Of set",true));
+    //}
+
+
