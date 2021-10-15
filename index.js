@@ -5,6 +5,8 @@ const cardGame= require("./CardGame");
 const fileIO= require("./fileIO");
 const bestOf= require("./BestOf");
 const response=require("./Response.js");
+const BestOf = require("./BestOf");
+const { CommandBestOfExists, CommandBestOfPlayerList } = require("./BestOf");
 
 let curCoinflipRequest = "";
 
@@ -544,13 +546,64 @@ client.on("interactionCreate", async (interaction) => {
                 interaction,
                 cardGame.CommandEndGame(interaction.user.id));
         } else if (interaction.commandName == "21") {
-            BulkReplyHandler(
-                interaction,
-                cardGame.CommandStartJoinGame(interaction.user.id,interaction.options.getInteger("amount")));
+            if(BestOf.CommandBestOfExists()&&BestOf.CommandBestOfType()=="21"&&!BestOf.CommandBestOfRunning())
+            {
+                var list=CommandBestOfPlayerList();
+                if(list[0]==interaction.user.id)
+                {
+                    BestOf.CommandBestOfStart();
+                    await BulkReplyHandler(
+                        interaction,
+                        cardGame.CommandStartJoinGame(list[0],interaction.options.getInteger("amount")));
+                        for(var x=1;x<list.length;x++)
+                        {
+                           await BulkReplyHandler(
+                                interaction,
+                                cardGame.CommandStartJoinGame(list[x],interaction.options.getInteger("amount"),false));
+                        }
+                    BulkReplyHandler(
+                        interaction,
+                        cardGame.CommandStartJoinGame(interaction.user.id,interaction.options.getInteger("amount"),false));
+                }
+                else
+                {
+                    BotReply(interaction, null, "You can't start a game of 21 if there is a 'Best Of' set pending. join up to it now with ./bestjoin !", true);
+                    
+                }
+            }
+            else
+            {
+                BulkReplyHandler(
+                    interaction,
+                    cardGame.CommandStartJoinGame(interaction.user.id,interaction.options.getInteger("amount")));
+            }
+            //logic that checks if there is a best of five queued
+                // if true then then the queue will check if the person calling has started the bo5
+                    // if true then all b05 playesr will be loaded up and the game will start
+                    //if false then it will say they can't start the game and they should join it
+                // if false then just start the game normally
+           
+
         } else if (interaction.commandName =="stay") {
             BulkReplyHandler(
                 interaction,
                 cardGame.CommandStay(interaction.user.id));
+
+                console.log("does the game exist "+BestOf.CommandBestOfRunning());
+                
+                if(BestOf.CommandBestOfExists()&&BestOf.CommandBestOfRunning())
+                {
+                    var list=CommandBestOfPlayerList();
+                    for(var x=0;x<list.length;x++)
+                    {
+                        BulkReplyHandler(
+                            interaction,
+                            cardGame.CommandStartJoinGame(list[x],1,false));
+                    }
+                BulkReplyHandler(
+                    interaction,
+                    cardGame.CommandStartJoinGame(list[0],1,false));
+                }
         } else if (interaction.commandName == "hand") {
             BulkReplyHandler(
                 interaction,
@@ -559,6 +612,21 @@ client.on("interactionCreate", async (interaction) => {
             BulkReplyHandler(
                 interaction,
                 cardGame.CommandDraw(interaction.user.id));
+
+                if(BestOf.CommandBestOfExists()&&BestOf.CommandBestOfRunning())
+                {
+                    var list=CommandBestOfPlayerList();
+                    for(var x=0;x<list.length;x++)
+                    {
+                        BulkReplyHandler(
+                            interaction,
+                            cardGame.CommandStartJoinGame(list[x],1,false));
+                    }
+                BulkReplyHandler(
+                    interaction,
+                    cardGame.CommandStartJoinGame(list[0],1,false));
+                }
+                            //check if the b05 game is over, if not then queue up a new game 
         } else if (interaction.commandName == "players"){
             BulkReplyHandler(
                 interaction,
@@ -671,7 +739,7 @@ function TimeOutHandler(options)
             }
             for(let x=0;x<GlobalTimers.length;x++)
             {
-                if(GlobalTimers[x].Name.includes("CG-"))
+                if(GlobalTimers[x].Name.includes("CG-")||GlobalTimers[x].Name.includes("BS-"))
                 {
                     clearTimeout(GlobalTimers[x].Timer);
                     GlobalTimers.splice(x,1);// I don't think this will break things now, but this might mess with the indexing of the array when looping
@@ -682,6 +750,10 @@ function TimeOutHandler(options)
         {
             BulkReplyHandler(options.interaction,cardGame.CommandTimerEvent(GlobalTimers[options.index].functionCall))
         }
+    }
+    else if(options.actionName.includes('BS-'))
+    {
+        BulkReplyHandler(options.interaction,bestOf.CommandBestOfEnd());
     }
     GlobalTimers.splice(options.index,1);
 }
