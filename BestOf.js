@@ -1,33 +1,17 @@
 const fileIO= require("./FileIO");
+const comm= require("./Communication");
 
 
-function communicationObject(isReply, embedObject, botMessage,isHidden,TimerObject)
-{
-    let object={reply:isReply,
-        winner:0,
-        embed:embedObject,
-        message:botMessage,
-        hidden:isHidden,
-        TimerSettings:null
-        };
-        if(TimerObject)
-        {
-            object.TimerSettings=TimerObject;
-        }
-    return object;
-    
-}
+
 
 const Events={
-    GameStart:"BS-Start",
-    GameEnd:"BS-End",
-    GameInit:"BS-Init"
+    BestInit:{Name:"BS-Init",Replace:["CG-Init","CG-Start","CG-Action","CG-End"]}
 }
 
 function BestOfSet(){
-    var Session=undefined;
-    var StartingPlayer;
-    var gameRunning=false;
+    this.Session=undefined;
+    this.StartingPlayer;
+    this.gameRunning=false;
     this.CreateBestOf=function(initPlayer,gameType,coffAmount,winsRequired)
     {
         StartingPlayer=initPlayer;
@@ -41,45 +25,43 @@ function BestOfSet(){
     }
 
     this.AddPlayer=function(playerId){
-        for(var x=0;x<this.Session.players.length;x++)
-        {
-            if(this.Session.players[x].id==playerId)
-            {
-                return communicationObject(true,null,`You are already in this 'Best Of' set!`,true,null);
+        for(var x=0;x<this.Session.players.length;x++){
+            if(this.Session.players[x].id==playerId){
+                return false;
             }
         }
+                
         var PlayerObject={
             wins:0,
             id:playerId
         };
         this.Session.players.push(PlayerObject);
-        return communicationObject(true,null,`<@${playerId}> has joined the 'Best Of' set!`,false,null);
+        return true;
     }
 
     this.PlayerWin=function(playerId)
     {
-
-        var communicationRequests=[];
-        // send some kind of message to chat here 
         for(var x=0;x<this.Session.players.length;x++)
         {
             if(this.Session.players[x].id==playerId)
             {
-                this.Session.players[x].wins++;
-                communicationRequests.push(communicationObject(false,null,`<@${playerId}> has ${this.Session.players[x].wins} out of ${this.Session.count} `,false,null));
-                if(this.Session.players[x].wins>((this.Session.count/2)+1))
+                this.Session.players[x].wins++; 
+                console.log(`Here is the win calculation: Current wins ${this.Session.players[x].wins} calculation for current win rate ${(((this.Session.count/2)+1)| 0)}. Is this a win? ${this.Session.players[x].wins>(((this.Session.count/2)+1)|0)}`);
+                if(this.Session.players[x].wins>=(((this.Session.count/2)+1)| 0))
                 {
-                    communicationRequests.push(communicationObject(false,null,`<@${playerId}> has won the 'Best Of' ${this.Session.count} set!`,false,null));
+                    var wins=this.Session.players[x].wins;
+                    console.log("Hello I am here!");
                     this.EndBestOf(this.Session.players[x].id);
+                    console.log("and I made it out!");
+                    return {winner:true,wins:wins};
                 }
-                break;
+                return {winner:false,wins:this.Session.players[x].wins};
             }
         }
-        return communicationRequests;
+        return {winner:false,wins:0}
     }
     this.EndBestOf=function(winnerId)
     {
-        //send some kind of message here 
         for(var x=0;x<this.Session.players.length;x++)
         {        
             fileIO.AddUserCoffee(this.Session.players[x].id,winnerId,this.Session.amount,this.Session.game);
@@ -90,13 +72,17 @@ function BestOfSet(){
     }
 }
 
-let set=new BestOfSet();
+let set= new BestOfSet();
 
 module.exports = 
 {
+    
     CommandBestOfType:function()
     {
-        return set.Session.game;
+        if(set.Session==undefined) 
+            return "";
+        else 
+            return set.Session.game;
     },
     CommandBestOfStart:function()
     {
@@ -104,7 +90,14 @@ module.exports =
     },
     CommandAddWinner:function(winner)
     {
-        return set.PlayerWin(winner);
+        var returnobject=[];
+        var winObject= set.PlayerWin(winner);
+        console.log(winObject);
+        if(winObject.winner==true)
+             returnobject.push(comm.Request(false,null,`<@${winner}> has won the 'Best Of' set!`,false,null));
+        else
+             returnobject.push(comm.Request(false,null,`<@${winner}> has ${winObject.wins} out of ${set.Session.count} `,false,null));
+        return returnobject;
     },
     CommandBestOfExists:function()
     {
@@ -112,14 +105,13 @@ module.exports =
         else return true;
     },
     CommandBestOfRunning:function(){
-    
         if(set.gameRunning==false) return false
         else return true;
     },
     CommandBestOfPlayerList:function(){
         if(set.Session==undefined)return [];
         var players=[];
-        for(var x=0;x<set.Session.players.count;x++)
+        for(var x=0;x<set.Session.players.length;x++)
             {
                 players.push(set.Session.players[x].id);
             }
@@ -127,19 +119,19 @@ module.exports =
     },
     CommandBestOfPlayerMessage:function(){
         let communicationRequests=[];
-        console.log(set.Session);
+
         if(set.Session!=undefined)
         {
             var message=`Current Players in 'Best Of' Set: ${set.Session.players.length} \n`;
             for(var x=0;x<set.Session.players.length;x++)
             {
-                message=message.concat(`<@${set.Session.players[x].id}>\n`)
+                message=message.concat(`<@${set.Session.players[x].id}> Wins: ${set.Session.players[x].wins}\n`)
             }
-            communicationRequests.push(communicationObject(true,null,message,false,null));
+            communicationRequests.push(comm.Request(true,null,message,false,null));
         }
         else
         {
-            communicationRequests.push(communicationObject(true,null,"There is no 'Best Of' set running.",false,null));   
+            communicationRequests.push(comm.Request(true,null,"There is no 'Best Of' set running.",false,null));   
         }
         return communicationRequests;
     },
@@ -149,32 +141,36 @@ module.exports =
         {
             set.CreateBestOf(InteractionID,gameType,coffAmount,winsRequired)
             set.AddPlayer(InteractionID);
-            communicationRequests.push(communicationObject(true,null,`<@${InteractionID}> is starting a 'Best Of' ${winsRequired} in ${gameType} for ${coffAmount} :coffee:s `,false,null));
+            communicationRequests.push(comm.Request(true,null,`<@${InteractionID}> is starting a 'Best Of' ${winsRequired} in ${gameType} for ${coffAmount} :coffee:s `,false,comm.Timer(Events.BestInit,4,0)));
+        }
+        else
+        {
+            communicationRequests.push(comm.Request(true,null,`There is already a 'Best Of' set running, see if  you can join it!`,true,null));  
         }
         return communicationRequests;
 
     },
     CommandAddPlayer:function(InteractionID)
     {
-        let communicationRequests=[];
+        var returnobject=[];
         if(set.Session!=undefined)
         {
-            communicationRequests.push(set.AddPlayer(InteractionID));
+            if(set.AddPlayer(InteractionID))
+                returnobject.push( comm.Request(true,null,`<@${InteractionID}> has joined the 'Best Of' set!`,false,null));
+            else
+            {
+                returnobject.push( comm.Request(true,null,`You are already in this 'Best Of' set!`,true,null));;
+            }
         }
-        return communicationRequests;
+        return returnobject;
     },
-    
+    CommandBestOfEnd:function()
+    {
+        set.Session=undefined;
+        set.gameRunning=false;
+        set.StartingPlayer=0;
+        return comm.Request(true,null,`The 'Best Of' Set was never started, for shame! Feel free to try again when people actually want to play...`,true,null);
+
+    }
 }
 
-function CreateEmbed(setTitle,setText,setFields,setFieldsAlign,setColor)
-{
-    let psudoEmbed={
-     title:setTitle,
-     text:setText,
-     color:setColor,
-     fields:setFields,
-     fieldsAlign:setFieldsAlign,
-     thumbnail:"https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg"
-    }
-     return psudoEmbed;
-}

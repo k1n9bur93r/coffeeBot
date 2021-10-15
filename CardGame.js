@@ -1,58 +1,16 @@
- 
+
 const fileIO= require("./FileIO");
 const BestOf= require("./BestOf");
+const comm= require("./Communication");
+const { CommandBestOfRunning } = require("./BestOf");
 
-function communicationObject(isReply, embedObject, botMessage,isHidden,TimerObject)
-{
-    let object={reply:isReply,
-        embed:embedObject,
-        message:botMessage,
-        hidden:isHidden,
-        TimerSettings:null
-        };
-        if(TimerObject)
-        {
-            object.TimerSettings=TimerObject;
-        }
-    return object;
-    
-}
-function TimerSettings(eventName,timerLength,methodNumber)
-{
-    console.log("I am the methodNumber: "+methodNumber);
-    let replaceAction=[];
-    if(eventName==Events.GameEnd)
-    {
-        replaceAction.push(Events.GameStart);
-        replaceAction.push(Events.GameInit);
-        replaceAction.push(Events.GameAction)
-    }
-    else if(eventName==Events.GameStart)
-    {
-        replaceAction.push(Events.GameInit);
 
-    }
-    else if(eventName==Events.GameAction)
-    {
-        replaceAction.push(Events.GameStart);
-        replaceAction.push(Events.GameAction);
-    }
-    
 
-    let object={
-        Action: eventName,
-        Replace: replaceAction,
-        Length:timerLength*60000,
-        functionCall:methodNumber
-    }
-    return object
-
-}
 const Events={
-    GameStart:"CG-Start",
-    GameEnd:"CG-End",
-    GameAction:"CG-Action",
-    GameInit:"CG-Init"
+    GameStart: {Name:"CG-Start",Replace:["CG-Init","BS-Init"]},
+    GameEnd:{Name:"CG-End",Replace:["CG-Init","CG-Action","CG-Start"]},
+    GameAction:{Name:"CG-Action",Replace:["CG-Start"]},
+    GameInit:{Name:"CG-Init",Replace:["BS-Init"]}
 }
 
 function cardGame()
@@ -66,7 +24,7 @@ function cardGame()
     this.StartingPlayer=0;
     this.PotSize=1;
     this.TieGame=false;
-    this.TimeStamp=""; 
+    this.TimeStamp="";
     this.TimerLength=
     this.AddPlayer=function(id)
     {
@@ -97,7 +55,7 @@ function cardGame()
         this.GameRunning=false;
         this.StartingPlayer=0;
         this.PotSize=1;
-        this.TieGame=false; 
+        this.TieGame=false;
     }
     this.DealCard=function(id)
     {
@@ -121,7 +79,7 @@ function cardGame()
                     this.PlayerObjects[index].cards[x]=1;
                     aceCounter--;
                     break;
-    
+
                 }
             }
         }
@@ -164,16 +122,16 @@ function cardGame()
                 return;
         }
         this.GameWon=true;
-        for (let x = 0; x <  this.PlayerObjects.length; x++) 
+        for (let x = 0; x <  this.PlayerObjects.length; x++)
         {
-            if ( this.PlayerObjects[x].isStayed) 
+            if ( this.PlayerObjects[x].isStayed)
             {
-                if ( this.PlayerObjects[x].total == highestStay) 
+                if ( this.PlayerObjects[x].total == highestStay)
                 {
                     this.TieGame = true;
                     this.Winners.push( this.PlayerObjects[x]);
-                } 
-                else if ( this.PlayerObjects[x].total > highestStay) 
+                }
+                else if ( this.PlayerObjects[x].total > highestStay)
                 {
                     this.Winners = [];
                     highestStay =  this.PlayerObjects[x].total;
@@ -200,7 +158,7 @@ function cardGame()
             if(this.PlayerObjects[x].userId==id)
                 return x;
         return -1;
-        
+
     }
     this.RemovePlayer=function()
     {
@@ -222,21 +180,24 @@ function cardGame()
 }
 let currentGame=new cardGame();
 
-module.exports = 
-{
-    CommandStartJoinGame: function (interactionID, amount, messageReply=true)
-    {
-        let communicationRequests=[]
+const thumbnail="https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg";
 
-     communicationRequests= BestOfAddUsers("21",messageReply);
+module.exports =
+{
+    CommandStartJoinGame: function (interactionID, amount, messageReply=true)//,requests=[])
+    {
+        let communicationRequests=[];
+
+    //   communicationRequests=BestOfAddUsers("21",messageReply,requests);
+    //   if(communicationRequests.length!=0) return communicationRequests;
 
         let coffAmount = amount;
-            
+
         if(!coffAmount)
             coffAmount=1;
         else if(coffAmount>5)
         {
-            return  communicationRequests.push(communicationObject(messageReply,null,"Can't have a buy in great than 5!",true))
+            return  communicationRequests.push(comm.Request(messageReply,null,"Can't have a buy in great than 5!",true))
         }
         if(currentGame.StartingPlayer==interactionID)
         {
@@ -245,25 +206,26 @@ module.exports =
                 let fields=[];
                 for(let x=0;x<currentGame.PlayerObjects.length;x++)
                     fields.push({title:`Player ${x+1}`,content:`<@${currentGame.PlayerObjects[x].userId}>`,fieldsAlign:true});
-                const embed=CreateEmbed(
+                const embed=comm.Embed(
                     "21 Round Starting",
                     `The game of 21 is starting with ${(currentGame.PlayerObjects.length-1)*currentGame.PotSize} coffs on the line! Players see your hand with **/hand** and use **/draw** to draw or **/stay** stay!\n`,
                     fields,
                     true,
-                    "DARK_RED"
+                    "DARK_RED",
+                    thumbnail
                 );
-                
-                communicationRequests.push(communicationObject(messageReply,embed,"",false,TimerSettings(Events.GameStart,4,2)));
+
+                communicationRequests.push(comm.Request(messageReply,embed,"",false,comm.Timer(Events.GameStart,4,2)));
                 currentGame.GameRunning=true;
             }
             else
             {
-                communicationRequests.push(communicationObject(messageReply,null,`Sorry, there is a game currently on going!`,true));
+                communicationRequests.push(comm.Request(messageReply,null,`Sorry, there is a game currently on going!`,true));
             }
-        }    
+        }
         else if(currentGame.GameRunning==false)
         {
-           
+
             if(currentGame.PlayerObjects.length==0)
             {
                 let embed;
@@ -272,15 +234,16 @@ module.exports =
                 currentGame.AddPlayer(interactionID);
                 currentGame.DealCard(0);
                 currentGame.DealCard(0);
-                embed=CreateEmbed(
+                embed=comm.Embed(
                     "21 New Round",
                     `<@${interactionID}> Is starting a round of 21 with a ${currentGame.PotSize} coff buy in, use /21 to join!`,
                     null,
                     null,
-                    "DARK_RED"
+                    "DARK_RED",
+                    thumbnail
                 );
-                
-                communicationRequests.push(communicationObject(messageReply,embed,"",false,TimerSettings(Events.GameInit,5,1)));
+
+                communicationRequests.push(comm.Request(messageReply,embed,"",false,comm.Timer(Events.GameInit,5,1)));
 
             }
             else
@@ -288,18 +251,18 @@ module.exports =
                 let result =currentGame.AddPlayer(interactionID);
                 if(result==false)
                 {
-                    communicationRequests.push(communicationObject(messageReply,null,`You are already in this game!`,true));
+                    communicationRequests.push(comm.Request(messageReply,null,`You are already in this game!`,true));
                     return communicationRequests;
                 }
                 currentGame.DealCard(interactionID);
                 currentGame.DealCard(interactionID);
-                communicationRequests.push(communicationObject(messageReply,null,`<@${interactionID}> has joined the game of 21 started by <@${currentGame.StartingPlayer}>!`,false));
+                communicationRequests.push(comm.Request(messageReply,null,`<@${interactionID}> has joined the game of 21 started by <@${currentGame.StartingPlayer}>!`,false));
             }
-           
+
         }
         else if(currentGame.GameRunning==true)
         {
-            communicationRequests.push(communicationObject(messageReply,null,`Sorry, there is a game currently on going!`,true));
+            communicationRequests.push(comm.Request(messageReply,null,`Sorry, there is a game currently on going!`,true));
         }
         return communicationRequests;
     },
@@ -308,55 +271,56 @@ module.exports =
     {
         let communicationRequests=[];
         if(interactionID==currentGame.StartingPlayer&&currentGame.GameRunning==false){
-            communicationRequests.push(communicationObject(true,null,`${interactionID} Is revoking their game offer`,true,TimerSettings(Events.GameEnd,0,0)));
+            communicationRequests.push(comm.Request(true,null,`${interactionID} Is revoking their game offer`,true,comm.Timer(Events.GameEnd,0,0)));
             ResetGameVars();
         }
         else if(interactionID==currentGame.StartingPlayer&&currentGame.GameRunning==true)
-            communicationRequests.push(communicationObject(true,null,`${interactionID} You cannot cancel a game after it has started!`,true));
+            communicationRequests.push(comm.Request(true,null,`${interactionID} You cannot cancel a game after it has started!`,true));
         else
-            communicationRequests.push(communicationObject(true,null,`${interactionID} You cannot cancel a game you did not start!`,true));
+            communicationRequests.push(comm.Request(true,null,`${interactionID} You cannot cancel a game you did not start!`,true));
         return communicationRequests;
-    }, 
+    },
 
     CommandPlayerList: function ()
     {
         let communicationRequests=[];
         if(currentGame.PlayerObjects.length==0)
         {
-            communicationRequests.push(communicationObject(true,null,"No game is pending/currently being played. Type /21 to start one!",true));
+            communicationRequests.push(comm.Request(true,null,"No game is pending/currently being played. Type /21 to start one!",true));
         }
         else
         {
         let fields=[];
         for(let x=0;x<currentGame.PlayerObjects.length;x++)
             fields.push({title:`Player ${x+1}`,content:`<@${currentGame.PlayerObjects[x].userId}>`});
-        const embed=CreateEmbed(
+        const embed=comm.Embed(
             "21 Current Players",
             `There are *${(currentGame.PlayerObjects.length-1)*currentGame.PotSize}* coffs on the line`,
             fields,
             true,
-            'DARK_RED'
+            'DARK_RED',
+            thumbnail
         );
-        communicationRequests.push(communicationObject(true,embed,"",false));
+        communicationRequests.push(comm.Request(true,embed,"",false));
         }
         return communicationRequests;
     },
 
     CommandDraw: function (interactionID)
-    {              
+    {
         let playerIndex=ValidateAction(interactionID);
         let communicationRequests=playerIndex.requets;
         if(playerIndex.index==-1) return communicationRequests;
         currentGame.DealCard(playerIndex.index);
         const embed =CreatePlayerHandEmbed(currentGame.PlayerObjects[playerIndex.index],true);
-        communicationRequests.push(communicationObject(true,embed,"",true,TimerSettings(Events.GameAction,2,2)));
+        communicationRequests.push(comm.Request(true,embed,"",true,comm.Timer(Events.GameAction,2,2)));
         if(currentGame.PlayerObjects[playerIndex.index].isOver)
         {
-            communicationRequests.push(communicationObject( 
+            communicationRequests.push(comm.Request(
                 false,
                 null,
                 `<@${currentGame.PlayerObjects[playerIndex.index].userId}> is done with their hand in the current game of 21.`,
-            ));  
+            ));
         }
         return GameEnd(communicationRequests);
     },
@@ -366,24 +330,24 @@ module.exports =
         let playerIndex=ValidateAction(interactionID);
         let communicationRequests=playerIndex.requets;
         if(playerIndex.index==-1) return communicationRequests;
-        currentGame.StayHand(playerIndex.index);   
-        communicationRequests.push(communicationObject(true,null,`You have stayed`,true,TimerSettings(Events.GameAction,2,2)));
-        communicationRequests.push(communicationObject(
+        currentGame.StayHand(playerIndex.index);
+        communicationRequests.push(comm.Request(true,null,`You have stayed`,true,comm.Timer(Events.GameAction,2,2)));
+        communicationRequests.push(comm.Request(
             false,
             null,
             `<@${currentGame.PlayerObjects[playerIndex.index].userId}> is done with their hand in the current game of 21.`
-        ));  
+        ));
         return GameEnd(communicationRequests);
     },
 
     CommandHand: function(interactionID)
     {
-        
+
         let playerIndex=ValidateAction(interactionID);
         let communicationRequests=playerIndex.requets;
         if(playerIndex.index==-1) return communicationRequests;
         const embed = CreatePlayerHandEmbed( currentGame.PlayerObjects[playerIndex.index], false);
-        communicationRequests.push(communicationObject( true, embed, "", true));
+        communicationRequests.push(comm.Request( true, embed, "", true));
         return communicationRequests;
     },
 
@@ -405,7 +369,7 @@ module.exports =
 function TimeOutNoStart()
 {
     let communicationRequests=[];
-    communicationRequests.push(communicationObject(false,null,`The current 21 Game has been reset,<@${currentGame.StartingPlayer}> has failed to start it....good job.`,false));
+    communicationRequests.push(comm.Request(false,null,`The current 21 Game has been reset,<@${currentGame.StartingPlayer}> has failed to start it....good job.`,false));
     currentGame.ResetGame();
     return communicationRequests;
 }
@@ -413,12 +377,12 @@ function TimeOutNoStart()
 function TimeOutLongWait()
 {
     let communicationRequests=[];
-    
+
     for(let x=0;x<currentGame.PlayerObjects.length;x++)
     {
         currentGame.StayHand(x);
     }
-    communicationRequests.push(communicationObject(false,null,"The current game of 21 has gone stale! No one has played an action in over two minutes. Wrapping up the game!"));
+    communicationRequests.push(comm.Request(false,null,"The current game of 21 has gone stale! No one has played an action in over two minutes. Wrapping up the game!"));
     return GameEnd(communicationRequests);
 }
 
@@ -427,20 +391,21 @@ function TimeOutLongWait()
     let embedText = `Still in the game!\n`;
     if (playerObject.isOver)
         embedText = `You went over!\n`;
-    if (newDraw) 
+    if (newDraw)
         embedText = embedText.concat( `:hearts::diamonds:You drew a **${playerObject.cards[playerObject.cards.length - 1]}**:diamonds::hearts:`);
-    for (let x = 0; x < playerObject.cards.length; x++) 
+    for (let x = 0; x < playerObject.cards.length; x++)
     {
         cardString = cardString.concat(`*${playerObject.cards[x]}* :black_joker: `);
-        if (x + 1 != playerObject.cards.length) 
+        if (x + 1 != playerObject.cards.length)
             cardString = cardString.concat(`->`);
     }
-    return   CreateEmbed(
+    return   comm.Embed(
     "Your Hand",
     embedText,
     [{title:"Total: ",content:`*${playerObject.total}*`,fieldsAlign:true},{title:"Cards: ",content: cardString,fieldsAlign:true}],
     true,
-    "ORANGE"
+    "ORANGE",
+    thumbnail
     )
 }
 
@@ -457,7 +422,7 @@ if(currentGame.Winners.length>1)
     isTie=true;
     warText = ` Wow there is a tie between players! \n`
     for(let x=0;x<currentGame.Winners.length;x++)
-        warText += `<@${currentGame.Winners[x].userId}> has tied with a total of ${currentGame.Winners[x].total} \n`;   
+        warText += `<@${currentGame.Winners[x].userId}> has tied with a total of ${currentGame.Winners[x].total} \n`;
     warText+=`Starting up a new round.\n **Total past results**:\n`;
 
     currentGame.GameRunning=true;
@@ -468,16 +433,16 @@ if(currentGame.Winners.length>1)
         currentGame.AddPlayer(currentGame.Winners[x].userId);
         currentGame.DealCard(x);
         currentGame.DealCard(x);
-    } 
-    currentGame.Winners=[]; 
-}   
+    }
+    currentGame.Winners=[];
+}
 else if(currentGame.Winners.length==1)
 {
     warText = `<@${currentGame.Winners[0].userId}> has won the game of 21! They won **${(currentGame.PlayerIds.length-1)*currentGame.PotSize}** :coffee:!\n\n`;
-        for ( let x=0;x<currentGame.PlayerIds.length;x++) 
+        for ( let x=0;x<currentGame.PlayerIds.length;x++)
         {
             tempPlayerObject=currentGame.PlayerObjects;
-            if (currentGame.PlayerIds[x] != currentGame.Winners[0]) 
+            if (currentGame.PlayerIds[x] != currentGame.Winners[0])
             {
                 fileIO.AddUserCoffee(currentGame.PlayerIds[x],currentGame.Winners[0],currentGame.PotSize,"21");
             }
@@ -487,87 +452,75 @@ else if(currentGame.Winners.length==1)
 }
 else
 {
-    warText = `No one won...\n\n`; 
+    warText = `No one won...\n\n`;
     tempPlayerObject=currentGame.PlayerObjects;
 }
 tempPlayerObject= tempPlayerObject.sort((a,b)=>(a.total<b.total)? 1 : -1);
-for (let x=0;x<tempPlayerObject.length;x++) 
+for (let x=0;x<tempPlayerObject.length;x++)
 {
-   
+
     let cardText="Cards:";
     let totalText=`Total:`;
     if(tempPlayerObject[x].total>21)
-        totalText+=` **Over** ~~**${tempPlayerObject[x].total}**~~`; 
+        totalText+=` **Over** ~~**${tempPlayerObject[x].total}**~~`;
     else
         totalText+=`**${tempPlayerObject[x].total}**`;
-    for (let y = 0; y < tempPlayerObject[x].cards.length; y++) 
+    for (let y = 0; y < tempPlayerObject[x].cards.length; y++)
     {
         cardText = cardText.concat(`*${tempPlayerObject[x].cards[y]}* :black_joker: `);
-        if (y + 1 != tempPlayerObject[x].cards.length) 
+        if (y + 1 != tempPlayerObject[x].cards.length)
             cardText = cardText.concat(`->`);
-              
+
     }
     warfields.push({title:`Player ${x+1}`,content:`<@${tempPlayerObject[x].userId}> - ${totalText} , ${cardText} `,fieldsAlign:false});
 }
-    let embed= CreateEmbed(
+    let embed= comm.Embed(
         "21 Round Result",
         warText,
         warfields,
         false,
-        'DARK_RED'
-    );                        
+        'DARK_RED',
+        thumbnail
+    );
     if(isTie)
-    returnObject=communicationObject(false,embed,"",false,null);
+    returnObject=comm.Request(false,embed,"",false,null);
     else
     {
-        returnObject=communicationObject(false,embed,"",false,TimerSettings(Events.GameEnd,0,0));
+        returnObject=comm.Request(false,embed,"",false,comm.Timer(Events.GameEnd,0,0));
     }
     return  returnObject;
-}
-
-function CreateEmbed(setTitle,setText,setFields,setFieldsAlign,setColor)
-{
-    let psudoEmbed={
-     title:setTitle,
-     text:setText,
-     color:setColor,
-     fields:setFields,
-     fieldsAlign:setFieldsAlign,
-     thumbnail:"https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg"
-    }
-     return psudoEmbed;
 }
 
 function ValidateAction(interactionID)
 {
     let tempIndex=currentGame.GetPlayerIndex(interactionID)
     let returnObject={index:-1,requets:[]};
-    if(currentGame.GameRunning==false) 
-    { 
-        returnObject.requets.push(communicationObject(true,
+    if(currentGame.GameRunning==false)
+    {
+        returnObject.requets.push(comm.Request(true,
         null,
         "There is no game currently running!",
-        true));
-        
+        true,null));
+
     }
     else if(tempIndex==-1)
     {
-        returnObject.requets.push(communicationObject(true,
+        returnObject.requets.push(comm.Request(true,
             null,
             "You are not in this game, wait till the next one",
             true));
-        
+
     }else if(currentGame.CheckPlayerIn(tempIndex))
     {
         returnObject.index=tempIndex;
     }
     else
     {
-        returnObject.requets.push(communicationObject(true,
+        returnObject.requets.push(comm.Request(true,
             null,
             "You cannot make anymore actions this round",
             true));
-        return returnObject; 
+        return returnObject;
     }
     return returnObject;
 
@@ -578,50 +531,51 @@ function GameEnd(communicationRequests)
     var returnObject=CheckWinner();
     if(returnObject)
     {
-        console.log("Hello1");
         communicationRequests.push(returnObject);
-        console.log("Hello2");
-        if(BestOf.CommandBestOfRunning()==true)
+        console.log("Game End function the game is running "+BestOf.CommandBestOfRunning())
+        if(BestOf.CommandBestOfRunning())
         {
-            console.log("Hello3");
-            communicationRequests.concat(BestOf.CommandAddWinner(currentGame.Winners[0].userId));
+            communicationRequests= communicationRequests.concat(BestOf.CommandAddWinner(currentGame.Winners[0].userId));
             currentGame.ResetGame();
-            if(BestOf.CommandBestOfRunning==true)
-            {
-                BestOfAddUsers();
-            }
         }
-        console.log("Hello4");
     }
-    console.log(communicationRequests);
     return communicationRequests;
 }
 
-function BestOfAddUsers(gameType,recurse)
-{   var x=0;
-    var communicationRequests=[];
-    if(BestOf.CommandBestOfExists()&&!BestOf.CommandBestOfRunning()&&(BestOf.CommandBestOfType()==gameType)&&recurse)
-    {
-        BestOf.CommandBestOfStart();
-        x++
-    }
-    if(BestOf.CommandBestOfExists()&&(BestOf.CommandBestOfType()==gameType))
-    {
-        var players=BestOf.CommandBestOfPlayerList();
-        for(x;x<players.length;x++)
-        {
-            communicationRequests.concat(this.CommandStartJoinGame(players[x],5,false));
-        }
-        communicationRequests.concat(this.CommandStartJoinGame(players[0],5,false));
-    }
-    return communicationRequests();
-}
+// function BestOfAddUsers(gameType,recurse,requests=[])
+// {
 
+//     var x=0;
+//     var communicationRequests=[];
+//     communicationRequests= communicationRequests.concat(requests);
+//     console.log("BestOfAddUsers input requests");
+//     console.log(communicationRequests);
 
-    //        return  communicationRequests.push(communicationObject(messageReply,null,"Can't start a new game when there is a Best Of set in progress",true));
-    //}else if(BestOf.CommandBestOfPlayerList().length>0)
-   // {
-    //    return  communicationRequests.push(communicationObject(messageReply,null,"Can't start a new game when people are creating a Best Of set",true));
-    //}
+//     console.log(`Checking logic for a Bo5 game if it should be running\n Exists: ${BestOf.CommandBestOfExists()}\n Running: ${BestOf.CommandBestOfRunning()}\n Type: ${BestOf.CommandBestOfType()}\n Recurse: ${recurse} `);
+//     if(BestOf.CommandBestOfExists()&&!BestOf.CommandBestOfRunning()&&(BestOf.CommandBestOfType()==gameType)&&recurse)
+//     {
+//         console.log("Starting a Best of Game");
+//         BestOf.CommandBestOfStart();
+//         x++
+//     }
+//     console.log(`Checking logic for a Bo5 game if we should add players to an game\n Exists: ${BestOf.CommandBestOfExists()}\n Type: ${BestOf.CommandBestOfType()}\n Recurse: ${recurse} `);
+
+//     if(recurse&&(BestOf.CommandBestOfExists()&&(BestOf.CommandBestOfType()==gameType)))
+//     {
+//         console.log("Adding players to best of game");
+//         var players=BestOf.CommandBestOfPlayerList();
+//         for(x;x<players.length;x++)
+//         {
+//             console.log("Payer added via best of five");
+//             communicationRequests= communicationRequests.concat(module.exports.CommandStartJoinGame(players[x],5,false,communicationRequests));
+//         }
+//         console.log("Starting best of five");
+//         communicationRequests=communicationRequests.concat(module.exports.CommandStartJoinGame(players[0],5,false,communicationRequests));
+//     }
+//     console.log("BestOfAddUsers communication requests");
+//     console.log(communicationRequests);
+//     return communicationRequests;
+// }
+
 
 
