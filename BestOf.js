@@ -5,23 +5,25 @@ const comm= require("./Communication");
 
 
 const Events={
-    BestInit:{Name:"BS-Init",Replace:["CG-Init","CG-Start","CG-Action","CG-End"]}
+    BestInit:{Name:"BS-Init",Replace:["CG-Init","CG-Start","CG-Action","CG-End"]},
+    BestTimeOut:{Name:"BS-Time",Replace:["CG-Init","CG-Start","CG-Action","CG-End"]}
 }
 
 function BestOfSet(){
-    this.Session=undefined;
-    this.StartingPlayer;
+    this.Session={
+        game:"",
+        amount:0,
+        count: 0,
+        players:[]
+    }
+    this.StartingPlayer=0;
     this.gameRunning=false;
     this.CreateBestOf=function(initPlayer,gameType,coffAmount,winsRequired)
     {
-        StartingPlayer=initPlayer;
-        this.Session={
-            game:gameType,
-            amount:coffAmount,
-            count: winsRequired,
-            players:[]
-        };
-        
+        this.StartingPlayer=initPlayer;
+        this.Session.game=gameType;
+        this.Session.amount=coffAmount;
+        this.Session.count=winsRequired;        
     }
 
     this.AddPlayer=function(playerId){
@@ -63,10 +65,19 @@ function BestOfSet(){
     this.EndBestOf=function(winnerId)
     {
         for(var x=0;x<this.Session.players.length;x++)
-        {        
-            fileIO.AddUserCoffee(this.Session.players[x].id,winnerId,this.Session.amount,this.Session.game);
+        {   if(this.Session.players[x].id!=winnerId)     
+                fileIO.AddUserCoffee(this.Session.players[x].id,winnerId,this.Session.amount,this.Session.game);
         }
-        set.Session=undefined;
+        this.Reset();
+    }
+    this.Reset=function()
+    {
+        this.Session={
+            game:"",
+            amount:0,
+            count: 0,
+            players:[]
+        }
         set.gameRunning=false;
         set.StartingPlayer=0;
     }
@@ -79,48 +90,45 @@ module.exports =
     
     CommandBestOfType:function()
     {
-        if(set.Session==undefined) 
-            return "";
-        else 
             return set.Session.game;
     },
     CommandBestOfStart:function()
     {
         set.gameRunning=true;
     },
-    CommandAddWinner:function(winner)
+    CommandAddWinner:function(winner,isTimeOut)
     {
+        console.log(`What is IsTimeOut????? ${isTimeOut}`);
         var returnobject=[];
         var winObject= set.PlayerWin(winner);
         console.log(winObject);
         if(winObject.winner==true)
              returnobject.push(comm.Request(false,null,`<@${winner}> has won the 'Best Of' set!`,false,null));
         else
-             returnobject.push(comm.Request(false,null,`<@${winner}> has ${winObject.wins} out of ${set.Session.count} `,false,null));
+        {
+            if(isTimeOut)
+                returnobject.push(comm.Request(false,null,`<@${winner}> has ${winObject.wins} out of ${set.Session.count} `,false,null,comm.Timer(Events.BestTimeOut,.01,0)));
+            else
+                returnobject.push(comm.Request(false,null,`<@${winner}> has ${winObject.wins} out of ${set.Session.count} `,false,null));
+        }
         return returnobject;
     },
-    CommandBestOfExists:function()
-    {
-        if(set.Session==undefined)return false;
-        else return true;
-    },
     CommandBestOfRunning:function(){
-        if(set.gameRunning==false) return false
-        else return true;
+        return set.gameRunning;
     },
     CommandBestOfPlayerList:function(){
-        if(set.Session==undefined)return [];
+        if(set.Session.players.length==0)return [];
         var players=[];
         for(var x=0;x<set.Session.players.length;x++)
-            {
-                players.push(set.Session.players[x].id);
-            }
-            return players;
+        {
+            players.push(set.Session.players[x].id);
+        }
+        return players;
     },
     CommandBestOfPlayerMessage:function(){
         let communicationRequests=[];
 
-        if(set.Session!=undefined)
+        if(set.StartingPlayer!=0)
         {
             var message=`Current Players in 'Best Of' Set: ${set.Session.players.length} \n`;
             for(var x=0;x<set.Session.players.length;x++)
@@ -137,7 +145,7 @@ module.exports =
     },
     CommandNewBestOf:function(InteractionID,gameType,coffAmount,winsRequired){
         communicationRequests=[];
-        if(set.Session==undefined)
+        if(set.Session.StartingPlayer!=0)
         {
             set.CreateBestOf(InteractionID,gameType,coffAmount,winsRequired)
             set.AddPlayer(InteractionID);
@@ -153,24 +161,27 @@ module.exports =
     CommandAddPlayer:function(InteractionID)
     {
         var returnobject=[];
-        if(set.Session!=undefined)
+        if(set.gameRunning==false&&set.StartingPlayer!=0)
         {
             if(set.AddPlayer(InteractionID))
                 returnobject.push( comm.Request(true,null,`<@${InteractionID}> has joined the 'Best Of' set!`,false,null));
             else
             {
-                returnobject.push( comm.Request(true,null,`You are already in this 'Best Of' set!`,true,null));;
+                returnobject.push( comm.Request(true,null,`You are already in this 'Best Of' set!`,true,null));
             }
+        }
+        else
+        {
+            returnobject.push( comm.Request(true,null,`There is no 'Best Of' set to join!`,true,null));
         }
         return returnobject;
     },
     CommandBestOfEnd:function()
     {
-        set.Session=undefined;
-        set.gameRunning=false;
-        set.StartingPlayer=0;
-        return comm.Request(true,null,`The 'Best Of' Set was never started, for shame! Feel free to try again when people actually want to play...`,true,null);
-
+        var returnObject=[];
+        set.Reset();
+        returnObject.push( comm.Request(false,null,`The 'Best Of' Set was never started, for shame! Feel free to try again when people actually want to play...`,true,null));
+        return returnObject;
     }
 }
 
