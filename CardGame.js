@@ -2,7 +2,7 @@
 const fileIO= require("./FileIO");
 const BestOf= require("./BestOf");
 const comm= require("./Communication");
-const { CommandBestOfRunning } = require("./BestOf");
+
 
 
 
@@ -18,6 +18,7 @@ function cardGame()
     this.CardDeck=[11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10];
     this.PlayerIds=[];
     this.GameWon=false;
+    this.PastWinner=0;
     this.PlayerObjects=[];
     this.Winners=[];
     this.GameRunning=false;
@@ -184,12 +185,13 @@ const thumbnail="https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/B
 
 module.exports =
 {
-    CommandStartJoinGame: function (interactionID, amount, messageReply=true)//,requests=[])
+    CommandGameRunning: function()
+    {
+        return currentGame.GameRunning;
+    },
+    CommandStartJoinGame: function (interactionID, amount, messageReply=true)
     {
         let communicationRequests=[];
-
-    //   communicationRequests=BestOfAddUsers("21",messageReply,requests);
-    //   if(communicationRequests.length!=0) return communicationRequests;
 
         let coffAmount = amount;
 
@@ -215,7 +217,7 @@ module.exports =
                     thumbnail
                 );
 
-                communicationRequests.push(comm.Request(messageReply,embed,"",false,comm.Timer(Events.GameStart,4,2)));
+                communicationRequests.push(comm.Request(messageReply,embed,"",false,comm.Timer(Events.GameStart,.25,2)));
                 currentGame.GameRunning=true;
             }
             else
@@ -363,6 +365,15 @@ module.exports =
             communicationRequests= TimeOutLongWait();
         }
         return communicationRequests;
+    },
+
+    CommandGetPastWinner:function()
+    {
+        if(currentGame.TieGame==false&&currentGame.PlayerObjects.length==0)
+        {
+            return currentGame.PastWinner;
+        }
+        return "";
     }
 }
 
@@ -373,7 +384,6 @@ function TimeOutNoStart()
     currentGame.ResetGame();
     return communicationRequests;
 }
-
 function TimeOutLongWait()
 {
     let communicationRequests=[];
@@ -383,7 +393,7 @@ function TimeOutLongWait()
         currentGame.StayHand(x);
     }
     communicationRequests.push(comm.Request(false,null,"The current game of 21 has gone stale! No one has played an action in over two minutes. Wrapping up the game!"));
-    return GameEnd(communicationRequests);
+    return GameEnd(communicationRequests,true);
 }
 
  function CreatePlayerHandEmbed (playerObject, newDraw) {
@@ -438,16 +448,18 @@ if(currentGame.Winners.length>1)
 }
 else if(currentGame.Winners.length==1)
 {
+    currentGame.PastWinner=currentGame.Winners[0].userId;
     warText = `<@${currentGame.Winners[0].userId}> has won the game of 21! They won **${(currentGame.PlayerIds.length-1)*currentGame.PotSize}** :coffee:!\n\n`;
         for ( let x=0;x<currentGame.PlayerIds.length;x++)
         {
             tempPlayerObject=currentGame.PlayerObjects;
-            if (currentGame.PlayerIds[x] != currentGame.Winners[0])
+            console.log(`Checking if losing player is not the winning player. Losing player: ${currentGame.PlayerIds[x]}. Winning player ${currentGame.Winners[0].userId}. `)
+            if (currentGame.PlayerIds[x] != currentGame.Winners[0].userId)
             {
-                fileIO.AddUserCoffee(currentGame.PlayerIds[x],currentGame.Winners[0],currentGame.PotSize,"21");
+                console.log("game won, sending over coffs");
+                fileIO.AddUserCoffee(currentGame.PlayerIds[x],currentGame.Winners[0].userId,currentGame.PotSize,"21");
             }
         }
-
         fileIO.UpdateFile("c");
 }
 else
@@ -483,7 +495,7 @@ for (let x=0;x<tempPlayerObject.length;x++)
         thumbnail
     );
     if(isTie)
-    returnObject=comm.Request(false,embed,"",false,null);
+    returnObject=comm.Request(false,embed,"",false,null,comm.Timer(Events.GameStart,.25,2));
     else
     {
         returnObject=comm.Request(false,embed,"",false,comm.Timer(Events.GameEnd,0,0));
@@ -526,56 +538,20 @@ function ValidateAction(interactionID)
 
 }
 
-function GameEnd(communicationRequests)
+function GameEnd(communicationRequests,timeout=false)
 {
     var returnObject=CheckWinner();
     if(returnObject)
     {
         communicationRequests.push(returnObject);
-        console.log("Game End function the game is running "+BestOf.CommandBestOfRunning())
-        if(BestOf.CommandBestOfRunning())
-        {
-            communicationRequests= communicationRequests.concat(BestOf.CommandAddWinner(currentGame.Winners[0].userId));
-            currentGame.ResetGame();
-        }
+        // console.log("Game End function the game is running "+BestOf.CommandBestOfRunning())
+        // if(BestOf.CommandBestOfRunning())
+        // {
+        //     if(currentGame.Winners.length!=0)
+        //         communicationRequests= communicationRequests.concat(BestOf.CommandAddWinner(currentGame.Winners[0].userId,timeout));
+            
+        // }
+        currentGame.ResetGame();
     }
     return communicationRequests;
 }
-
-// function BestOfAddUsers(gameType,recurse,requests=[])
-// {
-
-//     var x=0;
-//     var communicationRequests=[];
-//     communicationRequests= communicationRequests.concat(requests);
-//     console.log("BestOfAddUsers input requests");
-//     console.log(communicationRequests);
-
-//     console.log(`Checking logic for a Bo5 game if it should be running\n Exists: ${BestOf.CommandBestOfExists()}\n Running: ${BestOf.CommandBestOfRunning()}\n Type: ${BestOf.CommandBestOfType()}\n Recurse: ${recurse} `);
-//     if(BestOf.CommandBestOfExists()&&!BestOf.CommandBestOfRunning()&&(BestOf.CommandBestOfType()==gameType)&&recurse)
-//     {
-//         console.log("Starting a Best of Game");
-//         BestOf.CommandBestOfStart();
-//         x++
-//     }
-//     console.log(`Checking logic for a Bo5 game if we should add players to an game\n Exists: ${BestOf.CommandBestOfExists()}\n Type: ${BestOf.CommandBestOfType()}\n Recurse: ${recurse} `);
-
-//     if(recurse&&(BestOf.CommandBestOfExists()&&(BestOf.CommandBestOfType()==gameType)))
-//     {
-//         console.log("Adding players to best of game");
-//         var players=BestOf.CommandBestOfPlayerList();
-//         for(x;x<players.length;x++)
-//         {
-//             console.log("Payer added via best of five");
-//             communicationRequests= communicationRequests.concat(module.exports.CommandStartJoinGame(players[x],5,false,communicationRequests));
-//         }
-//         console.log("Starting best of five");
-//         communicationRequests=communicationRequests.concat(module.exports.CommandStartJoinGame(players[0],5,false,communicationRequests));
-//     }
-//     console.log("BestOfAddUsers communication requests");
-//     console.log(communicationRequests);
-//     return communicationRequests;
-// }
-
-
-

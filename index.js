@@ -552,18 +552,18 @@ client.on("interactionCreate", async (interaction) => {
                 if(list[0]==interaction.user.id)
                 {
                     BestOf.CommandBestOfStart();
-                    await BulkReplyHandler(
+                     BulkReplyHandler(
                         interaction,
                         cardGame.CommandStartJoinGame(list[0],interaction.options.getInteger("amount")));
                         for(var x=1;x<list.length;x++)
                         {
-                           await BulkReplyHandler(
+                            BulkReplyHandler(
                                 interaction,
                                 cardGame.CommandStartJoinGame(list[x],interaction.options.getInteger("amount"),false));
                         }
-                    BulkReplyHandler(
-                        interaction,
-                        cardGame.CommandStartJoinGame(interaction.user.id,interaction.options.getInteger("amount"),false));
+                        BulkReplyHandler(
+                            interaction,
+                            cardGame.CommandStartJoinGame(interaction.user.id,interaction.options.getInteger("amount"),false));
                 }
                 else
                 {
@@ -577,33 +577,14 @@ client.on("interactionCreate", async (interaction) => {
                     interaction,
                     cardGame.CommandStartJoinGame(interaction.user.id,interaction.options.getInteger("amount")));
             }
-            //logic that checks if there is a best of five queued
-                // if true then then the queue will check if the person calling has started the bo5
-                    // if true then all b05 playesr will be loaded up and the game will start
-                    //if false then it will say they can't start the game and they should join it
-                // if false then just start the game normally
+
            
 
         } else if (interaction.commandName =="stay") {
             BulkReplyHandler(
                 interaction,
                 cardGame.CommandStay(interaction.user.id));
-
-                console.log("does the game exist "+BestOf.CommandBestOfRunning());
-                
-                if(BestOf.CommandBestOfExists()&&BestOf.CommandBestOfRunning())
-                {
-                    var list=CommandBestOfPlayerList();
-                    for(var x=0;x<list.length;x++)
-                    {
-                        BulkReplyHandler(
-                            interaction,
-                            cardGame.CommandStartJoinGame(list[x],1,false));
-                    }
-                BulkReplyHandler(
-                    interaction,
-                    cardGame.CommandStartJoinGame(list[0],1,false));
-                }
+            BestOfHandler("21",interaction);
         } else if (interaction.commandName == "hand") {
             BulkReplyHandler(
                 interaction,
@@ -612,21 +593,7 @@ client.on("interactionCreate", async (interaction) => {
             BulkReplyHandler(
                 interaction,
                 cardGame.CommandDraw(interaction.user.id));
-
-                if(BestOf.CommandBestOfExists()&&BestOf.CommandBestOfRunning())
-                {
-                    var list=CommandBestOfPlayerList();
-                    for(var x=0;x<list.length;x++)
-                    {
-                        BulkReplyHandler(
-                            interaction,
-                            cardGame.CommandStartJoinGame(list[x],1,false));
-                    }
-                BulkReplyHandler(
-                    interaction,
-                    cardGame.CommandStartJoinGame(list[0],1,false));
-                }
-                            //check if the b05 game is over, if not then queue up a new game 
+            BestOfHandler("21",interaction);
         } else if (interaction.commandName == "players"){
             BulkReplyHandler(
                 interaction,
@@ -726,8 +693,34 @@ client.on("interactionCreate", async (interaction) => {
     }
 });
 
+async function BestOfHandler(GameType,interaction,timeout=false)
+{
+    if(BestOf.CommandBestOfType()==GameType)
+    {
+
+    var pastWinner=cardGame.CommandGetPastWinner();
+    if(pastWinner!='')
+        BulkReplyHandler(interaction, BestOf.CommandAddWinner(pastWinner,timeout));
+    if(BestOf.CommandBestOfRunning())
+    {
+        var list=CommandBestOfPlayerList();
+        for(var x=0;x<list.length;x++)
+        {
+            await BulkReplyHandler(
+                interaction,
+                cardGame.CommandStartJoinGame(list[x],1,false));
+        }
+        await BulkReplyHandler(
+        interaction,
+        cardGame.CommandStartJoinGame(list[0],1,false));
+        }
+
+    }  
+}
+
 function TimeOutHandler(options)
 {
+    console.log("hitting the handler, logic before actual decision "+options.actionName);
     if(options.actionName.includes('CG-'))
     {
         if(options.actionName=="CG-End"||options.actionName=="CG-Init")
@@ -739,23 +732,37 @@ function TimeOutHandler(options)
             }
             for(let x=0;x<GlobalTimers.length;x++)
             {
-                if(GlobalTimers[x].Name.includes("CG-")||GlobalTimers[x].Name.includes("BS-"))
+                console.log("clearing cg timers");
+                if(GlobalTimers[x].Name.includes("Action"))
                 {
+                    console.log("clearing cg timer "+GlobalTimers[x].Name);
                     clearTimeout(GlobalTimers[x].Timer);
                     GlobalTimers.splice(x,1);// I don't think this will break things now, but this might mess with the indexing of the array when looping
                 }
             }
+            return;
         }
         else
         {
-            BulkReplyHandler(options.interaction,cardGame.CommandTimerEvent(GlobalTimers[options.index].functionCall))
+            console.log(`${options.actionName} is FIRING with index ${options.index}`);
+            console.log(GlobalTimers);
+            BulkReplyHandler(options.interaction,cardGame.CommandTimerEvent(GlobalTimers[options.index].functionCall));
         }
+        //BestOfHandler(BestOf.CommandBestOfType(),options.interaction,true);
     }
     else if(options.actionName.includes('BS-'))
     {
-        BulkReplyHandler(options.interaction,bestOf.CommandBestOfEnd());
+        if(options.actionName.includes('Time'))
+        {
+            BestOfHandler(options.functionCall,options.interaction,TextTrackCue);
+        }
+        else
+            BulkReplyHandler(options.interaction,BestOf.CommandBestOfEnd());
+    return;
     }
+    console.log(GlobalTimers);
     GlobalTimers.splice(options.index,1);
+    console.log(GlobalTimers);
 }
 
 function BulkReplyHandler(interaction,communicationRequests)
@@ -806,15 +813,18 @@ function BulkReplyHandler(interaction,communicationRequests)
                         console.log(`Currently looking to replace timer: ${communicationRequests[x].TimerSettings.Replace[z]} Currently looking at : ${GlobalTimers[y].Name}`);
                         if(communicationRequests[x].TimerSettings.Replace[z]==GlobalTimers[y].Name)
                         {
+                            console.log(GlobalTimers);
                             console.log(`REPLACED A CURRENT TIMER  '${GlobalTimers[y].Name}' with: ${communicationRequests[x].TimerSettings.Action}`);
                             clearTimeout(GlobalTimers[y].Timer);
                             GlobalTimers.splice(y,1);
+                            console.log(GlobalTimers);
                             break;
                         }
                     }
                 }
             }
                 console.log("ADDED A NEW TIMER: "+communicationRequests[x].TimerSettings.Action);
+                console.log(`Timer Settings  Name :${communicationRequests[x].TimerSettings.Action}\n Length: ${communicationRequests[x].TimerSettings.Length}\n functionCall: ${communicationRequests[x].TimerSettings.functionCall}`)
                 GlobalTimers.push(
                     TimerObject(
                         setTimeout(
@@ -822,13 +832,15 @@ function BulkReplyHandler(interaction,communicationRequests)
                             communicationRequests[x].TimerSettings.Length , 
                             {
                             index:GlobalTimers.length,
-                            actionName:communicationRequests[x].TimerSettings.Action,interaction:interaction
+                            actionName:communicationRequests[x].TimerSettings.Action,
+                            interaction:interaction
                             }
                             ),
                         communicationRequests[x].TimerSettings.Action,
                         communicationRequests[x].TimerSettings.functionCall
                         )
                     );
+                    console.log(GlobalTimers);
         }
 
     }
