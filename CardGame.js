@@ -217,7 +217,7 @@ module.exports =
                     thumbnail
                 );
 
-                communicationRequests.push(comm.Request(messageReply,embed,"",false,comm.Timer(Events.GameStart,.25,2)));
+                communicationRequests.push(comm.Request(messageReply,embed,"",false,comm.Timer(Events.GameStart,4,2)));
                 currentGame.GameRunning=true;
             }
             else
@@ -495,7 +495,7 @@ for (let x=0;x<tempPlayerObject.length;x++)
         thumbnail
     );
     if(isTie)
-    returnObject=comm.Request(false,embed,"",false,null,comm.Timer(Events.GameStart,.25,2));
+    returnObject=comm.Request(false,embed,"",false,null,comm.Timer(Events.GameStart,4,2));
     else
     {
         returnObject=comm.Request(false,embed,"",false,comm.Timer(Events.GameEnd,0,0));
