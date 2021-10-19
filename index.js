@@ -17,11 +17,10 @@ let maxMultiflipAmount = 5;
 let multiflipRequests = {};
 
 let GlobalTimers=[];
-function TimerObject(timer,timerName,callbackMethod)
+function TimerObject(timer,timerName)
 {
     return{
         Timer:timer,
-        functionCall:callbackMethod,
         Name:timerName
     }
 }
@@ -721,48 +720,36 @@ async function BestOfHandler(GameType,interaction,timeout=false)
 
 function TimeOutHandler(options)
 {
-    console.log("This is the new thing, why is this firing? "+options.actionName);
+    console.log("Event FIRING "+options.actionName);
     if(options.actionName.includes('CG-'))
     {
-        if(options.actionName=="CG-End"||options.actionName=="CG-Init")
+        if(options.actionName=="CG-End")
         {
-            if(options.actionName=="CG-Init")
+            for(let x=0;x<GlobalTimers.length;x++)
             {
-                BulkReplyHandler(options.interaction,cardGame.CommandTimerEvent(GlobalTimers[options.index].functionCall))
-
-            }
-            else 
-            {
-                for(let x=0;x<GlobalTimers.length;x++)
+                if(GlobalTimers[x].Name.includes("CG-"))
                 {
-                    if(GlobalTimers[x].Name.includes("CG-"))
-                    {
-                        clearTimeout(GlobalTimers[x].Timer);
-                        GlobalTimers.splice(x,1);// I don't think this will break things now, but this might mess with the indexing of the array when looping
-                    }
-                }
-        }
-            
+                    clearTimeout(GlobalTimers[x].Timer);
+                    GlobalTimers.splice(x,1);// I don't think this will break things now, but this might mess with the indexing of the array when looping
+                }  
+            }  
         }
         else
         {
-            BulkReplyHandler(options.interaction,cardGame.CommandTimerEvent(GlobalTimers[options.index].functionCall)); // add some kind of message when it tries to kill a timer and fails
+            BulkReplyHandler(options.interaction,cardGame.CommandTimerEvent(options.functionCall));
+            BestOfHandler("21",options.interaction,true); 
         }
-        BestOfHandler("21",options.interaction,true);
-        return;
     }
     else if(options.actionName.includes('BS-'))
     {
-        console.log("This is the new thing, why is this firing? "+options.actionName);
         if(options.actionName.includes('Time'))
         {
             BestOfHandler("21",options.interaction,true);
         }
         else
             BulkReplyHandler(options.interaction,BestOf.CommandBestOfEnd());
-    return;
+
     }
-    GlobalTimers.splice(options.index,1);
 }
 
 function BulkReplyHandler(interaction,communicationRequests)
@@ -807,10 +794,8 @@ function BulkReplyHandler(interaction,communicationRequests)
             {
                 for(let z=0;z<communicationRequests[x].TimerSettings.Replace.length;z++)
                 {
-                   // console.log("Name of the replace I am checking "+communicationRequests[x].TimerSettings.Replace[z]);
                     for(let y=0;y<GlobalTimers.length;y++)
                     {
-                       // console.log(`Currently looking to replace timer: ${communicationRequests[x].TimerSettings.Replace[z]} Currently looking at : ${GlobalTimers[y].Name}`);
                         if(communicationRequests[x].TimerSettings.Replace[z]==GlobalTimers[y].Name)
                         {
                             console.log(`REPLACED A CURRENT TIMER  '${GlobalTimers[y].Name}' with: ${communicationRequests[x].TimerSettings.Action}`);
@@ -821,7 +806,6 @@ function BulkReplyHandler(interaction,communicationRequests)
                     }
                 }
             }
-                //console.log("ADDED A NEW TIMER: "+communicationRequests[x].TimerSettings.Action);
                 GlobalTimers.push(
                     TimerObject(
                         setTimeout(
@@ -830,11 +814,11 @@ function BulkReplyHandler(interaction,communicationRequests)
                             {
                             index:GlobalTimers.length,
                             actionName:communicationRequests[x].TimerSettings.Action,
+                            functionCall:communicationRequests[x].TimerSettings.functionCall,
                             interaction:interaction
                             }
                             ),
-                        communicationRequests[x].TimerSettings.Action,
-                        communicationRequests[x].TimerSettings.functionCall
+                        communicationRequests[x].TimerSettings.Action
                         )
                     );
         }

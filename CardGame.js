@@ -59,7 +59,6 @@ function cardGame()
         let index=this.GetPlayerIndex(id);
         if(index==-1)return false;
         let selection = this.CardDeck[Math.floor(Math.random() * this.CardDeck.length)];
-        selection=5;
         if(selection==11)
     {
         if((this.PlayerObjects[index].total+11)>21&&this.PlayerObjects[index].aceCounter==0)
@@ -214,7 +213,7 @@ module.exports =
                     thumbnail
                 );
 
-                communicationRequests.push(comm.Request(messageReply,embed,"",false,comm.Timer(Events.GameStart,4,2)));
+                communicationRequests.push(comm.Request(messageReply,embed,"",false,comm.Timer(Events.GameStart,2,2)));
                 currentGame.GameRunning=true;
             }
             else
@@ -426,6 +425,7 @@ let isTie=false;
 if(currentGame.GameWon==false) return communicationRequests;
 if(currentGame.Winners.length>1)
 {
+    currentGame.PastWinner="";
     isTie=true;
     warText = ` Wow there is a tie between players! \n`
     for(let x=0;x<currentGame.Winners.length;x++)
@@ -491,7 +491,7 @@ for (let x=0;x<tempPlayerObject.length;x++)
         thumbnail
     );
     if(isTie)
-    communicationRequests.push(comm.Request(false,embed,"",false,null,comm.Timer(Events.GameStart,4,2)));
+        communicationRequests.push(comm.Request(false,embed,"",false,comm.Timer(Events.GameStart,2,2)));
     else
     {
         communicationRequests.push(comm.Request(false,embed,"",false,comm.Timer(Events.GameEnd,0,0)));
