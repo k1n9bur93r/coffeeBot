@@ -3,10 +3,8 @@ const { Client, Intents, MessageEmbed } = require("discord.js");
 const { token} = require("./config.json");
 const cardGame= require("./CardGame");
 const fileIO= require("./fileIO");
-const bestOf= require("./BestOf");
 const response=require("./Response.js");
-const BestOf = require("./BestOf");
-const { CommandBestOfExists, CommandBestOfPlayerList } = require("./BestOf");
+const BestOf = require("./BestOf.js");
 
 let curCoinflipRequest = "";
 
@@ -48,6 +46,7 @@ client.once("ready", () => {
 });
 
 client.on("interactionCreate", async (interaction) => {
+    var channelId=interaction.channelId;
     if (!interaction.isCommand()) return;
     try {
         if (interaction.commandName === "multiflip") {
@@ -546,9 +545,11 @@ client.on("interactionCreate", async (interaction) => {
                 interaction,
                 cardGame.CommandEndGame(interaction.user.id));
         } else if (interaction.commandName == "21") {
-            if(BestOf.CommandBestOfExists()&&BestOf.CommandBestOfType()=="21"&&!BestOf.CommandBestOfRunning())
+
+
+            var list=BestOf.CommandBestOfPlayerList()
+            if(list.length!=0&&BestOf.CommandBestOfType()=="21"&&!BestOf.CommandBestOfRunning())
             {
-                var list=CommandBestOfPlayerList();
                 if(list[0]==interaction.user.id)
                 {
                     BestOf.CommandBestOfStart();
@@ -668,20 +669,20 @@ client.on("interactionCreate", async (interaction) => {
         } else if (interaction.commandName == "bestjoin"){
             BulkReplyHandler(
                 interaction,
-                bestOf.CommandAddPlayer(interaction.user.id));
+                BestOf.CommandAddPlayer(interaction.user.id));
         }else if (interaction.commandName == "bestcreate"){
             BulkReplyHandler(
                 interaction,
-                bestOf.CommandNewBestOf(interaction.user.id,interaction.options.getString("game"),interaction.options.getInteger("coffs"),interaction.options.getInteger("rounds")));
+                BestOf.CommandNewBestOf(interaction.user.id,interaction.options.getString("game"),interaction.options.getInteger("coffs"),interaction.options.getInteger("rounds")));
         }else if (interaction.commandName == "bestplayers"){
             BulkReplyHandler(
                 interaction,
-                bestOf.CommandBestOfPlayerMessage());
+                BestOf.CommandBestOfPlayerMessage());
             
         }
 } catch (e) {
-        BotReply(
-            interaction,
+        BotChannelMessage(
+            {channelId:channelId},
             null,
             `I'm Sowwy UwU~ <@${
                 interaction.user.id
@@ -697,13 +698,12 @@ async function BestOfHandler(GameType,interaction,timeout=false)
 {
     if(BestOf.CommandBestOfType()==GameType)
     {
-
     var pastWinner=cardGame.CommandGetPastWinner();
     if(pastWinner!='')
         BulkReplyHandler(interaction, BestOf.CommandAddWinner(pastWinner,timeout));
-    if(BestOf.CommandBestOfRunning())
+    if(BestOf.CommandBestOfRunning()&&!cardGame.CommandGameRunning())
     {
-        var list=CommandBestOfPlayerList();
+        var list=BestOf.CommandBestOfPlayerList();
         for(var x=0;x<list.length;x++)
         {
             await BulkReplyHandler(
@@ -714,13 +714,14 @@ async function BestOfHandler(GameType,interaction,timeout=false)
         interaction,
         cardGame.CommandStartJoinGame(list[0],1,false));
         }
-
+        return true;
     }  
+    return false;
 }
 
 function TimeOutHandler(options)
 {
-    console.log("hitting the handler, logic before actual decision "+options.actionName);
+    console.log("This is the new thing, why is this firing? "+options.actionName);
     if(options.actionName.includes('CG-'))
     {
         if(options.actionName=="CG-End"||options.actionName=="CG-Init")
@@ -730,39 +731,38 @@ function TimeOutHandler(options)
                 BulkReplyHandler(options.interaction,cardGame.CommandTimerEvent(GlobalTimers[options.index].functionCall))
 
             }
-            for(let x=0;x<GlobalTimers.length;x++)
+            else 
             {
-                console.log("clearing cg timers");
-                if(GlobalTimers[x].Name.includes("Action"))
+                for(let x=0;x<GlobalTimers.length;x++)
                 {
-                    console.log("clearing cg timer "+GlobalTimers[x].Name);
-                    clearTimeout(GlobalTimers[x].Timer);
-                    GlobalTimers.splice(x,1);// I don't think this will break things now, but this might mess with the indexing of the array when looping
+                    if(GlobalTimers[x].Name.includes("CG-"))
+                    {
+                        clearTimeout(GlobalTimers[x].Timer);
+                        GlobalTimers.splice(x,1);// I don't think this will break things now, but this might mess with the indexing of the array when looping
+                    }
                 }
-            }
-            return;
+        }
+            
         }
         else
         {
-            console.log(`${options.actionName} is FIRING with index ${options.index}`);
-            console.log(GlobalTimers);
-            BulkReplyHandler(options.interaction,cardGame.CommandTimerEvent(GlobalTimers[options.index].functionCall));
+            BulkReplyHandler(options.interaction,cardGame.CommandTimerEvent(GlobalTimers[options.index].functionCall)); // add some kind of message when it tries to kill a timer and fails
         }
-        //BestOfHandler(BestOf.CommandBestOfType(),options.interaction,true);
+        BestOfHandler("21",options.interaction,true);
+        return;
     }
     else if(options.actionName.includes('BS-'))
     {
+        console.log("This is the new thing, why is this firing? "+options.actionName);
         if(options.actionName.includes('Time'))
         {
-            BestOfHandler(options.functionCall,options.interaction,TextTrackCue);
+            BestOfHandler("21",options.interaction,true);
         }
         else
             BulkReplyHandler(options.interaction,BestOf.CommandBestOfEnd());
     return;
     }
-    console.log(GlobalTimers);
     GlobalTimers.splice(options.index,1);
-    console.log(GlobalTimers);
 }
 
 function BulkReplyHandler(interaction,communicationRequests)
@@ -807,24 +807,21 @@ function BulkReplyHandler(interaction,communicationRequests)
             {
                 for(let z=0;z<communicationRequests[x].TimerSettings.Replace.length;z++)
                 {
-                    console.log("Name of the replace I am checking "+communicationRequests[x].TimerSettings.Replace[z]);
+                   // console.log("Name of the replace I am checking "+communicationRequests[x].TimerSettings.Replace[z]);
                     for(let y=0;y<GlobalTimers.length;y++)
                     {
-                        console.log(`Currently looking to replace timer: ${communicationRequests[x].TimerSettings.Replace[z]} Currently looking at : ${GlobalTimers[y].Name}`);
+                       // console.log(`Currently looking to replace timer: ${communicationRequests[x].TimerSettings.Replace[z]} Currently looking at : ${GlobalTimers[y].Name}`);
                         if(communicationRequests[x].TimerSettings.Replace[z]==GlobalTimers[y].Name)
                         {
-                            console.log(GlobalTimers);
                             console.log(`REPLACED A CURRENT TIMER  '${GlobalTimers[y].Name}' with: ${communicationRequests[x].TimerSettings.Action}`);
                             clearTimeout(GlobalTimers[y].Timer);
                             GlobalTimers.splice(y,1);
-                            console.log(GlobalTimers);
                             break;
                         }
                     }
                 }
             }
-                console.log("ADDED A NEW TIMER: "+communicationRequests[x].TimerSettings.Action);
-                console.log(`Timer Settings  Name :${communicationRequests[x].TimerSettings.Action}\n Length: ${communicationRequests[x].TimerSettings.Length}\n functionCall: ${communicationRequests[x].TimerSettings.functionCall}`)
+                //console.log("ADDED A NEW TIMER: "+communicationRequests[x].TimerSettings.Action);
                 GlobalTimers.push(
                     TimerObject(
                         setTimeout(
@@ -840,7 +837,6 @@ function BulkReplyHandler(interaction,communicationRequests)
                         communicationRequests[x].TimerSettings.functionCall
                         )
                     );
-                    console.log(GlobalTimers);
         }
 
     }

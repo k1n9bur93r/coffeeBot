@@ -1,15 +1,11 @@
 
 const fileIO= require("./FileIO");
-const BestOf= require("./BestOf");
 const comm= require("./Communication");
-
-
-
 
 const Events={
     GameStart: {Name:"CG-Start",Replace:["CG-Init","BS-Init"]},
     GameEnd:{Name:"CG-End",Replace:["CG-Init","CG-Action","CG-Start"]},
-    GameAction:{Name:"CG-Action",Replace:["CG-Start"]},
+    GameAction:{Name:"CG-Action",Replace:["CG-Start","CG-Action"]},
     GameInit:{Name:"CG-Init",Replace:["BS-Init"]}
 }
 
@@ -63,6 +59,7 @@ function cardGame()
         let index=this.GetPlayerIndex(id);
         if(index==-1)return false;
         let selection = this.CardDeck[Math.floor(Math.random() * this.CardDeck.length)];
+        selection=5;
         if(selection==11)
     {
         if((this.PlayerObjects[index].total+11)>21&&this.PlayerObjects[index].aceCounter==0)
@@ -324,7 +321,8 @@ module.exports =
                 `<@${currentGame.PlayerObjects[playerIndex.index].userId}> is done with their hand in the current game of 21.`,
             ));
         }
-        return GameEnd(communicationRequests);
+        
+        return CheckWinner(communicationRequests);
     },
 
     CommandStay: function (interactionID)
@@ -339,7 +337,7 @@ module.exports =
             null,
             `<@${currentGame.PlayerObjects[playerIndex.index].userId}> is done with their hand in the current game of 21.`
         ));
-        return GameEnd(communicationRequests);
+        return CheckWinner(communicationRequests);
     },
 
     CommandHand: function(interactionID)
@@ -393,7 +391,7 @@ function TimeOutLongWait()
         currentGame.StayHand(x);
     }
     communicationRequests.push(comm.Request(false,null,"The current game of 21 has gone stale! No one has played an action in over two minutes. Wrapping up the game!"));
-    return GameEnd(communicationRequests,true);
+    return CheckWinner(communicationRequests);
 }
 
  function CreatePlayerHandEmbed (playerObject, newDraw) {
@@ -419,14 +417,13 @@ function TimeOutLongWait()
     )
 }
 
-function CheckWinner ()
+function CheckWinner (communicationRequests)
 {
-let returnObject;
 let warText;
 let warfields=[];
 let tempPlayerObject=[]
 let isTie=false;
-if(currentGame.GameWon==false) return returnObject;
+if(currentGame.GameWon==false) return communicationRequests;
 if(currentGame.Winners.length>1)
 {
     isTie=true;
@@ -445,6 +442,7 @@ if(currentGame.Winners.length>1)
         currentGame.DealCard(x);
     }
     currentGame.Winners=[];
+    currentGame.GameWon=false;
 }
 else if(currentGame.Winners.length==1)
 {
@@ -453,10 +451,8 @@ else if(currentGame.Winners.length==1)
         for ( let x=0;x<currentGame.PlayerIds.length;x++)
         {
             tempPlayerObject=currentGame.PlayerObjects;
-            console.log(`Checking if losing player is not the winning player. Losing player: ${currentGame.PlayerIds[x]}. Winning player ${currentGame.Winners[0].userId}. `)
             if (currentGame.PlayerIds[x] != currentGame.Winners[0].userId)
             {
-                console.log("game won, sending over coffs");
                 fileIO.AddUserCoffee(currentGame.PlayerIds[x],currentGame.Winners[0].userId,currentGame.PotSize,"21");
             }
         }
@@ -495,12 +491,15 @@ for (let x=0;x<tempPlayerObject.length;x++)
         thumbnail
     );
     if(isTie)
-    returnObject=comm.Request(false,embed,"",false,null,comm.Timer(Events.GameStart,4,2));
+    communicationRequests.push(comm.Request(false,embed,"",false,null,comm.Timer(Events.GameStart,4,2)));
     else
     {
-        returnObject=comm.Request(false,embed,"",false,comm.Timer(Events.GameEnd,0,0));
+        communicationRequests.push(comm.Request(false,embed,"",false,comm.Timer(Events.GameEnd,0,0)));
+        currentGame.ResetGame();
     }
-    return  returnObject;
+    
+    
+    return  communicationRequests;
 }
 
 function ValidateAction(interactionID)
@@ -538,20 +537,3 @@ function ValidateAction(interactionID)
 
 }
 
-function GameEnd(communicationRequests,timeout=false)
-{
-    var returnObject=CheckWinner();
-    if(returnObject)
-    {
-        communicationRequests.push(returnObject);
-        // console.log("Game End function the game is running "+BestOf.CommandBestOfRunning())
-        // if(BestOf.CommandBestOfRunning())
-        // {
-        //     if(currentGame.Winners.length!=0)
-        //         communicationRequests= communicationRequests.concat(BestOf.CommandAddWinner(currentGame.Winners[0].userId,timeout));
-            
-        // }
-        currentGame.ResetGame();
-    }
-    return communicationRequests;
-}
