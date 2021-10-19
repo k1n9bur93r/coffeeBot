@@ -48,13 +48,10 @@ function BestOfSet(){
             if(this.Session.players[x].id==playerId)
             {
                 this.Session.players[x].wins++; 
-                console.log(`Here is the win calculation: Current wins ${this.Session.players[x].wins} calculation for current win rate ${(((this.Session.count/2)+1)| 0)}. Is this a win? ${this.Session.players[x].wins>(((this.Session.count/2)+1)|0)}`);
                 if(this.Session.players[x].wins>=(((this.Session.count/2)+1)| 0))
                 {
                     var wins=this.Session.players[x].wins;
-                    console.log("Hello I am here!");
                     this.EndBestOf(this.Session.players[x].id);
-                    console.log("and I made it out!");
                     return {winner:true,wins:wins};
                 }
                 return {winner:false,wins:this.Session.players[x].wins};
@@ -87,7 +84,6 @@ let set= new BestOfSet();
 
 module.exports = 
 {
-    
     CommandBestOfType:function()
     {
             return set.Session.game;
@@ -101,7 +97,6 @@ module.exports =
         console.log(`What is IsTimeOut????? ${isTimeOut}`);
         var returnobject=[];
         var winObject= set.PlayerWin(winner);
-        console.log(winObject);
         if(winObject.winner==true)
              returnobject.push(comm.Request(false,null,`<@${winner}> has won the 'Best Of' set!`,false,null));
         else
@@ -145,7 +140,7 @@ module.exports =
     },
     CommandNewBestOf:function(InteractionID,gameType,coffAmount,winsRequired){
         communicationRequests=[];
-        if(set.Session.StartingPlayer!=0)
+        if(set.StartingPlayer==0)
         {
             set.CreateBestOf(InteractionID,gameType,coffAmount,winsRequired)
             set.AddPlayer(InteractionID);
