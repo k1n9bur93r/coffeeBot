@@ -181,7 +181,7 @@ client.on("interactionCreate", async (interaction) => {
                 interaction.options.get("user").user.id,
                 interaction.channel
             );
-            let parsedCoffeeAmount = interaction.options.getInteger("amount");//num
+            let parsedCoffeeAmount = interaction.options.getNumber("amount");//num
 
             if (mentionedUser) {
                 if (mentionedUser == undefined) {
@@ -234,7 +234,7 @@ client.on("interactionCreate", async (interaction) => {
                 interaction.channel
             );
 
-            let parsedCoffeeAmount = interaction.options.getInteger("amount");//num
+            let parsedCoffeeAmount = interaction.options.getNumber("amount");//num
 
             if (mentionedUser) {
                 if (mentionedUser == undefined) {
@@ -332,7 +332,7 @@ client.on("interactionCreate", async (interaction) => {
             let transferer = interaction.user.id;
             let fromId = interaction.options.get("from").user.id;
             let toId = interaction.options.get("to").user.id;
-            let amount = interaction.options.getInteger("amount");//num
+            let amount = interaction.options.getNumber("amount");//num
 
             //check if from user owes less than amount to transferer or that transferer owes less than amount to toId
            if(fileIO.GetUserCoffeeDebt(fromId,transferer)<amount)
@@ -540,12 +540,18 @@ client.on("interactionCreate", async (interaction) => {
 
             BotReply(interaction, embed, "", false);
         } else if (interaction.commandName == "21End") {
-            BulkReplyHandler(
-                interaction,
-                cardGame.CommandEndGame(interaction.user.id));
+            if(list.length!=0&&BestOf.CommandBestOfType()=="21"&&!BestOf.CommandBestOfRunning())
+            {
+                BotReply(interaction,null,"Can't end a game when a 'Best Of' set is running. Just let it play out fam.")
+            }
+            else
+            {
+                BulkReplyHandler(
+                    interaction,
+                    cardGame.CommandEndGame(interaction.user.id));
+                }
+            
         } else if (interaction.commandName == "21") {
-
-
             var list=BestOf.CommandBestOfPlayerList()
             if(list.length!=0&&BestOf.CommandBestOfType()=="21"&&!BestOf.CommandBestOfRunning())
             {
@@ -594,7 +600,7 @@ client.on("interactionCreate", async (interaction) => {
                 interaction,
                 cardGame.CommandDraw(interaction.user.id));
             BestOfHandler("21",interaction);
-        } else if (interaction.commandName == "players"){
+        } else if (interaction.commandName == "21players"){
             BulkReplyHandler(
                 interaction,
                 cardGame.CommandPlayerList(interaction.user.id));
@@ -672,13 +678,19 @@ client.on("interactionCreate", async (interaction) => {
         }else if (interaction.commandName == "bestcreate"){
             BulkReplyHandler(
                 interaction,
-                BestOf.CommandNewBestOf(interaction.user.id,interaction.options.getString("game"),interaction.options.getInteger("coffs"),interaction.options.getInteger("rounds")));
+                BestOf.CommandNewBestOf(interaction.user.id,"21",interaction.options.getInteger("coffs"),interaction.options.getInteger("rounds")));
         }else if (interaction.commandName == "bestplayers"){
             BulkReplyHandler(
                 interaction,
                 BestOf.CommandBestOfPlayerMessage());
             
+        }else if (interaction.commandName=="bestend")
+        {
+            BulkReplyHandler(
+                interaction,
+                BestOf.CommandBestOfPlayerMessage());
         }
+        
 } catch (e) {
         BotChannelMessage(
             {channelId:channelId},
@@ -730,12 +742,13 @@ function TimeOutHandler(options)
                 if(GlobalTimers[x].Name.includes("CG-"))
                 {
                     clearTimeout(GlobalTimers[x].Timer);
-                    GlobalTimers.splice(x,1);// I don't think this will break things now, but this might mess with the indexing of the array when looping
+                    GlobalTimers.splice(x,1);
                 }  
             }  
         }
         else
         {
+            GlobalTimers.splice(options.index,1)
             BulkReplyHandler(options.interaction,cardGame.CommandTimerEvent(options.functionCall));
             BestOfHandler("21",options.interaction,true); 
         }
