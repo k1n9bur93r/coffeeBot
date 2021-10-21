@@ -94,7 +94,6 @@ module.exports =
     },
     CommandAddWinner:function(winner,isTimeOut)
     {
-        console.log(`What is IsTimeOut????? ${isTimeOut}`);
         var returnobject=[];
         var winObject= set.PlayerWin(winner);
         if(winObject.winner==true)
@@ -171,11 +170,18 @@ module.exports =
         }
         return returnobject;
     },
-    CommandBestOfEnd:function()
+    CommandBestOfEnd:function(InteractionID)
     {
         var returnObject=[];
+        if(set.Session.players.length!=0&&set.gameRunning==false &&InteractionID==set.Session.StartingPlayer==InteractionID)
+        {
         set.Reset();
-        returnObject.push( comm.Request(false,null,`The 'Best Of' Set was never started, for shame! Feel free to try again when people actually want to play...`,true,null));
+        returnObject.push( comm.Request(true,null,`The 'Best Of' Set was never started, for shame! Feel free to try again when people actually want to play...`,false,null));
+        }
+        else
+        {
+            returnObject.push( comm.Request(true,null,`The 'Best Of' Set was never started, for shame! Feel free to try again when people actually want to play...`,true,null));
+        }
         return returnObject;
     }
 }

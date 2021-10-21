@@ -50,7 +50,7 @@ Initalize: function()
             thumbnail
         );
         
-        return comm.Request(true,embed,`<@${interactionID}> said\n> "*${userMessage}*"`,false);
+        return [comm.Request(true,embed,`<@${interactionID}> said\n> "*${userMessage}*"`,false)];
     }
 }
 
