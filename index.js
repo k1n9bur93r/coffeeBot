@@ -13,7 +13,7 @@ let curRPSChoice = "";
 
 let curCoffeePotPlayers = {};
 let curCoffeePotSlots = -1;
-let maxMultiflipAmount = 5;
+let maxMultiflipAmount = 2;
 let multiflipRequests = {};
 
 let GlobalTimers=[];
@@ -48,7 +48,38 @@ client.on("interactionCreate", async (interaction) => {
     var channelId=interaction.channelId;
     if (!interaction.isCommand()) return;
     try {
-        if (interaction.commandName === "multiflip") {
+        if (interaction.commandName === "agree") {
+            FileIO.agreePlayer(interaction.user.id)
+            BotReply(
+                interaction,
+                null,
+                `<@${interaction.user.id}> has agreed to the terms & conditions!`,
+                false
+            )
+        }
+        else if (!FileIO.playerAgreedToTerms(interaction.user.id)) {
+            const embed = new MessageEmbed()
+            .setTitle("Coffee Economy Terms & Conditions")
+            .setDescription(`One must accept accept the following terms & conditions to participate in the :coffee: economy:
+            
+            :one: I agree a :coffee: is worth $2 towards a food or drink purchase
+                
+            :two: I agree that I will not bet more than I can afford
+            
+            :three: I agree that anyone may ask to cashout coffees at any time with proof of a receipt
+            
+            :four: I agree that if I am unable to payout my coffees upon being requested, I must declare bankruptcy and will be suspended from the :coffee: system for [my net oweage * 4] days
+            
+            By doing \`/agree\` you accept to these terms & conditions`)
+            .setThumbnail(
+                "https://lh3.googleusercontent.com/proxy/-aeVwzFtgt_rnoLyJpHjtQSUKRbDtJNLTH8w5bybehJW4ibOJA_PFlnLiSsjdPElbpoyOGCdf8otyNGFvchWfjKjUuUWmZguwe8"
+            );
+            BotReply(interaction, 
+                 embed, 
+                ``,
+                 false);
+            return
+        } else if (interaction.commandName === "multiflip") {
             let flipAmount = interaction.options.getInteger("amount");
 
             if (flipAmount < 1) {

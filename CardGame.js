@@ -193,7 +193,7 @@ module.exports =
 
         if(!coffAmount)
             coffAmount=1;
-        else if(coffAmount>5)
+        else if(coffAmount>2)
         {
             return  communicationRequests.push(comm.Request(messageReply,null,"Can't have a buy in great than 5!",true))
         }
