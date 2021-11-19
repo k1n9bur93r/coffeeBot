@@ -1,9 +1,9 @@
-const {coffeeJSON,statsJSON,logTXT} = require("./config.json");
+const { coffeeJSON, statsJSON, logTXT } = require("./config.json");
 const fs = require("fs");
+const { SlashCommandSubcommandBuilder } = require("@discordjs/builders");
 const stats = require(`./${statsJSON}`);
 const coffees = require(`./${coffeeJSON}`);
-module.exports = 
-{
+module.exports = {
     UpdateGlobalStats: function (options) {
         // Options = {
         //options.circulation :"",
@@ -15,14 +15,17 @@ module.exports =
         //options.warGames:""
         //options.warCoffs:""
         // }
-        if (options.circulation) stats.CoffsInCirculation += options.circulation;
+        if (options.circulation)
+            stats.CoffsInCirculation += options.circulation;
         if (options.winnerId) stats.RecentCoffWinner = options.winnerId;
-        if (options.PotCoffs && options.PotCoffs > stats.LargestPotWon) stats.LargestPotWon = options.PotCoffs;
+        if (options.PotCoffs && options.PotCoffs > stats.LargestPotWon)
+            stats.LargestPotWon = options.PotCoffs;
         if (options.redeemed) stats.TotalCoffsRedeemed += options.redeemed;
         if (options.coinflip) stats.TotalCoinFlips++;
         if (options.PotGames) stats.TotalPotGames++;
         if (options.PotCoffs) stats.TotalPotCoffs += options.PotCoffs;
-        if (options.warCoffs && options.warCoffs > stats.LargestWarWon) stats.LargestWarWon = options.warCoffs;
+        if (options.warCoffs && options.warCoffs > stats.LargestWarWon)
+            stats.LargestWarWon = options.warCoffs;
         if (options.warCoffs) stats.TotalWarCoffs += options.warCoffs;
         if (options.warGames) stats.TotalWarGames++;
         UpdateFile("s");
@@ -33,41 +36,55 @@ module.exports =
         coffees[interactionUser][mentionedUser] += amount;
         NullifyCoffees(interactionUser);
         NullifyCoffees(mentionedUser);
-        WriteToLog(action,amount,interactionUser,mentionedUser);
+        WriteToLog(action, amount, interactionUser, mentionedUser);
     },
 
-    RemoveUserCoffee: function (interactionUser, mentionedUser, amount,action) {
+    RemoveUserCoffee: function (
+        interactionUser,
+        mentionedUser,
+        amount,
+        action
+    ) {
         ValidateUserCoffee(interactionUser, mentionedUser);
         coffees[interactionUser][mentionedUser] -= amount;
         NullifyCoffees(interactionUser);
         NullifyCoffees(mentionedUser);
-        WriteToLog(action,amount,interactionUser,mentionedUser);
+        WriteToLog(action, amount, interactionUser, mentionedUser);
     },
-    
+
     GetUserCoffeeDebt: function (interactionUser, mentionedUser) {
         let curCoffees;
         ValidateUserCoffee(interactionUser, mentionedUser);
         curCoffees = coffees[interactionUser][mentionedUser];
         return curCoffees;
     },
-    GetUserCoffeeRow:function (interactionUser)
-    {
-        let value= coffees[interactionUser]
+    GetUserCoffeeRow: function (interactionUser) {
+        let value = coffees[interactionUser];
         return value;
     },
-    UpdateFile:function (FileObject) {
-        if(FileObject=="c")
-        fs.writeFile(`${coffeeJSON}`, JSON.stringify(coffees, null, 1), (err) => {
-            if (err) throw err;
-        });
-        else if(FileObject=="s")
-        fs.writeFile(`${statsJSON}`, JSON.stringify(stats, null, 1), (err) => {
-            if (err) throw err;
-        });
+    UpdateFile: function (FileObject) {
+        if (FileObject == "c")
+            fs.writeFile(
+                `${coffeeJSON}`,
+                JSON.stringify(coffees, null, 1),
+                (err) => {
+                    if (err) throw err;
+                }
+            );
+        else if (FileObject == "s")
+            fs.writeFile(
+                `${statsJSON}`,
+                JSON.stringify(stats, null, 1),
+                (err) => {
+                    if (err) throw err;
+                }
+            );
     },
-    coffees: function() { return coffees;},
+    coffees: function () {
+        return coffees;
+    },
 
-    GetDebts:function(userId) {
+    GetDebts: function (userId) {
         let debts = {
             owedAmount: 0,
             receivedAmount: 0,
@@ -77,10 +94,10 @@ module.exports =
         };
         for (let ower in coffees) {
             for (let receiver in coffees[ower]) {
-                let coffeeDebt= coffees[ower][receiver];
+                let coffeeDebt = coffees[ower][receiver];
                 if (coffeeDebt != 0) {
                     if (ower == userId) {
-                        debts.owedAmount +=coffeeDebt;
+                        debts.owedAmount += coffeeDebt;
                         debts.uniqueOwe++;
                     } else if (receiver == userId) {
                         debts.receivedAmount += coffeeDebt;
@@ -91,9 +108,22 @@ module.exports =
         }
         debts.totalAmount = debts.receivedAmount - debts.owedAmount;
         return debts;
-}
-    
-}
+    },
+    playerAgreedToTerms: function (userId) {
+        if (coffees[userId]!=null && coffees[userId]["agreed"]!=null) {
+            return true;
+        }
+        return false;
+    },
+    agreePlayer: function (userId) {
+        if (coffees[userId]==null) {
+            coffees[userId] = {}
+        }
+        console.log(coffees[userId])
+        coffees[userId]["agreed"] = true;
+        this.UpdateFile("c")
+    }
+};
 
 function NullifyCoffees(userId) {
     let coffeeAmount = 0;
@@ -118,25 +148,20 @@ function NullifyCoffees(userId) {
 
     return coffeeAmount;
 }
-function WriteToLog (action,amount, gainedUser, losingUser )
-{
-    try
-    {
-        let logMessage=`${action}: ${gainedUser} ${amount} ${losingUser}`;
-        let logFileStream= fs.createWriteStream(logTXT,{flags:'a'});
-        let timestamp= new Date().toISOString();
-        timestamp+=` - ${logMessage}\n-------------------------------------------------------\n`;
+function WriteToLog(action, amount, gainedUser, losingUser) {
+    try {
+        let logMessage = `${action}: ${gainedUser} ${amount} ${losingUser}`;
+        let logFileStream = fs.createWriteStream(logTXT, { flags: "a" });
+        let timestamp = new Date().toISOString();
+        timestamp += ` - ${logMessage}\n-------------------------------------------------------\n`;
         logFileStream.write(timestamp);
         logFileStream.end();
-
-    }
-    catch(e)
-    {
+    } catch (e) {
         //think of some logging error event here
-        throw(e);
+        throw e;
     }
 }
-function ValidateUserCoffee (interactionUser, mentionedUser) {
+function ValidateUserCoffee(interactionUser, mentionedUser) {
     if (coffees[interactionUser] == undefined) {
         coffees[interactionUser] = {};
     }

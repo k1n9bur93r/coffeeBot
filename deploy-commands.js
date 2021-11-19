@@ -6,6 +6,9 @@ const { clientId, guildId, token } = require("./config.json");
 
 const commands = [
     new SlashCommandBuilder()
+    .setName("agree")
+    .setDescription("Agree to terms & conditions"),
+    new SlashCommandBuilder()
         .setName("ledger")
         .setDescription("Sends updated coffee ledger"),
     new SlashCommandBuilder()
@@ -142,7 +145,7 @@ const commands = [
         .addStringOption((option) =>
             option
                 .setName("choice")
-                .setDescription("Rock, papper, or scissors")
+                .setDescription("Rock, paper, or scissors")
                 .setRequired(true)
                 .addChoice("Rock", "Rock")
                 .addChoice("Paper", "Paper")
