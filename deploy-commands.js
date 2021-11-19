@@ -6,6 +6,9 @@ const { clientId, guildId, token } = require("./config.json");
 
 const commands = [
     new SlashCommandBuilder()
+    .setName("agree")
+    .setDescription("Agree to terms & conditions"),
+    new SlashCommandBuilder()
         .setName("ledger")
         .setDescription("Sends updated coffee ledger"),
     new SlashCommandBuilder()
