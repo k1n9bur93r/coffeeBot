@@ -3,6 +3,7 @@ const language = require("@google-cloud/language");
 const fileIO= require("./FileIO.js");
 const fileResponses = require(`./${responseJSON}`);
 const gCloud = require(`./${gCloudJSON}`);
+const comm= require("./Communication");
 
 const gCloudOptions = {
     projectId: gCloud.project_id,
@@ -14,22 +15,7 @@ const gCloudOptions = {
 };
 const gCClient = new language.LanguageServiceClient(gCloudOptions);
 
-
-function communicationObject(isReply, embedObject, botMessage,isHidden,isTimer)
-{
-    let object={reply:isReply,
-        embed:embedObject,
-        message:botMessage,
-        hidden:isHidden,
-        isTimer:false
-        };
-        if(isTimer)
-        {
-            object.isTimer=isTimer;
-        }
-    return object;
-    
-}
+const thumbnail="https://cdn.discordapp.com/avatars/878799768963391568/eddb102f5d15650d0dfc73613a86f5d2.webp?size=128";
 
 module.exports = 
 {
@@ -39,7 +25,6 @@ Initalize: function()
 },
  CommandTalk: async function(interactionID, userMessage){
 
-        let communicationRequests=[];
         let output;
         const document = {
             language: "en",
@@ -56,17 +41,16 @@ Initalize: function()
         //generate response
         output = GenerateResponse(result, fileResponses, stats);
 
-        let embed = new CreateEmbed(
+        let embed = comm.Embed(
             "Coffee Bot Says:",
             output,
             null,
             false,
-            "DARK_GREEN"
+            "DARK_GREEN",
+            thumbnail
         );
         
-        communicationRequests.push(communicationObject(true,embed,`<@${interactionID}> said\n> "*${userMessage}*"`,false));
-        console.log(communicationRequests[0]);
-        return communicationRequests;
+        return [comm.Request(true,embed,`<@${interactionID}> said\n> "*${userMessage}*"`,false)];
     }
 }
 
@@ -306,16 +290,4 @@ function GenerateResponse(response, text, coffeeStats) {
         }
     }
     return output;
-}
-function CreateEmbed(setTitle,setText,setFields,setFieldsAlign,setColor)
-{
-    let psudoEmbed={
-     title:setTitle,
-     text:setText,
-     color:setColor,
-     fields:setFields,
-     fieldsAlign:setFieldsAlign,
-     thumbnail:"https://cdn.discordapp.com/avatars/878799768963391568/eddb102f5d15650d0dfc73613a86f5d2.webp?size=128"
-    }
-     return psudoEmbed;
 }

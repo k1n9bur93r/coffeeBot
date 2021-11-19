@@ -4,7 +4,7 @@ const { token} = require("./config.json");
 const cardGame= require("./CardGame");
 const fileIO= require("./fileIO");
 const response=require("./Response.js");
-const FileIO = require("./fileIO");
+const BestOf = require("./BestOf.js");
 
 let curCoinflipRequest = "";
 
@@ -17,11 +17,10 @@ let maxMultiflipAmount = 2;
 let multiflipRequests = {};
 
 let GlobalTimers=[];
-function TimerObject(timer,timerName,callbackMethod)
+function TimerObject(timer,timerName)
 {
     return{
         Timer:timer,
-        functionCall:callbackMethod,
         Name:timerName
     }
 }
@@ -46,6 +45,7 @@ client.once("ready", () => {
 });
 
 client.on("interactionCreate", async (interaction) => {
+    var channelId=interaction.channelId;
     if (!interaction.isCommand()) return;
     try {
         if (interaction.commandName === "agree") {
@@ -212,7 +212,7 @@ client.on("interactionCreate", async (interaction) => {
                 interaction.options.get("user").user.id,
                 interaction.channel
             );
-            let parsedCoffeeAmount = interaction.options.getNumber("amount");
+            let parsedCoffeeAmount = interaction.options.getNumber("amount");//num
 
             if (mentionedUser) {
                 if (mentionedUser == undefined) {
@@ -265,7 +265,7 @@ client.on("interactionCreate", async (interaction) => {
                 interaction.channel
             );
 
-            let parsedCoffeeAmount = interaction.options.getNumber("amount");
+            let parsedCoffeeAmount = interaction.options.getNumber("amount");//num
 
             if (mentionedUser) {
                 if (mentionedUser == undefined) {
@@ -363,7 +363,7 @@ client.on("interactionCreate", async (interaction) => {
             let transferer = interaction.user.id;
             let fromId = interaction.options.get("from").user.id;
             let toId = interaction.options.get("to").user.id;
-            let amount = interaction.options.getNumber("amount");
+            let amount = interaction.options.getNumber("amount");//num
 
             //check if from user owes less than amount to transferer or that transferer owes less than amount to toId
            if(fileIO.GetUserCoffeeDebt(fromId,transferer)<amount)
@@ -571,26 +571,67 @@ client.on("interactionCreate", async (interaction) => {
 
             BotReply(interaction, embed, "", false);
         } else if (interaction.commandName == "21End") {
-            BulkReplyHandler(
-                interaction,
-                cardGame.CommandEndGame(interaction.user.id));
+            if(list.length!=0&&BestOf.CommandBestOfType()=="21"&&!BestOf.CommandBestOfRunning())
+            {
+                BotReply(interaction,null,"Can't end a game when a 'Best Of' set is running. Just let it play out fam.")
+            }
+            else
+            {
+                BulkReplyHandler(
+                    interaction,
+                    cardGame.CommandEndGame(interaction.user.id));
+                }
+            
         } else if (interaction.commandName == "21") {
-            BulkReplyHandler(
-                interaction,
-                cardGame.CommandStartJoinGame(interaction.user.id,interaction.options.getInteger("amount")));
-        } else if (interaction.commandName=="stay") {
+            var list=BestOf.CommandBestOfPlayerList()
+            if(list.length!=0&&BestOf.CommandBestOfType()=="21"&&!BestOf.CommandBestOfRunning())
+            {
+                if(list[0]==interaction.user.id)
+                {
+                    BestOf.CommandBestOfStart();
+                     BulkReplyHandler(
+                        interaction,
+                        cardGame.CommandStartJoinGame(list[0],interaction.options.getInteger("amount")));
+                        for(var x=1;x<list.length;x++)
+                        {
+                            BulkReplyHandler(
+                                interaction,
+                                cardGame.CommandStartJoinGame(list[x],interaction.options.getInteger("amount"),false));
+                        }
+                        BulkReplyHandler(
+                            interaction,
+                            cardGame.CommandStartJoinGame(interaction.user.id,interaction.options.getInteger("amount"),false));
+                }
+                else
+                {
+                    BotReply(interaction, null, "You can't start a game of 21 if there is a 'Best Of' set pending. join up to it now with ./bestjoin !", true);
+                    
+                }
+            }
+            else
+            {
+                BulkReplyHandler(
+                    interaction,
+                    cardGame.CommandStartJoinGame(interaction.user.id,interaction.options.getInteger("amount")));
+            }
+
+           
+
+        } else if (interaction.commandName =="stay") {
             BulkReplyHandler(
                 interaction,
                 cardGame.CommandStay(interaction.user.id));
-        } else if (interaction.commandName== "hand") {
+            BestOfHandler("21",interaction);
+        } else if (interaction.commandName == "hand") {
             BulkReplyHandler(
                 interaction,
                 cardGame.CommandHand(interaction.user.id));
-        } else if (interaction.commandName=="draw") {
+        } else if (interaction.commandName =="draw") {
             BulkReplyHandler(
                 interaction,
                 cardGame.CommandDraw(interaction.user.id));
-        } else if (interaction.commandName == "players"){
+            BestOfHandler("21",interaction);
+        } else if (interaction.commandName == "21players"){
             BulkReplyHandler(
                 interaction,
                 cardGame.CommandPlayerList(interaction.user.id));
@@ -661,10 +702,29 @@ client.on("interactionCreate", async (interaction) => {
                     false
                 );
             }
+        } else if (interaction.commandName == "bestjoin"){
+            BulkReplyHandler(
+                interaction,
+                BestOf.CommandAddPlayer(interaction.user.id));
+        }else if (interaction.commandName == "bestcreate"){
+            BulkReplyHandler(
+                interaction,
+                BestOf.CommandNewBestOf(interaction.user.id,"21",interaction.options.getInteger("coffs"),interaction.options.getInteger("rounds")));
+        }else if (interaction.commandName == "bestplayers"){
+            BulkReplyHandler(
+                interaction,
+                BestOf.CommandBestOfPlayerMessage());
+            
+        }else if (interaction.commandName=="bestend")
+        {
+            BulkReplyHandler(
+                interaction,
+                BestOf.CommandBestOfPlayerMessage());
         }
+        
 } catch (e) {
-        BotReply(
-            interaction,
+        BotChannelMessage(
+            {channelId:channelId},
             null,
             `I'm Sowwy UwU~ <@${
                 interaction.user.id
@@ -676,32 +736,64 @@ client.on("interactionCreate", async (interaction) => {
     }
 });
 
+async function BestOfHandler(GameType,interaction,timeout=false)
+{
+    if(BestOf.CommandBestOfType()==GameType)
+    {
+    var pastWinner=cardGame.CommandGetPastWinner();
+    if(pastWinner!='')
+        BulkReplyHandler(interaction, BestOf.CommandAddWinner(pastWinner,timeout));
+    if(BestOf.CommandBestOfRunning()&&!cardGame.CommandGameRunning())
+    {
+        var list=BestOf.CommandBestOfPlayerList();
+        for(var x=0;x<list.length;x++)
+        {
+            await BulkReplyHandler(
+                interaction,
+                cardGame.CommandStartJoinGame(list[x],1,false));
+        }
+        await BulkReplyHandler(
+        interaction,
+        cardGame.CommandStartJoinGame(list[0],1,false));
+        }
+        return true;
+    }  
+    return false;
+}
+
 function TimeOutHandler(options)
 {
+    console.log("Event FIRING "+options.actionName);
     if(options.actionName.includes('CG-'))
     {
-        if(options.actionName=="CG-End"||options.actionName=="CG-Init")
+        if(options.actionName=="CG-End")
         {
-            if(options.actionName=="CG-Init")
-            {
-                BulkReplyHandler(options.interaction,cardGame.CommandTimerEvent(GlobalTimers[options.index].functionCall))
-
-            }
             for(let x=0;x<GlobalTimers.length;x++)
             {
                 if(GlobalTimers[x].Name.includes("CG-"))
                 {
                     clearTimeout(GlobalTimers[x].Timer);
-                    GlobalTimers.splice(x,1);// I don't think this will break things now, but this might mess with the indexing of the array when looping
-                }
-            }
+                    GlobalTimers.splice(x,1);
+                }  
+            }  
         }
         else
         {
-            BulkReplyHandler(options.interaction,cardGame.CommandTimerEvent(GlobalTimers[options.index].functionCall))
+            GlobalTimers.splice(options.index,1)
+            BulkReplyHandler(options.interaction,cardGame.CommandTimerEvent(options.functionCall));
+            BestOfHandler("21",options.interaction,true); 
         }
     }
-    GlobalTimers.splice(options.index,1);
+    else if(options.actionName.includes('BS-'))
+    {
+        if(options.actionName.includes('Time'))
+        {
+            BestOfHandler("21",options.interaction,true);
+        }
+        else
+            BulkReplyHandler(options.interaction,BestOf.CommandBestOfEnd());
+
+    }
 }
 
 function BulkReplyHandler(interaction,communicationRequests)
@@ -709,7 +801,7 @@ function BulkReplyHandler(interaction,communicationRequests)
     for(let x=0;x<communicationRequests.length;x++)
     {
         let embed= null;
-        if(communicationRequests[x].embed)
+        if(communicationRequests[x].embed!=null)
         {
           embed= new MessageEmbed();
                 embed.setTitle(communicationRequests[x].embed.title);
@@ -746,10 +838,8 @@ function BulkReplyHandler(interaction,communicationRequests)
             {
                 for(let z=0;z<communicationRequests[x].TimerSettings.Replace.length;z++)
                 {
-                    console.log("Name of the replace I am checking "+communicationRequests[x].TimerSettings.Replace[z]);
                     for(let y=0;y<GlobalTimers.length;y++)
                     {
-                        console.log(`Currently looking to replace timer: ${communicationRequests[x].TimerSettings.Replace[z]} Currently looking at : ${GlobalTimers[y].Name}`);
                         if(communicationRequests[x].TimerSettings.Replace[z]==GlobalTimers[y].Name)
                         {
                             console.log(`REPLACED A CURRENT TIMER  '${GlobalTimers[y].Name}' with: ${communicationRequests[x].TimerSettings.Action}`);
@@ -760,7 +850,6 @@ function BulkReplyHandler(interaction,communicationRequests)
                     }
                 }
             }
-                console.log("ADDED A NEW TIMER: "+communicationRequests[x].TimerSettings.Action);
                 GlobalTimers.push(
                     TimerObject(
                         setTimeout(
@@ -768,11 +857,12 @@ function BulkReplyHandler(interaction,communicationRequests)
                             communicationRequests[x].TimerSettings.Length , 
                             {
                             index:GlobalTimers.length,
-                            actionName:communicationRequests[x].TimerSettings.Action,interaction:interaction
+                            actionName:communicationRequests[x].TimerSettings.Action,
+                            functionCall:communicationRequests[x].TimerSettings.functionCall,
+                            interaction:interaction
                             }
                             ),
-                        communicationRequests[x].TimerSettings.Action,
-                        communicationRequests[x].TimerSettings.functionCall
+                        communicationRequests[x].TimerSettings.Action
                         )
                     );
         }
