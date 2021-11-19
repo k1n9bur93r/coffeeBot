@@ -231,9 +231,9 @@ module.exports =
             
         if(!coffAmount)
             coffAmount=1;
-        else if(coffAmount>5)
+        else if(coffAmount>2)
         {
-            return  communicationRequests.push(communicationObject(true,null,"Can't have a buy in great than 5!",true))
+            return  communicationRequests.push(communicationObject(true,null,"Can't have a buy in greater than 2!",true))
         }
         if(currentGame.StartingPlayer==interactionID)
         {
