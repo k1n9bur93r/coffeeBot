@@ -972,7 +972,7 @@ function getProfileString(userId, channel) {
 
 
     let pString = ""
-    pString += `**Owed :coffee::**\n${owedCoffs}\n**Redeemable :coffee::**\n${receivingCoffs}\n**Net :coffee: worth:\n${
+    pString += `**Owed :coffee:**\n${owedCoffs}\n**Redeemable :coffee:**\n${receivingCoffs}\n**Net :coffee: worth\n${
         receivedAmount - owedAmount
     }**`
     
