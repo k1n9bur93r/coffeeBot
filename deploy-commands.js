@@ -9,6 +9,15 @@ const commands = [
     .setName("agree")
     .setDescription("Agree to terms & conditions"),
     new SlashCommandBuilder()
+    .setName("venmo")
+    .setDescription("Add venmo to profile")
+    .addStringOption((option) =>
+        option
+            .setName("venmo")
+            .setDescription("Your venmo username")
+            .setRequired(true)
+    ), 
+    new SlashCommandBuilder()
         .setName("ledger")
         .setDescription("Sends updated coffee ledger"),
     new SlashCommandBuilder()
@@ -150,28 +159,28 @@ const commands = [
                 .addChoice("Rock", "Rock")
                 .addChoice("Paper", "Paper")
                 .addChoice("Scissors", "Scissors")
-        ),
-        new SlashCommandBuilder()
-        .setName("bestcreate")
-        .setDescription("Create a new 'Best Of' Set for a game")
-        .addIntegerOption((option) =>
-        option
-            .setName("rounds")
-            .setDescription("Best Of how many games?")
-            .setRequired(true)
         )
-        .addIntegerOption((option) =>
-        option
-            .setName("coffs")
-            .setDescription("How many coffees does the winner get")
-            .setRequired(true)
-        ),
-        new SlashCommandBuilder()
-        .setName("bestjoin")
-        .setDescription("Join a Best Of set"),
-        new SlashCommandBuilder()
-        .setName("bestplayers")
-        .setDescription("Current players in a Best Of set"),
+        // new SlashCommandBuilder()
+        // .setName("bestcreate")
+        // .setDescription("Create a new 'Best Of' Set for a game")
+        // .addIntegerOption((option) =>
+        // option
+        //     .setName("rounds")
+        //     .setDescription("Best Of how many games?")
+        //     .setRequired(true)
+        // )
+        // .addIntegerOption((option) =>
+        // option
+        //     .setName("coffs")
+        //     .setDescription("How many coffees does the winner get")
+        //     .setRequired(true)
+        // ),
+        // new SlashCommandBuilder()
+        // .setName("bestjoin")
+        // .setDescription("Join a Best Of set"),
+        // new SlashCommandBuilder()
+        // .setName("bestplayers")
+        // .setDescription("Current players in a Best Of set"),
 ].map((command) => command.toJSON());
 
 const rest = new REST({ version: "9" }).setToken(token);

@@ -2,9 +2,10 @@
 const { Client, Intents, MessageEmbed } = require("discord.js");
 const { token} = require("./config.json");
 const cardGame= require("./CardGame");
-const fileIO= require("./fileIO");
+const fileIO= require("./FileIO");
 const response=require("./Response.js");
 const BestOf = require("./BestOf.js");
+const FileIO = require("./FileIO");
 
 let curCoinflipRequest = "";
 
@@ -49,15 +50,16 @@ client.on("interactionCreate", async (interaction) => {
     if (!interaction.isCommand()) return;
     try {
         if (interaction.commandName === "agree") {
-            FileIO.agreePlayer(interaction.user.id)
+            fileIO.agreePlayer(interaction.user.id)
             BotReply(
                 interaction,
                 null,
                 `<@${interaction.user.id}> has agreed to the terms & conditions!`,
                 false
             )
+            return;
         }
-        else if (!FileIO.playerAgreedToTerms(interaction.user.id)) {
+        else if (!fileIO.playerAgreedToTerms(interaction.user.id)) {
             const embed = new MessageEmbed()
             .setTitle("Coffee Economy Terms & Conditions")
             .setDescription(`One must accept accept the following terms & conditions to participate in the :coffee: economy:
@@ -79,6 +81,16 @@ client.on("interactionCreate", async (interaction) => {
                 ``,
                  false);
             return
+        } else if (interaction.commandName === "venmo") {
+            let venmoId = interaction.options.getString("venmo");
+            FileIO.setVenmo(interaction.user.id, venmoId)
+            BotReply(
+                interaction,
+                null,
+                `<@${interaction.user.id}> has set their venmo!`,
+                false
+            )
+            return;
         } else if (interaction.commandName === "multiflip") {
             let flipAmount = interaction.options.getInteger("amount");
 
@@ -957,9 +969,17 @@ function getProfileString(userId, channel) {
         receivingCoffs = "No redeemable coffs!\n";
     }
 
-    return `**Owed :coffee::**\n${owedCoffs}\n**Redeemable :coffee::**\n${receivingCoffs}\n**Net :coffee: worth:\n${
+
+
+    let pString = ""
+    pString += `**Owed :coffee::**\n${owedCoffs}\n**Redeemable :coffee::**\n${receivingCoffs}\n**Net :coffee: worth:\n${
         receivedAmount - owedAmount
-    }**`;
+    }**`
+    
+    if (FileIO.getVenmo(userId)) {
+        pString += `\n\n**Venmo 💰**\n${FileIO.getVenmo(userId)}`
+    }
+    return pString;
 }
 
 function getCoffeeLedgerString(channel) {
