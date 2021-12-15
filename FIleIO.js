@@ -119,9 +119,23 @@ module.exports = {
         if (coffees[userId]==null) {
             coffees[userId] = {}
         }
-        console.log(coffees[userId])
         coffees[userId]["agreed"] = true;
         this.UpdateFile("c")
+    },
+    setVenmo: function (userId, venmoId) {
+        if (coffees[userId]==null) {
+            coffees[userId] = {}
+        }
+        coffees[userId]["venmo"] = venmoId;
+        this.UpdateFile("c")
+    },
+    getVenmo: function (userId) {
+        if (coffees[userId] && coffees[userId]["venmo"]) {
+            return coffees[userId]["venmo"]
+        }
+        else {
+            return false
+        }
     }
 };
 
