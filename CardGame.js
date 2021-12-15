@@ -9,9 +9,32 @@ const Events={
     GameInit:{Name:"CG-Init",Replace:["BS-Init"]}
 }
 
+//easily modifiable things 
+///Dealing logic 
+    //card deck, can add multiple of cards to change their rarity, can add whole new cards as well
+    //can change which card can act as the ace 
+    //total required number to win
+    //stay possible
+    //draw possible
+    //individual randomized players
+
+function cardGamePlayers(playerId,canDraw=true,canStay=true,winAmount=21,deck=[],)
+{
+    return{
+    playerId:playerId,
+    playerDraw:canDraw,
+    playerStay:canStay,
+    playerDeck:deck,
+    playerWinAmount:winAmount,
+    playerIndex:-1,
+    otherPlayerIndex:-1
+
+    }
+}   
 function cardGame()
 {
-    this.CardDeck=[11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10];
+    this.PlayerRandomization=false
+    this.CardDeck=[11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10]; 
     this.PlayerIds=[];
     this.GameWon=false;
     this.PastWinner=0;
@@ -54,26 +77,30 @@ function cardGame()
         this.PotSize=1;
         this.TieGame=false;
     }
-    this.DealCard=function(id)
+    this.DealCard=function(id, winningAmount=21,aceValue=11, customDeck=[])
     {
         let index=this.GetPlayerIndex(id);
         if(index==-1)return false;
-        let selection = this.CardDeck[Math.floor(Math.random() * this.CardDeck.length)];
-        if(selection==11)
+        let selection;
+        if(customDeck.length!=0)
+        selection = customDeck[Math.floor(Math.random() * customDeck.length)];
+        else
+         selection = this.CardDeck[Math.floor(Math.random() * this.CardDeck.length)];
+        if(selection==aceValue)
     {
-        if((this.PlayerObjects[index].total+11)>21&&this.PlayerObjects[index].aceCounter==0)
+        if((this.PlayerObjects[index].total+aceValue)>winningAmount&&this.PlayerObjects[index].aceCounter==0)
         {
-            selection=1;
+            selection=aceValue-(aceValue-1);
         }
-        else if((this.PlayerObjects[index].total+11)>21&&this.PlayerObjects[index].hasAce>0)
+        else if((this.PlayerObjects[index].total+aceValue)>winningAmount&&this.PlayerObjects[index].hasAce>0)
         {
             aceCounter++;
-            this.PlayerObjects[index].total-=10;
+            this.PlayerObjects[index].total-=(aceValue-1);
             for(let x=0;x<this.PlayerObjects[index].cards.length;x++)
             {
-                if(this.PlayerObjects[index].cards[x]==11)
+                if(this.PlayerObjects[index].cards[x]==aceValue)
                 {
-                    this.PlayerObjects[index].cards[x]=1;
+                    this.PlayerObjects[index].cards[x]=(aceValue-(aceValue-1));
                     aceCounter--;
                     break;
 
@@ -87,22 +114,22 @@ function cardGame()
     }
     this.PlayerObjects[index].cards.push(selection);
     this.PlayerObjects[index].total += selection;
-        if(this.PlayerObjects[index].total>21&&this.PlayerObjects[index].aceCounter==0)
+        if(this.PlayerObjects[index].total>winningAmount&&this.PlayerObjects[index].aceCounter==0)
         this.PlayerObjects[index].isOver=true;
-        else if(this.PlayerObjects[index].total>21&&this.PlayerObjects[index].aceCounter>0)
+        else if(this.PlayerObjects[index].total>winningAmount&&this.PlayerObjects[index].aceCounter>0)
         {
-            if(this.PlayerObjects[index].total-10>21)
+            if(this.PlayerObjects[index].total-(aceValue-1)>winningAmount)
             {
                 this.PlayerObjects[index].isOver=true;
             }
             else
             {
-                this.PlayerObjects[index].total-=10;
+                this.PlayerObjects[index].total-=(aceValue-1);
                 for(let x=0;x<this.PlayerObjects[index].cards.length;x++)
                 {
-                    if(this.PlayerObjects[index].cards[x]==11)
+                    if(this.PlayerObjects[index].cards[x]==aceValue)
                     {
-                        this.PlayerObjects[index].cards[x]=1;
+                        this.PlayerObjects[index].cards[x]=(aceValue-(aceValue-1));
                         this.PlayerObjects[index].aceCounter--;
                         break;
                     }
@@ -111,11 +138,12 @@ function cardGame()
         }
         this.CheckGameEnd();
     }
-    this.CheckGameEnd=function()
+    this.CheckGameEnd=function(specialOverride=true)
     {
         let highestStay=0;
+        //could also add special override here to skip the whole check in general
         for (let x = 0; x <  this.PlayerObjects.length; x++) {
-            if ( this.PlayerObjects[x].isOver==false  &&  this.PlayerObjects[x].isStayed==false)
+            if ( specialOverride&&(this.PlayerObjects[x].isOver==false  &&  this.PlayerObjects[x].isStayed==false))
                 return;
         }
         this.GameWon=true;
@@ -168,10 +196,10 @@ function cardGame()
             foundIndex=this.GetPlayerIndex(index);
         else
             foundIndex=index;
-            if(this.PlayerObjects[foundIndex].isOver!=true){
+        if(this.PlayerObjects[foundIndex].isOver!=true){
             this.PlayerObjects[foundIndex].isStayed=true;
-            }
-            this.CheckGameEnd();
+        }
+        this.CheckGameEnd();
     }
 
 }
@@ -195,7 +223,7 @@ module.exports =
             coffAmount=1;
         else if(coffAmount>2)
         {
-            return  communicationRequests.push(comm.Request(messageReply,null,"Can't have a buy in great than 5!",true))
+            return  communicationRequests.push(comm.Request(messageReply,null,"Can't have a buy in great than 5!",comm.Type.Hidden))
         }
         if(currentGame.StartingPlayer==interactionID)
         {
@@ -213,12 +241,12 @@ module.exports =
                     thumbnail
                 );
 
-                communicationRequests.push(comm.Request(messageReply,embed,"",false,comm.Timer(Events.GameStart,2,2)));
+                communicationRequests.push(comm.Request(messageReply,embed,"",comm.Type.Visible,comm.Timer(Events.GameStart,2,2)));
                 currentGame.GameRunning=true;
             }
             else
             {
-                communicationRequests.push(comm.Request(messageReply,null,`Sorry, there is a game currently on going!`,true));
+                communicationRequests.push(comm.Request(messageReply,null,`Sorry, there is a game currently on going!`,comm.Type.Hidden));
             }
         }
         else if(currentGame.GameRunning==false)
@@ -241,7 +269,7 @@ module.exports =
                     thumbnail
                 );
 
-                communicationRequests.push(comm.Request(messageReply,embed,"",false,comm.Timer(Events.GameInit,5,1)));
+                communicationRequests.push(comm.Request(messageReply,embed,"",comm.Type.Visible,comm.Timer(Events.GameInit,5,1)));
 
             }
             else
@@ -249,18 +277,18 @@ module.exports =
                 let result =currentGame.AddPlayer(interactionID);
                 if(result==false)
                 {
-                    communicationRequests.push(comm.Request(messageReply,null,`You are already in this game!`,true));
+                    communicationRequests.push(comm.Request(messageReply,null,`You are already in this game!`,comm.Type.Hidden));
                     return communicationRequests;
                 }
                 currentGame.DealCard(interactionID);
                 currentGame.DealCard(interactionID);
-                communicationRequests.push(comm.Request(messageReply,null,`<@${interactionID}> has joined the game of 21 started by <@${currentGame.StartingPlayer}>!`,false));
+                communicationRequests.push(comm.Request(messageReply,null,`<@${interactionID}> has joined the game of 21 started by <@${currentGame.StartingPlayer}>!`,comm.Type.Visible));
             }
 
         }
         else if(currentGame.GameRunning==true)
         {
-            communicationRequests.push(comm.Request(messageReply,null,`Sorry, there is a game currently on going!`,true));
+            communicationRequests.push(comm.Request(messageReply,null,`Sorry, there is a game currently on going!`,comm.Type.Hidden));
         }
         return communicationRequests;
     },
@@ -269,13 +297,13 @@ module.exports =
     {
         let communicationRequests=[];
         if(interactionID==currentGame.StartingPlayer&&currentGame.GameRunning==false){
-            communicationRequests.push(comm.Request(true,null,`${interactionID} Is revoking their game offer`,true,comm.Timer(Events.GameEnd,0,0)));
+            communicationRequests.push(comm.Request(comm.Type.Reply,null,`${interactionID} Is revoking their game offer`,comm.Type.Hidden,comm.Timer(Events.GameEnd,0,0)));
             ResetGameVars();
         }
         else if(interactionID==currentGame.StartingPlayer&&currentGame.GameRunning==true)
-            communicationRequests.push(comm.Request(true,null,`${interactionID} You cannot cancel a game after it has started!`,true));
+            communicationRequests.push(comm.Request(comm.Type.Reply,null,`${interactionID} You cannot cancel a game after it has started!`,comm.Type.Hidden));
         else
-            communicationRequests.push(comm.Request(true,null,`${interactionID} You cannot cancel a game you did not start!`,true));
+            communicationRequests.push(comm.Request(comm.Type.Reply,null,`${interactionID} You cannot cancel a game you did not start!`,comm.Type.Hidden));
         return communicationRequests;
     },
 
@@ -284,7 +312,7 @@ module.exports =
         let communicationRequests=[];
         if(currentGame.PlayerObjects.length==0)
         {
-            communicationRequests.push(comm.Request(true,null,"No game is pending/currently being played. Type /21 to start one!",true));
+            communicationRequests.push(comm.Request(comm.Type.Reply,null,"No game is pending/currently being played. Type /21 to start one!",trucomm.Type.Hiddene));
         }
         else
         {
@@ -299,7 +327,7 @@ module.exports =
             'DARK_RED',
             thumbnail
         );
-        communicationRequests.push(comm.Request(true,embed,"",false));
+        communicationRequests.push(comm.Request(comm.Type.Reply,embed,"",comm.Type.Visible));
         }
         return communicationRequests;
     },
@@ -311,11 +339,11 @@ module.exports =
         if(playerIndex.index==-1) return communicationRequests;
         currentGame.DealCard(playerIndex.index);
         const embed =CreatePlayerHandEmbed(currentGame.PlayerObjects[playerIndex.index],true);
-        communicationRequests.push(comm.Request(true,embed,"",true,comm.Timer(Events.GameAction,2,2)));
+        communicationRequests.push(comm.Request(comm.Type.Reply,embed,"",true,comm.Timer(Events.GameAction,2,2)));
         if(currentGame.PlayerObjects[playerIndex.index].isOver)
         {
             communicationRequests.push(comm.Request(
-                false,
+                comm.Type.Brodcast,
                 null,
                 `<@${currentGame.PlayerObjects[playerIndex.index].userId}> is done with their hand in the current game of 21.`,
             ));
@@ -330,9 +358,9 @@ module.exports =
         let communicationRequests=playerIndex.requets;
         if(playerIndex.index==-1) return communicationRequests;
         currentGame.StayHand(playerIndex.index);
-        communicationRequests.push(comm.Request(true,null,`You have stayed`,true,comm.Timer(Events.GameAction,2,2)));
+        communicationRequests.push(comm.Request(comm.Type.Reply,null,`You have stayed`,comm.Type.Hidden,comm.Timer(Events.GameAction,2,2)));
         communicationRequests.push(comm.Request(
-            false,
+            comm.Type.Brodcast,
             null,
             `<@${currentGame.PlayerObjects[playerIndex.index].userId}> is done with their hand in the current game of 21.`
         ));
@@ -346,7 +374,7 @@ module.exports =
         let communicationRequests=playerIndex.requets;
         if(playerIndex.index==-1) return communicationRequests;
         const embed = CreatePlayerHandEmbed( currentGame.PlayerObjects[playerIndex.index], false);
-        communicationRequests.push(comm.Request( true, embed, "", true));
+        communicationRequests.push(comm.Request( comm.Type.Reply, embed, "", comm.Type.Hidden));
         return communicationRequests;
     },
 
@@ -377,7 +405,7 @@ module.exports =
 function TimeOutNoStart()
 {
     let communicationRequests=[];
-    communicationRequests.push(comm.Request(false,null,`The current 21 Game has been reset,<@${currentGame.StartingPlayer}> has failed to start it....good job.`,false));
+    communicationRequests.push(comm.Request(comm.Type.Broadcast,null,`The current 21 Game has been reset,<@${currentGame.StartingPlayer}> has failed to start it....good job.`,comm.Type.Visible));
     currentGame.ResetGame();
     return communicationRequests;
 }
@@ -389,7 +417,7 @@ function TimeOutLongWait()
     {
         currentGame.StayHand(x);
     }
-    communicationRequests.push(comm.Request(false,null,"The current game of 21 has gone stale! No one has played an action in over two minutes. Wrapping up the game!"));
+    communicationRequests.push(comm.Request(comm.Type.Broadcast,null,"The current game of 21 has gone stale! No one has played an action in over two minutes. Wrapping up the game!"));
     return CheckWinner(communicationRequests);
 }
 
@@ -491,10 +519,10 @@ for (let x=0;x<tempPlayerObject.length;x++)
         thumbnail
     );
     if(isTie)
-        communicationRequests.push(comm.Request(false,embed,"",false,comm.Timer(Events.GameStart,2,2)));
+        communicationRequests.push(comm.Request(comm.Type.Broadcast,embed,"",comm.Type.Visible,comm.Timer(Events.GameStart,2,2)));
     else
     {
-        communicationRequests.push(comm.Request(false,embed,"",false,comm.Timer(Events.GameEnd,0,0)));
+        communicationRequests.push(comm.Request(comm.Type.Broadcast,embed,"",comm.Type.Visible,comm.Timer(Events.GameEnd,0,0)));
         currentGame.ResetGame();
     }
     
@@ -508,18 +536,18 @@ function ValidateAction(interactionID)
     let returnObject={index:-1,requets:[]};
     if(currentGame.GameRunning==false)
     {
-        returnObject.requets.push(comm.Request(true,
+        returnObject.requets.push(comm.Request(comm.Type.Reply,
         null,
         "There is no game currently running!",
-        true,null));
+        comm.Type.Hidden));
 
     }
     else if(tempIndex==-1)
     {
-        returnObject.requets.push(comm.Request(true,
+        returnObject.requets.push(comm.Request(comm.Type.Reply,
             null,
             "You are not in this game, wait till the next one",
-            true));
+            comm.Type.Hidden));
 
     }else if(currentGame.CheckPlayerIn(tempIndex))
     {
@@ -527,10 +555,10 @@ function ValidateAction(interactionID)
     }
     else
     {
-        returnObject.requets.push(comm.Request(true,
+        returnObject.requets.push(comm.Request(comm.Type.Reply,
             null,
             "You cannot make anymore actions this round",
-            true));
+            comm.Type.Hidden));
         return returnObject;
     }
     return returnObject;

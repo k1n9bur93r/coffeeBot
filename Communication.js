@@ -35,5 +35,6 @@ module.exports =
             functionCall:methodNumber
         }
         return object;
-    }
+    },
+    Type:Object.freeze({Reply:true,Brodcast:false,Hidden:true,Visible:false})
 }
