@@ -8,6 +8,41 @@ const Events={
     GameAction:{Name:"CG-Action",Replace:["CG-Start","CG-Action"]},
     GameInit:{Name:"CG-Init",Replace:["BS-Init"]}
 }
+//TODO
+//General Idea for what would need to be acomplished here 
+//Based on emoji that are written in at game start, append a permutation object to each player which can define how the game is able to operate 
+//Ideas
+//1🤑 richest person has their buy in doubled 
+//2🤔 users are able to only see the first card they drew, and cant see their total
+//3🤪 Randomize card deck for whole group
+//4🥰 Winnings are given to the biggest loser 
+//25💵 Over all winnings are doubled 
+//5🥶 
+//6🥺 First person out gets a second chance with a new hand
+//7😱 
+//8🥱 Last person to stay gets a new hand
+//9🤬
+//10😳  A random person will have all their actions display publicly 
+//11🤡  Jake will always draw a starting hand of 20 and everyone else will have a soft 21
+//12👾  All text but numbers will say pew pew pew
+//13😺  All text but numbers will say meow meow meow
+//23 🏩 All text but numbers will be heart emoji
+//14💯 Card Target is set to 100
+//15💥
+//16💦
+//17💣 If a user takes a 4th action they lose 
+//18👋
+//19👌
+//20🙏
+//21🦿 
+//22🧠 23 is the max hit point
+//24🌚
+//26 ❓ Random win number for each user, least distance from win determines winner
+// 🐢 berate the poorest person in the game 
+// 🥳 Only 10s and 11s
+// 🍆 Only cards six and 9
+// ☠️ If you stay on your starting hand you lose
+// 💩 Only cards less than 5 
 
 //easily modifiable things 
 ///Dealing logic 
@@ -16,24 +51,27 @@ const Events={
     //total required number to win
     //stay possible
     //draw possible
-    //individual randomized players
+//General randomized logic 
+    //playing for different players
+    //each player has a differnet deck
+    //
 
-function cardGamePlayers(playerId,canDraw=true,canStay=true,winAmount=21,deck=[],)
+function cardGamePermutation(canDraw=true,canStay=true,winAmount=21,deck=[],minDraw=-1)
 {
     return{
-    playerId:playerId,
     playerDraw:canDraw,
     playerStay:canStay,
     playerDeck:deck,
     playerWinAmount:winAmount,
     playerIndex:-1,
-    otherPlayerIndex:-1
-
+    otherPlayerIndex:-1,
+    playerDraws:0,
+    PlayerMinDraws:minDraw
     }
 }   
 function cardGame()
 {
-    this.PlayerRandomization=false
+    this.PermutationGame=false,
     this.CardDeck=[11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10]; 
     this.PlayerIds=[];
     this.GameWon=false;
@@ -59,7 +97,8 @@ function cardGame()
         isStayed: false,
         isOver: false,
         totalSoft:0,
-        aceCounter:0
+        aceCounter:0,
+        cardGamePermutation: cardGamePermutation(id) //figure out something here on how to handle permutations 
         }
         if(this.TieGame!=true)
             this.PlayerIds.push(id)
@@ -219,6 +258,7 @@ module.exports =
 
         let coffAmount = amount;
 
+        //TODO:somewhere around this point we will read in the value as either a number or a set of emoji  
         if(!coffAmount)
             coffAmount=1;
         else if(coffAmount>2)
@@ -254,6 +294,7 @@ module.exports =
 
             if(currentGame.PlayerObjects.length==0)
             {
+                //TODO: Add the object that deals with ther permutations here 
                 let embed;
                 currentGame.PotSize=coffAmount;
                 currentGame.StartingPlayer=interactionID;
@@ -563,5 +604,13 @@ function ValidateAction(interactionID)
     }
     return returnObject;
 
+}
+
+function TranslatePermutation(permutationString)
+{
+    //TODO
+    //reads incomeing string to parse out emoji 
+    //there is a dictonary that holds key value pairs of each emoji and the effect it will have on creating the permutation rule set
+    //returns an object payload that is injected into the card game object. 
 }
 
