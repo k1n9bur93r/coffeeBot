@@ -240,10 +240,6 @@ client.on("interactionCreate", async (interaction) => {
                 parsedCoffeeAmount,
                 "GIVE"
             );
-            //fileIO.UpdateFile("c");
-
-            //lStats({circulation:parsedCoffeeAmount});
-            //fileIO.UpdateFile(statsJSON,stats);
 
             BotReply(
                 interaction,
@@ -299,10 +295,6 @@ client.on("interactionCreate", async (interaction) => {
                 parsedCoffeeAmount,
                 "REDEEM"
             );
-            //fileIO.UpdateFile("c");
-
-            //UpdateGlobalStats({redeemed:parsedCoffeeAmount,circulation:-Math.abs(parsedCoffeeAmount)});
-            //fileIO.UpdateFile(statsJSON,stats);
 
             BotReply(
                 interaction,
@@ -349,10 +341,7 @@ client.on("interactionCreate", async (interaction) => {
                         `<@${result.coinWin}> won the coinflip! <@${result.coinLose}> paid up 1 coffee.`,
                         false
                     );
-                //UpdateGlobalStats({coinflip:1,circulation:1,winnerId:winner});
-                //fileIO.UpdateFile(statsJSON,stats);
 
-                //fileIO.UpdateFile("c");
                 curCoinflipRequest = "";
             }
         } else if (interaction.commandName == "transfer") {
@@ -405,10 +394,6 @@ client.on("interactionCreate", async (interaction) => {
             //if from = to then coffees cancel out!
             if (fromId != toId) FileIO.AddUserCoffee(fromId, toId, amount,"TRANSFER");
 
-            //fileIO.UpdateFile("c");
-
-            //UpdateGlobalStats({PotGames:1,PotCoffs:curCoffeePotSlots+1,winnerId:winner});
-            //fileIO.UpdateFile(statsJSON,stats);
 
             BotReply(
                 interaction,
@@ -520,11 +505,6 @@ client.on("interactionCreate", async (interaction) => {
                         }
                     }
                 }
-                //fileIO.UpdateFile("c");
-
-                //UpdateGlobalStats({PotGames:1,circulation:curCoffeePotSlots-1,PotCoffs:curCoffeePotSlots,winnerId:winner});
-                //fileIO.UpdateFile(statsJSON,stats);
-
                 //reset slots and players
                 curCoffeePotSlots = -1;
                 curCoffeePotPlayers = {};
@@ -679,7 +659,6 @@ client.on("interactionCreate", async (interaction) => {
             } else if ((player1Choice + 1) % 3 != player2Choice) {
                 //player1 won
                 FileIO.AddUserCoffee(player2, player1, 1,"RPS");
-                //fileIO.UpdateFile("c");
                 BotReply(
                     interaction,
                     null,
@@ -690,7 +669,6 @@ client.on("interactionCreate", async (interaction) => {
                 //player2 won
 
                 FileIO.AddUserCoffee(player1, player2, 1,"RPS");
-                //fileIO.UpdateFile("c");
                 BotReply(
                     interaction,
                     null,
@@ -1026,7 +1004,6 @@ function Coinflip(flipper1, flipper2) {
 
     if (unique != "side") {
         FileIO.AddUserCoffee(loser, winner, flipValue,"COINFLIP");
-        //fileIO.UpdateFile("c");
     }
 
     return { coinSide: unique, coinWin: winner, coinLose: loser };

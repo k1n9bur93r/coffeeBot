@@ -1,5 +1,5 @@
 
-const fileIO= require("./FileIO");
+const fileIO= require("./FileIO.js");
 const comm= require("./Communication");
 
 const Events={
@@ -525,7 +525,6 @@ else if(currentGame.Winners.length==1)
                 fileIO.AddUserCoffee(currentGame.PlayerIds[x],currentGame.Winners[0].userId,currentGame.PotSize,"21");
             }
         }
-        //fileIO.UpdateFile("c");
 }
 else
 {
