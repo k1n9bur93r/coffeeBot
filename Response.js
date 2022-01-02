@@ -2,7 +2,6 @@ const { responseJSON,gCloudJSON} = require("./config.json");
 const language = require("@google-cloud/language");
 const fileIO= require("./FileIO.js");
 const fileResponses = require(`./${responseJSON}`);
-const gCloud = require(`./${gCloudJSON}`);
 const comm= require("./Communication");
 
 const gCloudOptions = {
@@ -13,7 +12,7 @@ const gCloudOptions = {
         private_key: gCloud.private_key,
     },
 };
-const gCClient = new language.LanguageServiceClient(gCloudOptions);
+const gCClient = new language.LanguageServiceClient(JSON.parse(gCloudOptions));
 
 const thumbnail="https://cdn.discordapp.com/avatars/878799768963391568/eddb102f5d15650d0dfc73613a86f5d2.webp?size=128";
 

@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
 const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v9");
-const { clientId, guildId, token } = require("./config.json");
+const { discordClientId, discordGuildId, discordToken } = require("./config.json");
 
 
 const commands = [
@@ -185,11 +185,11 @@ const commands = [
         // .setDescription("Current players in a Best Of set"),
 ].map((command) => command.toJSON());
 
-const rest = new REST({ version: "9" }).setToken(token);
+const rest = new REST({ version: "9" }).setToken(discordToken);
 
 (async () => {
     try {
-        await rest.put(Routes.applicationGuildCommands(clientId, guildId), {
+        await rest.put(Routes.applicationGuildCommands(discordClientId,discordGuildId), {
             body: commands,
         });
 

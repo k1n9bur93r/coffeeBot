@@ -1,11 +1,8 @@
-
 const { gCloudDB} = require("./config.json"); //service account will go here 
 const admin = require('firebase-admin');
-const serviceAccount= require(`./${gCloudDB}`); //move the service account thing up  
-
-admin.initializeApp({credential:admin.credential.cert(serviceAccount)})
+  
+admin.initializeApp({credential:admin.credential.cert(JSON.parse(gCloudDB))})
 const db= admin.firestore();
-
 const playerMap= new Map();
 let writeActions=0;
 let timerStart="";

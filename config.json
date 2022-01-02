@@ -1,0 +1,8 @@
+{
+    "discordToken": "",
+    "discordClientId": "",
+    "discordGuildId": "",
+    "responseJSON": "talk-responses.json",
+    "gCloudLang" : "",
+    "gCloudDB":""
+}
