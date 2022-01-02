@@ -2,10 +2,9 @@
 const { Client, Intents, MessageEmbed } = require("discord.js");
 const { token} = require("./config.json");
 const cardGame= require("./CardGame");
-const fileIO= require("./FileIO");
 const response=require("./Response.js");
 const BestOf = require("./BestOf.js");
-const FileIO = require("./FileIO");
+const FileIO = require("./FileIO.js");
 
 let curCoinflipRequest = "";
 
@@ -41,6 +40,7 @@ client.login(token);
 // When the client is ready, run this code (only once)
 client.once("ready", () => {
     console.log("Ready!");
+    FileIO.Initalize();
     response.Initalize();
     client.user.setActivity("/commands", { type: "LISTENING" });
 });
@@ -50,7 +50,7 @@ client.on("interactionCreate", async (interaction) => {
     if (!interaction.isCommand()) return;
     try {
         if (interaction.commandName === "agree") {
-            fileIO.agreePlayer(interaction.user.id)
+            FileIO.agreePlayer(interaction.user.id)
             BotReply(
                 interaction,
                 null,
@@ -59,7 +59,7 @@ client.on("interactionCreate", async (interaction) => {
             )
             return;
         }
-        else if (!fileIO.playerAgreedToTerms(interaction.user.id)) {
+        else if (!FileIO.playerAgreedToTerms(interaction.user.id)) { //removed negate
             const embed = new MessageEmbed()
             .setTitle("Coffee Economy Terms & Conditions")
             .setDescription(`One must accept accept the following terms & conditions to participate in the :coffee: economy:
@@ -202,29 +202,13 @@ client.on("interactionCreate", async (interaction) => {
             if (profiledUser == undefined) {
                 profiledUser = interaction.member;
             }
-
-            let avatarUrl = `https://cdn.discordapp.com/avatars/${profiledUser.user.id}/${profiledUser.user.avatar}`;
-            let profileString = getProfileString(
-                profiledUser.user.id,
-                interaction.channel
-            );
-            const profilEmbed = new MessageEmbed()
-                .setTitle(
-                    `${
-                        profiledUser.nickname != null
-                            ? profiledUser.nickname
-                            : profiledUser.user.username
-                    }'s profile`
-                )
-                .setDescription(profileString)
-                .setThumbnail(avatarUrl);
-            BotReply(interaction, profilEmbed, "", false);
+            return getProfileString(profiledUser,interaction,`https://cdn.discordapp.com/avatars/${profiledUser.user.id}/${profiledUser.user.avatar}`);
         } else if (interaction.commandName == "give") {
             let mentionedUser = getUserFromMention(
                 interaction.options.get("user").user.id,
                 interaction.channel
             );
-            let parsedCoffeeAmount = interaction.options.getNumber("amount");//num
+            let parsedCoffeeAmount = interaction.options.getInteger("amount");//num
 
             if (mentionedUser) {
                 if (mentionedUser == undefined) {
@@ -250,13 +234,13 @@ client.on("interactionCreate", async (interaction) => {
                 BotReply(interaction, null, `Nice try hax0r man`, true);
                 return;
             }
-            fileIO.AddUserCoffee(
+            FileIO.AddUserCoffee(
                 interaction.user.id,
                 mentionedUser.user.id,
                 parsedCoffeeAmount,
                 "GIVE"
             );
-            fileIO.UpdateFile("c");
+            //fileIO.UpdateFile("c");
 
             //lStats({circulation:parsedCoffeeAmount});
             //fileIO.UpdateFile(statsJSON,stats);
@@ -277,7 +261,7 @@ client.on("interactionCreate", async (interaction) => {
                 interaction.channel
             );
 
-            let parsedCoffeeAmount = interaction.options.getNumber("amount");//num
+            let parsedCoffeeAmount = interaction.options.getInteger("amount");//num
 
             if (mentionedUser) {
                 if (mentionedUser == undefined) {
@@ -298,7 +282,7 @@ client.on("interactionCreate", async (interaction) => {
             }
 
             if (
-                fileIO.GetUserCoffeeDebt(mentionedUser.user.id, interaction.user.id) <
+                FileIO.GetUserCoffeeDebt(interaction.user.id,mentionedUser.user.id) <
                 parsedCoffeeAmount
             ) {
                 BotReply(
@@ -309,13 +293,13 @@ client.on("interactionCreate", async (interaction) => {
                 );
                 return;
             }
-            fileIO.RemoveUserCoffee(
+            FileIO.RemoveUserCoffee(
                 mentionedUser.user.id,
                 interaction.user.id,
                 parsedCoffeeAmount,
                 "REDEEM"
             );
-            fileIO.UpdateFile("c");
+            //fileIO.UpdateFile("c");
 
             //UpdateGlobalStats({redeemed:parsedCoffeeAmount,circulation:-Math.abs(parsedCoffeeAmount)});
             //fileIO.UpdateFile(statsJSON,stats);
@@ -368,7 +352,7 @@ client.on("interactionCreate", async (interaction) => {
                 //UpdateGlobalStats({coinflip:1,circulation:1,winnerId:winner});
                 //fileIO.UpdateFile(statsJSON,stats);
 
-                fileIO.UpdateFile("c");
+                //fileIO.UpdateFile("c");
                 curCoinflipRequest = "";
             }
         } else if (interaction.commandName == "transfer") {
@@ -378,7 +362,7 @@ client.on("interactionCreate", async (interaction) => {
             let amount = interaction.options.getNumber("amount");//num
 
             //check if from user owes less than amount to transferer or that transferer owes less than amount to toId
-           if(fileIO.GetUserCoffeeDebt(fromId,transferer)<amount)
+           if(FileIO.GetUserCoffeeDebt(fromId,transferer)<amount)
             {    // if so, then ephemeral error and return
                 BotReply(
                     interaction,
@@ -388,7 +372,7 @@ client.on("interactionCreate", async (interaction) => {
                 );
                 return;
             }
-            if(fileIO.GetUserCoffeeDebt(transferer,toId)<amount)
+            if(FileIO.GetUserCoffeeDebt(transferer,toId)<amount)
             {
                 BotReply(
                     interaction,
@@ -416,12 +400,12 @@ client.on("interactionCreate", async (interaction) => {
                 );
                 return;
             }
-            fileIO.RemoveUserCoffee(fromId, transferer, amount,"TRANSFER");
-            fileIO.RemoveUserCoffee(transferer, toId, amount,"TRANSFER");
+            FileIO.RemoveUserCoffee(fromId, transferer, amount,"TRANSFER");
+            FileIO.RemoveUserCoffee(transferer, toId, amount,"TRANSFER");
             //if from = to then coffees cancel out!
-            if (fromId != toId) fileIO.AddUserCoffee(fromId, toId, amount,"TRANSFER");
+            if (fromId != toId) FileIO.AddUserCoffee(fromId, toId, amount,"TRANSFER");
 
-            fileIO.UpdateFile("c");
+            //fileIO.UpdateFile("c");
 
             //UpdateGlobalStats({PotGames:1,PotCoffs:curCoffeePotSlots+1,winnerId:winner});
             //fileIO.UpdateFile(statsJSON,stats);
@@ -433,7 +417,7 @@ client.on("interactionCreate", async (interaction) => {
                 false
             );
         } else if (interaction.commandName == "startpot") {
-            let spotsAmount = interaction.options.getInteger("amount");
+            let spotsAmount = interaction.options.getInteger("amount"); 
 
             if (spotsAmount < 2) {
                 BotReply(interaction, null, "Must have atleast 2 spots", true);
@@ -532,11 +516,11 @@ client.on("interactionCreate", async (interaction) => {
                     for (let playerId of sortedPlayerIds) {
                         if (playerId != winner) {
                             //playerId owes winner a coffee
-                            fileIO.AddUserCoffee(playerId, winner, 1,"COFFEPOT");
+                            FileIO.AddUserCoffee(playerId, winner, 1,"COFFEPOT");
                         }
                     }
                 }
-                fileIO.UpdateFile("c");
+                //fileIO.UpdateFile("c");
 
                 //UpdateGlobalStats({PotGames:1,circulation:curCoffeePotSlots-1,PotCoffs:curCoffeePotSlots,winnerId:winner});
                 //fileIO.UpdateFile(statsJSON,stats);
@@ -603,7 +587,7 @@ client.on("interactionCreate", async (interaction) => {
                     BestOf.CommandBestOfStart();
                      BulkReplyHandler(
                         interaction,
-                        cardGame.CommandStartJoinGame(list[0],interaction.options.getInteger("amount")));
+                        cardGame.CommandStartJoinGame(list[0],interaction.options.getInteger("amount"))); //Update to handle a string 
                         for(var x=1;x<list.length;x++)
                         {
                             BulkReplyHandler(
@@ -624,7 +608,7 @@ client.on("interactionCreate", async (interaction) => {
             {
                 BulkReplyHandler(
                     interaction,
-                    cardGame.CommandStartJoinGame(interaction.user.id,interaction.options.getInteger("amount")));
+                    cardGame.CommandStartJoinGame(interaction.user.id,interaction.options.getInteger("amount"))); //update to handle a string 
             }
 
            
@@ -694,8 +678,8 @@ client.on("interactionCreate", async (interaction) => {
                 );
             } else if ((player1Choice + 1) % 3 != player2Choice) {
                 //player1 won
-                fileIO.AddUserCoffee(player2, player1, 1,"RPS");
-                fileIO.UpdateFile("c");
+                FileIO.AddUserCoffee(player2, player1, 1,"RPS");
+                //fileIO.UpdateFile("c");
                 BotReply(
                     interaction,
                     null,
@@ -705,8 +689,8 @@ client.on("interactionCreate", async (interaction) => {
             } else {
                 //player2 won
 
-                fileIO.AddUserCoffee(player1, player2, 1,"RPS");
-                fileIO.UpdateFile("c");
+                FileIO.AddUserCoffee(player1, player2, 1,"RPS");
+                //fileIO.UpdateFile("c");
                 BotReply(
                     interaction,
                     null,
@@ -718,16 +702,16 @@ client.on("interactionCreate", async (interaction) => {
             BulkReplyHandler(
                 interaction,
                 BestOf.CommandAddPlayer(interaction.user.id));
-        }else if (interaction.commandName == "bestcreate"){
+        } else if (interaction.commandName == "bestcreate"){
             BulkReplyHandler(
                 interaction,
                 BestOf.CommandNewBestOf(interaction.user.id,"21",interaction.options.getInteger("coffs"),interaction.options.getInteger("rounds")));
-        }else if (interaction.commandName == "bestplayers"){
+        } else if (interaction.commandName == "bestplayers"){
             BulkReplyHandler(
                 interaction,
                 BestOf.CommandBestOfPlayerMessage());
             
-        }else if (interaction.commandName=="bestend")
+        } else if (interaction.commandName=="bestend")
         {
             BulkReplyHandler(
                 interaction,
@@ -934,34 +918,24 @@ function getUserFromMention(mention, channel) {
     return channel.members.get(mention);
 }
 
-function getProfileString(userId, channel) {
+function getProfileString(pUser, interaction,avatarUrl) {
     let owedCoffs = "";
-    let owedAmount = 0;
     let receivingCoffs = "";
-    let receivedAmount = 0;
-
-    for (let ower in fileIO.coffees()) {
-        for (let receiver in fileIO.coffees()[ower]) {
-            // only write profile line if both users exist in channel and the amount != 0
-            let coffeeDebt=fileIO.GetUserCoffeeDebt(ower,receiver);
-            if (
-                channel.members.get(ower) != undefined &&
-                channel.members.get(receiver) != undefined &&
-                coffeeDebt != 0
-            ) {
-                let owerMention = `<@${ower}>`;
-                let receiverMention = `<@${receiver}>`;
-                if (ower == userId) {
-                    owedCoffs += `**${coffeeDebt}** ${receiverMention}\n`;
-                    owedAmount += coffeeDebt;
-                } else if (receiver == userId) {
-                    receivingCoffs += `**${coffeeDebt}** ${owerMention}\n`;
-                    receivedAmount += coffeeDebt;
-                }
-            }
+    let pString="";
+    FileIO.getUserProfile(pUser.user.id)
+    .then(function(data){
+    for(let x=0;x<data.Ledger.length;x++)
+    {
+        let textString=`**${data.Ledger[x].Amount}** <@${data.Ledger[x].ID}>\n`;
+        if(data.Ledger[x].Amount<0)
+        {
+            owedCoffs += textString
+        }
+        else if(data.Ledger[x].Amount>0)
+        {
+            receivingCoffs += textString
         }
     }
-
     if (owedCoffs == "") {
         owedCoffs = "No owed coffs!\n";
     }
@@ -971,91 +945,56 @@ function getProfileString(userId, channel) {
 
 
 
-    let pString = ""
     pString += `**Owed :coffee:**\n${owedCoffs}\n**Redeemable :coffee:**\n${receivingCoffs}\n**Net :coffee: worth\n${
-        receivedAmount - owedAmount
+        data.ReceivingCoffs - data.OwedCoffs
     }**`
     
-    if (FileIO.getVenmo(userId)) {
-        pString += `\n\n**Venmo 💰**\n${FileIO.getVenmo(userId)}`
+    if (data.Venmo!='') {
+        pString += `\n\n**Venmo 💰**\n${data.Venmo}`
     }
-    return pString;
+        const profilEmbed = new MessageEmbed()
+        .setTitle(
+            `${
+                pUser.nickname != null
+                    ? pUser.nickname
+                    : pUser.user.username
+            }'s profile`
+        )
+        .setDescription(pString)
+        .setThumbnail(avatarUrl);
+    return BotReply(interaction, profilEmbed, "", false);
+    });
+
 }
 
 function getCoffeeLedgerString(channel) {
-    let coffeeLedgerString = "";
-
-    for (let ower in fileIO.coffees()) {
-        for (let receiver in fileIO.coffees()[ower]) {
-            let coffeeDebt=fileIO.GetUserCoffeeDebt(ower,receiver);
-            // only write ledger line if both users exist in channel and the amount != 0
-            if (
-                channel.members.get(ower) != undefined &&
-                channel.members.get(receiver) != undefined &&
-                coffeeDebt != 0
-            ) {
-                let owerMention = `<@${ower}>`;
-                let receiverMention = `<@${receiver}>`;
-
-                let oweLine = `**${coffeeDebt}** ${owerMention} -> ${receiverMention}`;
-                if (coffeeLedgerString != "") {
-                    coffeeLedgerString += "\n\n";
-                }
-                coffeeLedgerString += oweLine;
-            }
-        }
+    let coffeeLedger = FileIO.GetPlayerLedger();
+    let coffeeLedgerString="";
+    for(let x=0;x<coffeeLedger.length;x++)
+    {
+        coffeeLedgerString += `**${coffeeLedger[x].Amount}** <@${coffeeLedger[x].MainID}> -> <@${coffeeLedger[x].LedgerID}>\n\n`;
     }
     return coffeeLedgerString;
 }
 
 function getLeaderboardString(channel) {
-    let coffeeReceivers = {};
-    for (let ower in fileIO.coffees()) {
-        for (let receiver in fileIO.coffees()[ower]) {
-            let coffeeDebt=fileIO.GetUserCoffeeDebt(ower,receiver);
-            if (
-                channel.members.get(ower) != undefined &&
-                channel.members.get(receiver) != undefined &&
-                coffeeDebt!= 0
-            ) {
-                if (receiver in coffeeReceivers == false) {
-                    coffeeReceivers[receiver] = 0;
-                }
-                if (ower in coffeeReceivers == false) {
-                    coffeeReceivers[ower] = 0;
-                }
-                coffeeReceivers[receiver] += coffeeDebt;
-                coffeeReceivers[ower] -= coffeeDebt;
-            }
-        }
-    }
-
+    let leaderboard = FileIO.GetPlayerTotals();
     let coffeeLeaderboardString = "";
-
-    let sortedPlayers = getSortedKeysLeaderboardStyle(coffeeReceivers);
-    for (let player of sortedPlayers) {
-        if (
-            player == sortedPlayers[0] &&
-            coffeeReceivers[sortedPlayers[0]] !=
-                coffeeReceivers[sortedPlayers[1]]
-        ) {
-            coffeeLeaderboardString += `**${coffeeReceivers[player]}** <@${player}> :crown:\n\n`;
-        } else if (
-            player == sortedPlayers[sortedPlayers.length - 1] &&
-            coffeeReceivers[sortedPlayers[sortedPlayers.length - 1]] !=
-                coffeeReceivers[sortedPlayers[sortedPlayers.length - 2]]
-        ) {
-            coffeeLeaderboardString += `**${coffeeReceivers[player]}** <@${player}> :hot_face:\n\n`;
-        }else if(player=="887002671947595836")
+    for(let x=0;x<leaderboard.length;x++)
+    {
+        if(x==0)
         {
-            coffeeLeaderboardString += `**${coffeeReceivers[player]}** <@${player}> :hamburger:\n\n`;
-
-        } 
-        else {
-            coffeeLeaderboardString += `**${coffeeReceivers[player]}** <@${player}>\n\n`;
+            coffeeLeaderboardString += `**${leaderboard[x].Total}** <@${leaderboard[x].ID}> :crown:\n\n`; 
+        }
+        else if(x==leaderboard.length-1)
+        {
+            coffeeLeaderboardString += `**${leaderboard[x].Total}** <@${leaderboard[x].ID}> :hot_face:\n\n`; 
+        }
+        else
+        {
+            coffeeLeaderboardString += `**${leaderboard[x].Total}** <@${leaderboard[x].ID}> \n\n`; 
         }
     }
-
     return coffeeLeaderboardString;
 }
 
@@ -1086,8 +1025,8 @@ function Coinflip(flipper1, flipper2) {
     }
 
     if (unique != "side") {
-        fileIO.AddUserCoffee(loser, winner, flipValue,"COINFLIP");
-        fileIO.UpdateFile("c");
+        FileIO.AddUserCoffee(loser, winner, flipValue,"COINFLIP");
+        //fileIO.UpdateFile("c");
     }
 
     return { coinSide: unique, coinWin: winner, coinLose: loser };

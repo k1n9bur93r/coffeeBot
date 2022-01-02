@@ -525,7 +525,7 @@ else if(currentGame.Winners.length==1)
                 fileIO.AddUserCoffee(currentGame.PlayerIds[x],currentGame.Winners[0].userId,currentGame.PotSize,"21");
             }
         }
-        fileIO.UpdateFile("c");
+        //fileIO.UpdateFile("c");
 }
 else
 {
