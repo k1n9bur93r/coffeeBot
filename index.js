@@ -1,6 +1,5 @@
 // Require the necessary discord.js classes
 const { Client, Intents, MessageEmbed } = require("discord.js");
-const { discordToken} = require("./config.json");
 const cardGame= require("./CardGame.js");
 const response=require("./Response.js");
 const BestOf = require("./BestOf.js");
@@ -35,7 +34,7 @@ const client = new Client({
     ],
 });
 
-client.login(discordToken);
+client.login(process.env.discordToken);
 
 // When the client is ready, run this code (only once)
 client.once("ready", () => {

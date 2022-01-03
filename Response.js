@@ -1,8 +1,8 @@
-const { responseJSON,gCloudLang} = require("./config.json");
+const { responseJSON} = require("./config.json");
 const language = require("@google-cloud/language");
 const fileIO= require("./FileIO.js");
 const fileResponses = require(`./${responseJSON}`);
-let cloudBuffer= Buffer.from(`${gCloudLang}`,'base64')
+let cloudBuffer= Buffer.from(`${process.env.gCloudLang}`,'base64')
 let decodedCloud=cloudBuffer.toString();
 cloudBuffer=JSON.parse(decodedCloud);
 const comm= require("./Communication");
