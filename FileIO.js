@@ -1,8 +1,8 @@
-const { gCloudDB} = require("./config.json"); //service account will go here 
+//const { gCloudDB} = require("./config.json"); //service account will go here 
 const admin = require('firebase-admin'); 
 
 const playerMap= new Map();
-let cloudBuffer= Buffer.from(`${gCloudDB}`,'base64')
+let cloudBuffer= Buffer.from(`${process.env.gCloudDB}`,'base64')
 console.log(gCloudDB)
 
 let decodedCloud=cloudBuffer.toString();
