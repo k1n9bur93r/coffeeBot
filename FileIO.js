@@ -3,8 +3,12 @@ const admin = require('firebase-admin');
 
 const playerMap= new Map();
 let cloudBuffer= Buffer.from(`${gCloudDB}`,'base64')
+console.log(gCloudDB)
+
 let decodedCloud=cloudBuffer.toString();
+console.log(decodedCloud);
 cloudBuffer=JSON.parse(decodedCloud);
+console.log(cloudBuffer);
 admin.initializeApp({credential:admin.credential.cert(cloudBuffer)})
 const db= admin.firestore();
 let writeActions=0;
