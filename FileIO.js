@@ -3,7 +3,7 @@ const admin = require('firebase-admin');
 
 const playerMap= new Map();
 let cloudBuffer= Buffer.from(`${process.env.gCloudDB}`,'base64')
-console.log(gCloudDB)
+console.log(process.env.gCloudDB)
 
 let decodedCloud=cloudBuffer.toString();
 console.log(decodedCloud);
