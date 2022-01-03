@@ -1,9 +1,12 @@
 const { gCloudDB} = require("./config.json"); //service account will go here 
-const admin = require('firebase-admin');
-  
-admin.initializeApp({credential:admin.credential.cert(JSON.parse(gCloudDB))})
-const db= admin.firestore();
+const admin = require('firebase-admin'); 
+
 const playerMap= new Map();
+let cloudBuffer= Buffer.from(`${gCloudDB}`,'base64')
+let decodedCloud=cloudBuffer.toString();
+cloudBuffer=JSON.parse(decodedCloud);
+admin.initializeApp({credential:admin.credential.cert(cloudBuffer)})
+const db= admin.firestore();
 let writeActions=0;
 let timerStart="";
 let timerObject={};
