@@ -1,15 +1,18 @@
-const { responseJSON} = require("./config.json");
+"use strict"
+const { responseJSON} = require("../config.json");
 const language = require("@google-cloud/language");
-const fileIO= require("./FileIO.js");
-const fileResponses = require(`./${responseJSON}`);
-let cloudBuffer= Buffer.from(`${process.env.gCloudLang}`,'base64')
-let decodedCloud=cloudBuffer.toString();
-cloudBuffer=JSON.parse(decodedCloud);
-const comm= require("./Communication");
+const fileResponses = require(`../${responseJSON}`);
+let  RespFileIO = require("./FileIO");
+let RespComm= require("./Communication");
+let {gCloudLang}=require('../config.json')
+//let langCloudBuffer:object= Buffer.from(`${gCloudLang}`,'base64')
+let langCloudBuffer= Buffer.from(`${process.env.gCloudLang}`,'base64')
+let langDecodedCloud=langCloudBuffer.toString();
+langCloudBuffer=JSON.parse(langDecodedCloud);
 
-const gCClient = new language.LanguageServiceClient(cloudBuffer);
+const gCClient = new language.LanguageServiceClient(langCloudBuffer);
 
-const thumbnail="https://cdn.discordapp.com/avatars/878799768963391568/eddb102f5d15650d0dfc73613a86f5d2.webp?size=128";
+const ResponseThumbnail="https://cdn.discordapp.com/avatars/878799768963391568/eddb102f5d15650d0dfc73613a86f5d2.webp?size=128";
 
 module.exports = 
 {
@@ -17,7 +20,8 @@ Initalize: function()
 {
     gCClient.initialize();
 },
- CommandTalk: async function(interactionID, userMessage){
+ CommandTalk: async function(interactionID: number, userMessage: string):Promise<Array<object>>
+ {
 
         let output;
         const document = {
@@ -29,26 +33,27 @@ Initalize: function()
             document: document,
         });
         const gcReponse = result.documentSentiment;
-        let stats = fileIO.GetDebts(interactionID);
+        let stats = RespFileIO.GetDebts(interactionID);
 
         await gcReponse;
         //generate response
         output = GenerateResponse(result, fileResponses, stats);
 
-        let embed = comm.Embed(
+        let embed = RespComm.Embed(
             "Coffee Bot Says:",
             output,
             null,
             false,
             "DARK_GREEN",
-            thumbnail
+            ResponseThumbnail
         );
         
-        return [comm.Request(true,embed,`<@${interactionID}> said\n> "*${userMessage}*"`,false)];
+        return [RespComm.Request(true,embed,`<@${interactionID}> said\n> "*${userMessage}*"`,false)];
     }
 }
 
-function GenerateResponse(response, text, coffeeStats) {
+function GenerateResponse(response, text, coffeeStats) :string
+{
     let numGen = Math.floor(Math.random() * 2);
     var list1;
     var list2;

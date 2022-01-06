@@ -1,14 +1,12 @@
+"use strict"
+let  CardFileIO = require("./FileIO");
+let CardComm= require("./Communication");
 
-const fileIO= require("./FileIO.js");
-const comm= require("./Communication");
 
-const Events={
-    GameStart: {Name:"CG-Start",Replace:["CG-Init","BS-Init"]},
-    GameEnd:{Name:"CG-End",Replace:["CG-Init","CG-Action","CG-Start"]},
-    GameAction:{Name:"CG-Action",Replace:["CG-Start","CG-Action"]},
-    GameInit:{Name:"CG-Init",Replace:["BS-Init"]}
-}
 //TODO
+//Ts
+//fix the validate function thingy so it falls into line with typescript standards
+//Future
 //General Idea for what would need to be acomplished here 
 //Based on emoji that are written in at game start, append a permutation object to each player which can define how the game is able to operate 
 //Ideas
@@ -56,6 +54,8 @@ const Events={
     //each player has a differnet deck
     //
 
+
+
 function cardGamePermutation(canDraw=true,canStay=true,winAmount=21,deck=[],minDraw=-1)
 {
     return{
@@ -69,22 +69,21 @@ function cardGamePermutation(canDraw=true,canStay=true,winAmount=21,deck=[],minD
     PlayerMinDraws:minDraw
     }
 }   
-function cardGame()
+ class cardGameObj
 {
-    this.PermutationGame=false,
-    this.CardDeck=[11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10]; 
-    this.PlayerIds=[];
-    this.GameWon=false;
-    this.PastWinner=0;
-    this.PlayerObjects=[];
-    this.Winners=[];
-    this.GameRunning=false;
-    this.StartingPlayer=0;
-    this.PotSize=1;
-    this.TieGame=false;
-    this.TimeStamp="";
-    this.TimerLength=
-    this.AddPlayer=function(id)
+    PermutationGame=false;
+    CardDeck=[11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10]; 
+    PlayerIds=[];
+    GameWon=false;
+    PastWinner=0;
+    PlayerObjects=[];
+    Winners=[];
+    GameRunning=false;
+    StartingPlayer=0;
+    PotSize=1;
+    TieGame=false;
+    TimeStamp="";
+    AddPlayer(id: number)
     {
         let index=this.GetPlayerIndex(id);
         if(index!=-1)return false;
@@ -98,14 +97,14 @@ function cardGame()
         isOver: false,
         totalSoft:0,
         aceCounter:0,
-        cardGamePermutation: cardGamePermutation(id) //figure out something here on how to handle permutations 
+        //cardGamePermutation: cardGamePermutation(id) //figure out something here on how to handle permutations 
         }
         if(this.TieGame!=true)
             this.PlayerIds.push(id)
         this.PlayerObjects.push(Object);
         return true;
     }
-    this.ResetGame=function()
+    ResetGame()
     {
         this.PlayerIds=[];
         this.GameWon=false;
@@ -116,8 +115,8 @@ function cardGame()
         this.PotSize=1;
         this.TieGame=false;
     }
-    this.DealCard=function(id, winningAmount=21,aceValue=11, customDeck=[])
-    {
+    DealCard(id:number, winningAmount:number=21,aceValue:number=11, customDeck:Array<number>=[])
+    {   
         let index=this.GetPlayerIndex(id);
         if(index==-1)return false;
         let selection;
@@ -133,14 +132,14 @@ function cardGame()
         }
         else if((this.PlayerObjects[index].total+aceValue)>winningAmount&&this.PlayerObjects[index].hasAce>0)
         {
-            aceCounter++;
+            this.PlayerObjects[index].aceCounter++;
             this.PlayerObjects[index].total-=(aceValue-1);
             for(let x=0;x<this.PlayerObjects[index].cards.length;x++)
             {
                 if(this.PlayerObjects[index].cards[x]==aceValue)
                 {
                     this.PlayerObjects[index].cards[x]=(aceValue-(aceValue-1));
-                    aceCounter--;
+                    this.PlayerObjects[index].aceCounter--;
                     break;
 
                 }
@@ -177,7 +176,7 @@ function cardGame()
         }
         this.CheckGameEnd();
     }
-    this.CheckGameEnd=function(specialOverride=true)
+    CheckGameEnd(specialOverride:boolean=true)
     {
         let highestStay=0;
         //could also add special override here to skip the whole check in general
@@ -204,7 +203,7 @@ function cardGame()
             }
         }
     }
-    this.CheckPlayerIn=function(index)
+    CheckPlayerIn(index:number)
     {
         let foundIndex=-1;
         if(index>this.PlayerObjects.length)
@@ -215,7 +214,7 @@ function cardGame()
             return false;
         return true;
     }
-    this.GetPlayerIndex=function(id)
+    GetPlayerIndex(id:number)
     {
         if(id<this.PlayerObjects.length) return id;
         for(let x=0;x<this.PlayerObjects.length;x++)
@@ -224,11 +223,11 @@ function cardGame()
         return -1;
 
     }
-    this.RemovePlayer=function()
+    RemovePlayer()
     {
 
     }
-    this.StayHand=function(index)
+    StayHand(index:number)
     {
         let foundIndex=-1;
         if(index>this.PlayerObjects.length)
@@ -242,9 +241,9 @@ function cardGame()
     }
 
 }
-let currentGame=new cardGame();
+let currentGame=new cardGameObj();
 
-const thumbnail="https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg";
+const CardThumbnail="https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg";
 
 module.exports =
 {
@@ -252,9 +251,9 @@ module.exports =
     {
         return currentGame.GameRunning;
     },
-    CommandStartJoinGame: function (interactionID, amount, messageReply=true)
+    CommandStartJoinGame: function (interactionID: number, amount:number, messageReply:boolean=true):Array<object>
     {
-        let communicationRequests=[];
+        let communicationRequests:Array<object>=[];
 
         let coffAmount = amount;
 
@@ -263,7 +262,8 @@ module.exports =
             coffAmount=1;
         else if(coffAmount>2)
         {
-            return  communicationRequests.push(comm.Request(messageReply,null,"Can't have a buy in great than 5!",comm.Type.Hidden))
+            communicationRequests.push(CardComm.Request(messageReply,null,"Can't have a buy in great than 5!",CardComm.Type.Hidden));
+            return  communicationRequests;
         }
         if(currentGame.StartingPlayer==interactionID)
         {
@@ -272,21 +272,21 @@ module.exports =
                 let fields=[];
                 for(let x=0;x<currentGame.PlayerObjects.length;x++)
                     fields.push({title:`Player ${x+1}`,content:`<@${currentGame.PlayerObjects[x].userId}>`,fieldsAlign:true});
-                const embed=comm.Embed(
+                const embed=CardComm.Embed(
                     "21 Round Starting",
                     `The game of 21 is starting with ${(currentGame.PlayerObjects.length-1)*currentGame.PotSize} coffs on the line! Players see your hand with **/hand** and use **/draw** to draw or **/stay** stay!\n`,
                     fields,
                     true,
                     "DARK_RED",
-                    thumbnail
+                    CardThumbnail
                 );
 
-                communicationRequests.push(comm.Request(messageReply,embed,"",comm.Type.Visible,comm.Timer(Events.GameStart,2,2)));
+                communicationRequests.push(CardComm.Request(messageReply,embed,"",CardComm.Type.Visible,CardComm.Timer(CardComm.Type.GameStart,2,2)));
                 currentGame.GameRunning=true;
             }
             else
             {
-                communicationRequests.push(comm.Request(messageReply,null,`Sorry, there is a game currently on going!`,comm.Type.Hidden));
+                communicationRequests.push(CardComm.Request(messageReply,null,`Sorry, there is a game currently on going!`,CardComm.Type.Hidden));
             }
         }
         else if(currentGame.GameRunning==false)
@@ -301,16 +301,16 @@ module.exports =
                 currentGame.AddPlayer(interactionID);
                 currentGame.DealCard(0);
                 currentGame.DealCard(0);
-                embed=comm.Embed(
+                embed=CardComm.Embed(
                     "21 New Round",
                     `<@${interactionID}> Is starting a round of 21 with a ${currentGame.PotSize} coff buy in, use /21 to join!`,
                     null,
                     null,
                     "DARK_RED",
-                    thumbnail
+                    CardThumbnail
                 );
 
-                communicationRequests.push(comm.Request(messageReply,embed,"",comm.Type.Visible,comm.Timer(Events.GameInit,5,1)));
+                communicationRequests.push(CardComm.Request(messageReply,embed,"",CardComm.Type.Visible,CardComm.Timer(CardComm.Type.GameInit,5,1)));
 
             }
             else
@@ -318,73 +318,73 @@ module.exports =
                 let result =currentGame.AddPlayer(interactionID);
                 if(result==false)
                 {
-                    communicationRequests.push(comm.Request(messageReply,null,`You are already in this game!`,comm.Type.Hidden));
+                    communicationRequests.push(CardComm.Request(messageReply,null,`You are already in this game!`,CardComm.Type.Hidden));
                     return communicationRequests;
                 }
                 currentGame.DealCard(interactionID);
                 currentGame.DealCard(interactionID);
-                communicationRequests.push(comm.Request(messageReply,null,`<@${interactionID}> has joined the game of 21 started by <@${currentGame.StartingPlayer}>!`,comm.Type.Visible));
+                communicationRequests.push(CardComm.Request(messageReply,null,`<@${interactionID}> has joined the game of 21 started by <@${currentGame.StartingPlayer}>!`,CardComm.Type.Visible));
             }
 
         }
         else if(currentGame.GameRunning==true)
         {
-            communicationRequests.push(comm.Request(messageReply,null,`Sorry, there is a game currently on going!`,comm.Type.Hidden));
+            communicationRequests.push(CardComm.Request(messageReply,null,`Sorry, there is a game currently on going!`,CardComm.Type.Hidden));
         }
         return communicationRequests;
     },
 
-    CommandEndGame: function (interactionID)
+    CommandEndGame: function (interactionID:number):Array<object>
     {
         let communicationRequests=[];
         if(interactionID==currentGame.StartingPlayer&&currentGame.GameRunning==false){
-            communicationRequests.push(comm.Request(comm.Type.Reply,null,`${interactionID} Is revoking their game offer`,comm.Type.Hidden,comm.Timer(Events.GameEnd,0,0)));
-            ResetGameVars();
+            communicationRequests.push(CardComm.Request(CardComm.Type.Reply,null,`${interactionID} Is revoking their game offer`,CardComm.Type.Hidden,CardComm.Timer(CardComm.Type.GameEnd,0,0)));
+            currentGame.ResetGame();
         }
         else if(interactionID==currentGame.StartingPlayer&&currentGame.GameRunning==true)
-            communicationRequests.push(comm.Request(comm.Type.Reply,null,`${interactionID} You cannot cancel a game after it has started!`,comm.Type.Hidden));
+            communicationRequests.push(CardComm.Request(CardComm.Type.Reply,null,`${interactionID} You cannot cancel a game after it has started!`,CardComm.Type.Hidden));
         else
-            communicationRequests.push(comm.Request(comm.Type.Reply,null,`${interactionID} You cannot cancel a game you did not start!`,comm.Type.Hidden));
+            communicationRequests.push(CardComm.Request(CardComm.Type.Reply,null,`${interactionID} You cannot cancel a game you did not start!`,CardComm.Type.Hidden));
         return communicationRequests;
     },
 
-    CommandPlayerList: function ()
+    CommandPlayerList: function ():Array<object>
     {
         let communicationRequests=[];
         if(currentGame.PlayerObjects.length==0)
         {
-            communicationRequests.push(comm.Request(comm.Type.Reply,null,"No game is pending/currently being played. Type /21 to start one!",trucomm.Type.Hiddene));
+            communicationRequests.push(CardComm.Request(CardComm.Type.Reply,null,"No game is pending/currently being played. Type /21 to start one!",CardComm.Type.Hiddene));
         }
         else
         {
         let fields=[];
         for(let x=0;x<currentGame.PlayerObjects.length;x++)
             fields.push({title:`Player ${x+1}`,content:`<@${currentGame.PlayerObjects[x].userId}>`});
-        const embed=comm.Embed(
+        const embed=CardComm.Embed(
             "21 Current Players",
             `There are *${(currentGame.PlayerObjects.length-1)*currentGame.PotSize}* coffs on the line`,
             fields,
             true,
             'DARK_RED',
-            thumbnail
+            CardThumbnail
         );
-        communicationRequests.push(comm.Request(comm.Type.Reply,embed,"",comm.Type.Visible));
+        communicationRequests.push(CardComm.Request(CardComm.Type.Reply,embed,"",CardComm.Type.Visible));
         }
         return communicationRequests;
     },
 
-    CommandDraw: function (interactionID)
+    CommandDraw: function (interactionID:number):Array<object>
     {
         let playerIndex=ValidateAction(interactionID);
         let communicationRequests=playerIndex.requets;
         if(playerIndex.index==-1) return communicationRequests;
         currentGame.DealCard(playerIndex.index);
         const embed =CreatePlayerHandEmbed(currentGame.PlayerObjects[playerIndex.index],true);
-        communicationRequests.push(comm.Request(comm.Type.Reply,embed,"",true,comm.Timer(Events.GameAction,2,2)));
+        communicationRequests.push(CardComm.Request(CardComm.Type.Reply,embed,"",true,CardComm.Timer(CardComm.Type.GameAction,2,2)));
         if(currentGame.PlayerObjects[playerIndex.index].isOver)
         {
-            communicationRequests.push(comm.Request(
-                comm.Type.Brodcast,
+            communicationRequests.push(CardComm.Request(
+                CardComm.Type.Brodcast,
                 null,
                 `<@${currentGame.PlayerObjects[playerIndex.index].userId}> is done with their hand in the current game of 21.`,
             ));
@@ -393,33 +393,33 @@ module.exports =
         return CheckWinner(communicationRequests);
     },
 
-    CommandStay: function (interactionID)
+    CommandStay: function (interactionID:number):Array<object>
     {
         let playerIndex=ValidateAction(interactionID);
         let communicationRequests=playerIndex.requets;
         if(playerIndex.index==-1) return communicationRequests;
         currentGame.StayHand(playerIndex.index);
-        communicationRequests.push(comm.Request(comm.Type.Reply,null,`You have stayed`,comm.Type.Hidden,comm.Timer(Events.GameAction,2,2)));
-        communicationRequests.push(comm.Request(
-            comm.Type.Brodcast,
+        communicationRequests.push(CardComm.Request(CardComm.Type.Reply,null,`You have stayed`,CardComm.Type.Hidden,CardComm.Timer(CardComm.Type.GameAction,2,2)));
+        communicationRequests.push(CardComm.Request(
+            CardComm.Type.Brodcast,
             null,
             `<@${currentGame.PlayerObjects[playerIndex.index].userId}> is done with their hand in the current game of 21.`
         ));
         return CheckWinner(communicationRequests);
     },
 
-    CommandHand: function(interactionID)
+    CommandHand: function(interactionID:number):Array<object>
     {
 
         let playerIndex=ValidateAction(interactionID);
         let communicationRequests=playerIndex.requets;
         if(playerIndex.index==-1) return communicationRequests;
         const embed = CreatePlayerHandEmbed( currentGame.PlayerObjects[playerIndex.index], false);
-        communicationRequests.push(comm.Request( comm.Type.Reply, embed, "", comm.Type.Hidden));
+        communicationRequests.push(CardComm.Request( CardComm.Type.Reply, embed, "", CardComm.Type.Hidden));
         return communicationRequests;
     },
 
-    CommandTimerEvent:function(eventID)
+    CommandTimerEvent:function(eventID:number):Array<object>
     {
         let communicationRequests=[];
         if(eventID==1)
@@ -433,24 +433,24 @@ module.exports =
         return communicationRequests;
     },
 
-    CommandGetPastWinner:function()
+    CommandGetPastWinner:function():number
     {
         if(currentGame.TieGame==false&&currentGame.PlayerObjects.length==0)
         {
             return currentGame.PastWinner;
         }
-        return "";
+        return 0;
     }
 }
 
-function TimeOutNoStart()
+function TimeOutNoStart():Array<object>
 {
     let communicationRequests=[];
-    communicationRequests.push(comm.Request(comm.Type.Broadcast,null,`The current 21 Game has been reset,<@${currentGame.StartingPlayer}> has failed to start it....good job.`,comm.Type.Visible));
+    communicationRequests.push(CardComm.Request(CardComm.Type.Broadcast,null,`The current 21 Game has been reset,<@${currentGame.StartingPlayer}> has failed to start it....good job.`,CardComm.Type.Visible));
     currentGame.ResetGame();
     return communicationRequests;
 }
-function TimeOutLongWait()
+function TimeOutLongWait():Array<object>
 {
     let communicationRequests=[];
 
@@ -458,11 +458,12 @@ function TimeOutLongWait()
     {
         currentGame.StayHand(x);
     }
-    communicationRequests.push(comm.Request(comm.Type.Broadcast,null,"The current game of 21 has gone stale! No one has played an action in over two minutes. Wrapping up the game!"));
+    communicationRequests.push(CardComm.Request(CardComm.Type.Broadcast,null,"The current game of 21 has gone stale! No one has played an action in over two minutes. Wrapping up the game!"));
     return CheckWinner(communicationRequests);
 }
 
- function CreatePlayerHandEmbed (playerObject, newDraw) {
+ function CreatePlayerHandEmbed (playerObject, newDraw:boolean):object
+  {
     let cardString = ``;
     let embedText = `Still in the game!\n`;
     if (playerObject.isOver)
@@ -475,17 +476,17 @@ function TimeOutLongWait()
         if (x + 1 != playerObject.cards.length)
             cardString = cardString.concat(`->`);
     }
-    return   comm.Embed(
+    return   CardComm.Embed(
     "Your Hand",
     embedText,
     [{title:"Total: ",content:`*${playerObject.total}*`,fieldsAlign:true},{title:"Cards: ",content: cardString,fieldsAlign:true}],
     true,
     "ORANGE",
-    thumbnail
+    CardThumbnail
     )
 }
 
-function CheckWinner (communicationRequests)
+function CheckWinner (communicationRequests:Array<object>) :Array<object>
 {
 let warText;
 let warfields=[];
@@ -494,7 +495,7 @@ let isTie=false;
 if(currentGame.GameWon==false) return communicationRequests;
 if(currentGame.Winners.length>1)
 {
-    currentGame.PastWinner="";
+    currentGame.PastWinner=0;
     isTie=true;
     warText = ` Wow there is a tie between players! \n`
     for(let x=0;x<currentGame.Winners.length;x++)
@@ -522,7 +523,7 @@ else if(currentGame.Winners.length==1)
             tempPlayerObject=currentGame.PlayerObjects;
             if (currentGame.PlayerIds[x] != currentGame.Winners[0].userId)
             {
-                fileIO.AddUserCoffee(currentGame.PlayerIds[x],currentGame.Winners[0].userId,currentGame.PotSize,"21");
+                CardFileIO.AddUserCoffee(currentGame.PlayerIds[x],currentGame.Winners[0].userId,currentGame.PotSize,"21");
             }
         }
 }
@@ -550,19 +551,19 @@ for (let x=0;x<tempPlayerObject.length;x++)
     }
     warfields.push({title:`Player ${x+1}`,content:`<@${tempPlayerObject[x].userId}> - ${totalText} , ${cardText} `,fieldsAlign:false});
 }
-    let embed= comm.Embed(
+    let embed= CardComm.Embed(
         "21 Round Result",
         warText,
         warfields,
         false,
         'DARK_RED',
-        thumbnail
+        CardThumbnail
     );
     if(isTie)
-        communicationRequests.push(comm.Request(comm.Type.Broadcast,embed,"",comm.Type.Visible,comm.Timer(Events.GameStart,2,2)));
+        communicationRequests.push(CardComm.Request(CardComm.Type.Broadcast,embed,"",CardComm.Type.Visible,CardComm.Timer(CardComm.Type.GameStart,2,2)));
     else
     {
-        communicationRequests.push(comm.Request(comm.Type.Broadcast,embed,"",comm.Type.Visible,comm.Timer(Events.GameEnd,0,0)));
+        communicationRequests.push(CardComm.Request(CardComm.Type.Broadcast,embed,"",CardComm.Type.Visible,CardComm.Timer(CardComm.Type.GameEnd,0,0)));
         currentGame.ResetGame();
     }
     
@@ -570,24 +571,24 @@ for (let x=0;x<tempPlayerObject.length;x++)
     return  communicationRequests;
 }
 
-function ValidateAction(interactionID)
+function ValidateAction(interactionID:number)
 {
     let tempIndex=currentGame.GetPlayerIndex(interactionID)
     let returnObject={index:-1,requets:[]};
     if(currentGame.GameRunning==false)
     {
-        returnObject.requets.push(comm.Request(comm.Type.Reply,
+        returnObject.requets.push(CardComm.Request(CardComm.Type.Reply,
         null,
         "There is no game currently running!",
-        comm.Type.Hidden));
+        CardComm.Type.Hidden));
 
     }
     else if(tempIndex==-1)
     {
-        returnObject.requets.push(comm.Request(comm.Type.Reply,
+        returnObject.requets.push(CardComm.Request(CardComm.Type.Reply,
             null,
             "You are not in this game, wait till the next one",
-            comm.Type.Hidden));
+            CardComm.Type.Hidden));
 
     }else if(currentGame.CheckPlayerIn(tempIndex))
     {
@@ -595,10 +596,10 @@ function ValidateAction(interactionID)
     }
     else
     {
-        returnObject.requets.push(comm.Request(comm.Type.Reply,
+        returnObject.requets.push(CardComm.Request(CardComm.Type.Reply,
             null,
             "You cannot make anymore actions this round",
-            comm.Type.Hidden));
+            CardComm.Type.Hidden));
         return returnObject;
     }
     return returnObject;

@@ -1,24 +1,39 @@
-//const { gCloudDB} = require("./config.json"); //service account will go here 
+"use strict"
 const admin = require('firebase-admin'); 
-
-const playerMap= new Map();
-let cloudBuffer= Buffer.from(`${process.env.gCloudDB}`,'base64')
-let decodedCloud=cloudBuffer.toString();
+const playerMap = new Map();
+let {gCloudDB}=require('../config.json')
+//let cloudBuffer:object= Buffer.from(`${gCloudDB}`,'base64')
+let cloudBuffer:object= Buffer.from(`${process.env.gCloudDB}`,'base64')
+let decodedCloud :string=cloudBuffer.toString();
 cloudBuffer=JSON.parse(decodedCloud);
 admin.initializeApp({credential:admin.credential.cert(cloudBuffer)})
 const db= admin.firestore();
-let writeActions=0;
-let timerStart="";
-let timerObject={};
+let writeActions: number=0;
+let timerStart: number=0;
+let timerObject: ReturnType<typeof setTimeout>;
 //const Logging=[];
 //TODO set config values for how often things are saved to the DB, test the overflow handler insta save 
 //TODO figure out how to handle logging in a way that requires only write, no reading to deterime when to add to stuff 
-function NewPlayer(newLedgerUser=undefined)
+
+function PlayerObject(Data:Object=undefined)
 {
     let Player={
-        UpdatedData:true,
+        UpdatedData:false,
+        UserType: "DISCORD",
+        ResponseObjects:{},
         Data:{}
+    };
+    if(Data!=undefined)
+    {
+        Player.Data=Data;
     }
+    return Player;
+}
+
+function NewPlayer(newLedgerUser:number=undefined) :object
+{
+    let Player=PlayerObject();
+    Player.UpdatedData=true;
     let newPlayerObject={
         Name:"",
         OwedCoffs:0,
@@ -34,20 +49,20 @@ function NewPlayer(newLedgerUser=undefined)
 return Player;
     
 }
-function NewCacheAction()
+function NewCacheAction() :void
 {
     writeActions++;
-    if(writeActions!=0&&timerStart=="")
+    if(writeActions!=0&&timerStart==0)
     {
         console.log("DB Update Event Created");
         timerStart=Date.now();
-        timerObject= setTimeout(BatchUpdateDB,(1000*60*1));
+        timerObject= setTimeout(BatchUpdateDB,(1000*60*10));
     }
     else if(writeActions>20&&timerStart<(Date.now()+(1000*60*3)))
     {
         clearTimeout(timerObject);
         writeActions=0;
-        timeStart="";
+        timerStart=0;
         BatchUpdateDB();
     }
     
@@ -61,7 +76,7 @@ module.exports = {
             let playerData=await db.collection('Players').get();
             console.log("Player Information Fetched, Storing in Hashmap");
             playerData.forEach(document=>{
-                playerMap.set(document.id,{UpdatedData:false,Data:document.data()});
+                playerMap.set(document.id,PlayerObject(document.data()));
             });
             console.log("Player Information Stored in Hash Map");
         }
@@ -72,7 +87,8 @@ module.exports = {
     
     },
     
-    AddUserCoffee: function (interactionUser, mentionedUser, amount, action) {
+    AddUserCoffee: function (interactionUser: number, mentionedUser: number, amount:number, action:string) :void
+     {
         ValidateUser(interactionUser);
         ValidateUser(mentionedUser);
 
@@ -100,12 +116,8 @@ module.exports = {
         NewCacheAction()
         //WriteToLog(action, amount, interactionUser, mentionedUser);
     },
-    RemoveUserCoffee: function (  
-        interactionUser,
-        mentionedUser,
-        amount,
-        action
-    ) {
+    RemoveUserCoffee: function (interactionUser: number,mentionedUser: number,amount: number,action: string) :void 
+    {
         ValidateUser(interactionUser);
         ValidateUser(mentionedUser);
         if( !playerMap.get(interactionUser).Data.Ledger.some(item=>item.ID===mentionedUser))
@@ -133,7 +145,8 @@ module.exports = {
         NewCacheAction()
         //WriteToLog(action, amount, interactionUser, mentionedUser);
     },
-    GetDebts: async function (userId) {
+    GetDebts: function (userId :number) :object
+    {
         let debts = {
             owedAmount: 0,
             receivedAmount: 0,
@@ -162,37 +175,40 @@ module.exports = {
         }
         return debts;
     },
-    playerAgreedToTerms: function (userId) {
+    playerAgreedToTerms: function (userId: number) :boolean
+     {
         ValidateUser(userId);
         if (playerMap.get(userId).Data.TandC!=false) {
             return true;
         }
         return false;
     },
-    agreePlayer: async function (userId) {
+    agreePlayer:  function (userId: number) :void
+     {
         ValidateUser(userId);
         playerMap.get(userId).Data.TandC=true;
         playerMap.get(userId).UpdatedData=true;
         NewCacheAction()
     },
-    setVenmo:  function (userId, venmoId) {
+    setVenmo:  function (userId :number, venmoId: string) :void
+    {
         playerMap.get(userId).Data.Venmo=venmoId;
         playerMap.get(userId).UpdatedData=true;
         NewCacheAction()
 
     },
-    getUserProfile: async function(userId)
+    getUserProfile:  function(userId: number) :object
     {
        const returnData = playerMap.get(userId).Data;
         if (returnData==undefined) {
             console.log('No such document!'); //TOD better error handeling here
-            return "No Data Found"
+            return {};
           } else {
             console.log('Document data:', returnData);
             return  returnData;
           }
     },
-    GetUserCoffeeDebt: function (interactionUser, mentionedUser) {
+    GetUserCoffeeDebt: function (interactionUser: number, mentionedUser :number) {
         if( !playerMap.get(interactionUser).Data.Ledger.some(item=>item.ID===mentionedUser))
         {
             return 0;
@@ -225,23 +241,23 @@ module.exports = {
         return totals;
     }
 };
+//not being used currently
 function WriteToLog(action, amount, gainedUser, losingUser) {
     try {
         let logMessage = `${action}: ${gainedUser} ${amount} ${losingUser}`;
         let timestamp = new Date().toISOString();
-        Logging.push({timestamp:timestamp,message:logMessage});
     } catch (e) {
         //think of some logging error event here
         throw e;
     }
 }
-function ValidateUser(interactionUser)
+function ValidateUser(interactionUser :number) :void
 {
     if (playerMap.get(interactionUser) == undefined) {
         playerMap.set(interactionUser,NewPlayer());
     }
 }
-async function  BatchUpdateDB()
+async function  BatchUpdateDB() :Promise<void>
 {
     console.log("DB Update Event Firing");
     const batch=db.batch();
@@ -266,7 +282,7 @@ async function  BatchUpdateDB()
         console.log("FAILED TO UPDATE FIRESTORE DB "+e.message);
     }
     writeActions=0;
-    timerStart="";
-    timerObject={};
+    timerStart=0;
+    timerObject=undefined;
     console.log("Batch DB job completed");
 }

@@ -1,14 +1,15 @@
 // Require the necessary discord.js classes
 const { Client, Intents, MessageEmbed } = require("discord.js");
-const cardGame= require("./CardGame.js");
-const response=require("./Response.js");
-const BestOf = require("./BestOf.js");
-const FileIO = require("./FileIO.js");
+let cardGame= require("./CardGame");
+let response=require("./Response");
+let BestOf = require("./BestOf");
+let FileIO = require("./FileIO");
+//let {discordToken}=require('../config.json')
 
 let curCoinflipRequest = "";
 
 let curRPSRequest = "";
-let curRPSChoice = "";
+let curRPSChoice:string = "";
 
 let curCoffeePotPlayers = {};
 let curCoffeePotSlots = -1;
@@ -33,7 +34,7 @@ const client = new Client({
         Intents.FLAGS.GUILD_MEMBERS,
     ],
 });
-
+//client.login(discordToken);
 client.login(process.env.discordToken);
 
 // When the client is ready, run this code (only once)
@@ -535,20 +536,10 @@ client.on("interactionCreate", async (interaction) => {
         } else if (interaction.commandName == "talk") {
             let responseObject=await response.CommandTalk(interaction.user.id,interaction.options.getString("message"))
             BulkReplyHandler(interaction,responseObject);
-        } else if (interaction.commandName == "serverstats") {
-            let embedText = `Total Coffees in Circulation: *${stats.CoffsInCirculation}*\nTotal Coffees Redeemed: *${stats.TotalCoffsRedeemed}*\n Recent Bet Winner: *<@${stats.RecentCoffWinner}>*\nLargest Coffee Pot Win: *${stats.LargestPotWon}*\nTotal Coffees Bet In Pots: *${stats.TotalPotCoffs}*\nTotal Coffee Pots: *${stats.TotalPotGames}*\nTotal Coin Flips: *${stats.TotalCoinFlips}*\nTotal Coffees Bet In Wars: *${stats.TotalWarCoffs}*\nTotal Games of War: *${stats.TotalWarGames}*\n Highest War Game Pot: *${stats.LargestWarWon}*\n`;
-            const embed = new MessageEmbed()
-                .setTitle("**C O F F E E  S T A T Z**")
-                .setDescription(embedText)
-                .setThumbnail(
-                    "https://ipcdn.freshop.com/resize?url=https://images.freshop.com/1564405684703359252/a899a14345410c863a4bfd4541974f69_large.png&width=256&type=webp&quality=80"
-                );
-
-            BotReply(interaction, embed, "", false);
         } else if (interaction.commandName == "21End") {
             if(list.length!=0&&BestOf.CommandBestOfType()=="21"&&!BestOf.CommandBestOfRunning())
             {
-                BotReply(interaction,null,"Can't end a game when a 'Best Of' set is running. Just let it play out fam.")
+                BotReply(interaction,null,"Can't end a game when a 'Best Of' set is running. Just let it play out fam.",false)
             }
             else
             {
@@ -638,30 +629,31 @@ client.on("interactionCreate", async (interaction) => {
             let player1 = curRPSRequest;
             let player2 = interaction.user.id;
             let player1Choice = curRPSChoice;
-            let player2Choice = interaction.options.getString("choice");
-
+            let player2Choice:string = interaction.options.getString("choice");
+            let player1ChoiceIndex=-1;
+            let player2ChoiceIndex=-1;
             let choices = ["Rock", "Paper", "Scissors"];
             let verbs = ["crushes", "covers", "cuts"];
             let emojis = [":rock:", ":roll_of_paper:", ":scissors:"];
 
-            player1Choice = choices.indexOf(player1Choice);
-            player2Choice = choices.indexOf(player2Choice);
+            player1ChoiceIndex = choices.indexOf(player1Choice);
+            player2ChoiceIndex= choices.indexOf(player2Choice);
             curRPSRequest = "";
-            if (player1Choice == player2Choice) {
+            if (player1ChoiceIndex == player2ChoiceIndex) {
                 //tie
                 BotReply(
                     interaction,
                     null,
-                    `<@${player1}> and <@${player2}> tied by both choosing ${emojis[player1Choice]}.`,
+                    `<@${player1}> and <@${player2}> tied by both choosing ${emojis[player1ChoiceIndex]}.`,
                     false
                 );
-            } else if ((player1Choice + 1) % 3 != player2Choice) {
+            } else if ((player1ChoiceIndex + 1) % 3 != player2ChoiceIndex) {
                 //player1 won
                 FileIO.AddUserCoffee(player2, player1, 1,"RPS");
                 BotReply(
                     interaction,
                     null,
-                    `<@${player1}>'s ${emojis[player1Choice]} ${verbs[player1Choice]} <@${player2}>'s ${emojis[player2Choice]}. <@${player2}> paid up 1 :coffee:.`,
+                    `<@${player1}>'s ${emojis[player1ChoiceIndex]} ${verbs[player1ChoiceIndex]} <@${player2}>'s ${emojis[player2ChoiceIndex]}. <@${player2}> paid up 1 :coffee:.`,
                     false
                 );
             } else {
@@ -671,7 +663,7 @@ client.on("interactionCreate", async (interaction) => {
                 BotReply(
                     interaction,
                     null,
-                    `<@${player2}>'s ${emojis[player2Choice]} ${verbs[player2Choice]} <@${player1}>'s ${emojis[player1Choice]}. <@${player1}> paid up 1 :coffee:.`,
+                    `<@${player2}>'s ${emojis[player2ChoiceIndex]} ${verbs[player2ChoiceIndex]} <@${player1}>'s ${emojis[player1ChoiceIndex]}. <@${player1}> paid up 1 :coffee:.`,
                     false
                 );
             }
@@ -703,8 +695,7 @@ client.on("interactionCreate", async (interaction) => {
                 interaction.user.id
             }> \n> but something happened and I'm brokie... || ${e.message}${
                 e.stack ? `\nStackTrace:\n=========\n${e.stack}` : ``
-            } ||`,
-            false
+            } ||`
         );
     }
 });
@@ -714,7 +705,7 @@ async function BestOfHandler(GameType,interaction,timeout=false)
     if(BestOf.CommandBestOfType()==GameType)
     {
     var pastWinner=cardGame.CommandGetPastWinner();
-    if(pastWinner!='')
+    if(pastWinner!=0)
         BulkReplyHandler(interaction, BestOf.CommandAddWinner(pastWinner,timeout));
     if(BestOf.CommandBestOfRunning()&&!cardGame.CommandGameRunning())
     {
@@ -899,8 +890,7 @@ function getProfileString(pUser, interaction,avatarUrl) {
     let owedCoffs = "";
     let receivingCoffs = "";
     let pString="";
-    FileIO.getUserProfile(pUser.user.id)
-    .then(function(data){
+    let data=FileIO.getUserProfile(pUser.user.id);
     for(let x=0;x<data.Ledger.length;x++)
     {
         let textString=`**${data.Ledger[x].Amount}** <@${data.Ledger[x].ID}>\n`;
@@ -940,8 +930,6 @@ function getProfileString(pUser, interaction,avatarUrl) {
         .setDescription(pString)
         .setThumbnail(avatarUrl);
     return BotReply(interaction, profilEmbed, "", false);
-    });
-
 }
 
 function getCoffeeLedgerString(channel) {
