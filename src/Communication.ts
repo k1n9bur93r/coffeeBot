@@ -43,6 +43,7 @@ module.exports =
             embed:embedObject,
             message:botMessage,
             hidden:isHidden,
+            
             TimerSettings:null
             };
             if(TimerObject)
