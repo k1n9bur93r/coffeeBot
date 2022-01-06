@@ -7,4 +7,4 @@ statsJSON_test.json
 test_stats.json
 coffees_test.json
 gCloudAuth.json
-dist/
+dist
