@@ -1011,3 +1011,17 @@ res.status(200).send({
 returnData
 });
 });
+apiApp.get('/ledger/',(req,res)=>{
+    const {id}=req.params;
+let returnData=FileIO.GetPlayerLedger()
+res.status(200).send({
+returnData
+});
+});
+apiApp.get('/leaderboard/',(req,res)=>{
+    const {id}=req.params;
+let returnData=FileIO.GetPlayerTotals()
+res.status(200).send({
+returnData
+});
+});
