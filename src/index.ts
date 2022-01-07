@@ -1003,6 +1003,7 @@ function Coinflip(flipper1, flipper2) {
 
 
 /////TODO API Testing
+apiApp.listen(process.env.PORT); 
 apiApp.get('/profile/:id',(req,res)=>{
     const {id}=req.params;
 let returnData=FileIO.getUserProfile(id);
