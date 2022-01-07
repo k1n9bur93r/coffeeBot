@@ -1,10 +1,11 @@
 // Require the necessary discord.js classes
-const { Client, Intents, MessageEmbed } = require("discord.js");
+const { Client, Intents, MessageEmbed,MessageActionRow,MessageButton } = require("discord.js");
 let cardGame= require("./CardGame");
 let response=require("./Response");
 let BestOf = require("./BestOf");
 let FileIO = require("./FileIO");
 //let {discordToken}=require('../config.json')
+const apiApp= require('express')();
 
 let curCoinflipRequest = "";
 
@@ -59,7 +60,7 @@ client.on("interactionCreate", async (interaction) => {
             )
             return;
         }
-        else if (!FileIO.playerAgreedToTerms(interaction.user.id)) { //removed negate
+        else if (!FileIO.playerAgreedToTerms(interaction.user.id)) { 
             const embed = new MessageEmbed()
             .setTitle("Coffee Economy Terms & Conditions")
             .setDescription(`One must accept accept the following terms & conditions to participate in the :coffee: economy:
@@ -685,8 +686,7 @@ client.on("interactionCreate", async (interaction) => {
             BulkReplyHandler(
                 interaction,
                 BestOf.CommandBestOfPlayerMessage());
-        }
-        
+        } 
 } catch (e) {
         BotChannelMessage(
             {channelId:channelId},
@@ -847,21 +847,33 @@ function BotChannelMessage(interaction, embed, message) {
     }
 }
 async function BotReply(interaction, embed, message, ishidden) {
+                const row = new MessageActionRow()
+			.addComponents(
+				new MessageButton()
+					.setCustomId('primary')
+					.setLabel('Primary')
+					.setStyle('PRIMARY'),
+			);
+
     if (embed && message == "") {
         await interaction.reply({
             ephemeral: ishidden,
             embeds: [embed],
+            components:[row]
         });
     } else if (embed) {
         await interaction.reply({
             content: message,
             ephemeral: ishidden,
             embeds: [embed],
+            components:[row]
+            
         });
     } else {
         await interaction.reply({
             content: message,
             ephemeral: ishidden,
+            components:[row]
         });
     }
 }
@@ -870,13 +882,6 @@ function getSortedKeys(obj) {
     var keys = Object.keys(obj);
     return keys.sort(function (a, b) {
         return obj[a] - obj[b];
-    });
-}
-
-function getSortedKeysLeaderboardStyle(obj) {
-    var keys = Object.keys(obj);
-    return keys.sort(function (a, b) {
-        return obj[b] - obj[a];
     });
 }
 
@@ -995,3 +1000,13 @@ function Coinflip(flipper1, flipper2) {
 
     return { coinSide: unique, coinWin: winner, coinLose: loser };
 }
+
+
+/////TODO API Testing
+apiApp.get('/profile/:id',(req,res)=>{
+    const {id}=req.params;
+let returnData=FileIO.getUserProfile(id);
+res.status(200).send({
+returnData
+});
+});
