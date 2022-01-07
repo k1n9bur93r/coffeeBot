@@ -805,6 +805,7 @@ function BulkReplyHandler(interaction,communicationRequests)
                     }
                 }
         }
+        console.log("Current interaciton message is "+x);
         // if(communicationRequests[x].reply==true)
         // {
             BotReply(x,
