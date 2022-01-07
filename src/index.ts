@@ -779,23 +779,23 @@ function BulkReplyHandler(interaction,communicationRequests)
                     }
                 }
         }
-        if(communicationRequests[x].reply==true)
-        {
-            BotReply(
+        // if(communicationRequests[x].reply==true)
+        // {
+            BotReply(x,
                 interaction,
                 embed,
                 communicationRequests[x].message,
                 communicationRequests[x].hidden
             );
-        }
-        else
-        {
-            BotChannelMessage(
-                interaction,
-                embed,
-                communicationRequests[x].message
-            );
-        }
+        // }
+        // else
+        // {
+        //     BotChannelMessage(
+        //         interaction,
+        //         embed,
+        //         communicationRequests[x].message
+        //     );
+        // }
         if(communicationRequests[x].TimerSettings!=null)
         {
             if(communicationRequests[x].TimerSettings.Replace.length!=0&&GlobalTimers.length>0)
@@ -846,15 +846,15 @@ function BotChannelMessage(interaction, embed, message) {
         client.channels.cache.get(interaction.channelId).send(message);
     }
 }
-async function BotReply(interaction, embed, message, ishidden) {
+async function BotReply( isFollowup:number,interaction, embed, message, ishidden) {
                 const row = new MessageActionRow()
-			.addComponents(
-				new MessageButton()
-					.setCustomId('primary')
-					.setLabel('Primary')
-					.setStyle('PRIMARY'),
-			);
-
+			// .addComponents(
+			// 	new MessageButton()
+			// 		.setCustomId('primary')
+			// 		.setLabel('Primary')
+			// 		.setStyle('PRIMARY'),
+			// );
+    if(isFollowup==0){
     if (embed && message == "") {
         await interaction.reply({
             ephemeral: ishidden,
@@ -875,6 +875,31 @@ async function BotReply(interaction, embed, message, ishidden) {
             ephemeral: ishidden,
             components:[row]
         });
+    }
+    }
+    else
+    {
+        if (embed && message == "") {
+            await interaction.followUp({
+                ephemeral: ishidden,
+                embeds: [embed],
+                components:[row]
+            });
+        } else if (embed) {
+            await interaction.followUp({
+                content: message,
+                ephemeral: ishidden,
+                embeds: [embed],
+                components:[row]
+                
+            });
+        } else {
+            await interaction.followUp({
+                content: message,
+                ephemeral: ishidden,
+                components:[row]
+            });
+        }  
     }
 }
 
