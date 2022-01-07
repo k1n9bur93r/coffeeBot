@@ -884,22 +884,22 @@ async function BotReply( isFollowup:number,interaction, embed, message, ishidden
     if (embed && message == "") {
         await interaction.reply({
             ephemeral: ishidden,
-            embeds: [embed],
-            components:[row]
+            embeds: [embed]//,
+            //components:[row]
         });
     } else if (embed) {
         await interaction.reply({
             content: message,
             ephemeral: ishidden,
-            embeds: [embed],
-            components:[row]
+            embeds: [embed]//,
+            //components:[row]
             
         });
     } else {
         await interaction.reply({
             content: message,
-            ephemeral: ishidden,
-            components:[row]
+            ephemeral: ishidden//,
+            //components:[row]
         });
     }
     }
