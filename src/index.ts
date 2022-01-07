@@ -53,6 +53,7 @@ client.on("interactionCreate", async (interaction) => {
         if (interaction.commandName === "agree") {
             FileIO.agreePlayer(interaction.user.id)
             BotReply(
+                0,
                 interaction,
                 null,
                 `<@${interaction.user.id}> has agreed to the terms & conditions!`,
@@ -77,7 +78,9 @@ client.on("interactionCreate", async (interaction) => {
             .setThumbnail(
                 "https://lh3.googleusercontent.com/proxy/-aeVwzFtgt_rnoLyJpHjtQSUKRbDtJNLTH8w5bybehJW4ibOJA_PFlnLiSsjdPElbpoyOGCdf8otyNGFvchWfjKjUuUWmZguwe8"
             );
-            BotReply(interaction, 
+            BotReply(
+                0,
+                interaction, 
                  embed, 
                 ``,
                  false);
@@ -86,6 +89,7 @@ client.on("interactionCreate", async (interaction) => {
             let venmoId = interaction.options.getString("venmo");
             FileIO.setVenmo(interaction.user.id, venmoId)
             BotReply(
+                0,
                 interaction,
                 null,
                 `<@${interaction.user.id}> has set their venmo!`,
@@ -96,11 +100,12 @@ client.on("interactionCreate", async (interaction) => {
             let flipAmount = interaction.options.getInteger("amount");
 
             if (flipAmount < 1) {
-                BotReply(interaction, null, `Amount must be positive!`, true);
+                BotReply(0,interaction, null, `Amount must be positive!`, true);
                 return;
             }
             if (flipAmount > maxMultiflipAmount) {
                 BotReply(
+                    0,
                     interaction,
                     null,
                     `The current multiflip cap is ${maxMultiflipAmount}!`,
@@ -115,6 +120,7 @@ client.on("interactionCreate", async (interaction) => {
                 //user revoked
                 delete multiflipRequests[flipAmount];
                 BotReply(
+                    0,
                     interaction,
                     null,
                     `<@${interaction.user.id}> revoked their multiflip offer.`,
@@ -127,6 +133,7 @@ client.on("interactionCreate", async (interaction) => {
                 //add flip request
                 multiflipRequests[flipAmount] = interaction.user.id;
                 BotReply(
+                    0,
                     interaction,
                     null,
                     `<@${interaction.user.id}> is offering **${flipAmount}** coin flips for 1 :coffee: each. Do **/multiflip ${flipAmount}** to take the bet.`,
@@ -179,7 +186,9 @@ client.on("interactionCreate", async (interaction) => {
                     .setThumbnail(
                         "https://justflipacoin.com/img/share-a-coin.png"
                     );
-                BotReply(interaction, 
+                BotReply(
+                    0,
+                    interaction, 
                          embed, 
                          "",
                          false);
@@ -187,6 +196,7 @@ client.on("interactionCreate", async (interaction) => {
             }
 
             BotReply(
+                0,
                 interaction,
                 null,
                 "this shouldn't happen! @ austin and call him a dumdum",
@@ -197,7 +207,7 @@ client.on("interactionCreate", async (interaction) => {
             const ledgerEmbed = new MessageEmbed()
                 .setTitle("Coffee Ledger")
                 .setDescription(coffeeLedger);
-            BotReply(interaction, ledgerEmbed, "", false);
+            BotReply(0,interaction, ledgerEmbed, "", false);
         } else if (interaction.commandName == "profile") {
             let profiledUser = interaction.options.get("user");
             if (profiledUser == undefined) {
@@ -213,7 +223,7 @@ client.on("interactionCreate", async (interaction) => {
 
             if (mentionedUser) {
                 if (mentionedUser == undefined) {
-                    BotReply(
+                    BotReply(0,
                         interaction,
                         null,
                         `You must @ an existing person`,
@@ -223,7 +233,7 @@ client.on("interactionCreate", async (interaction) => {
                 }
             }
             if (mentionedUser.user.id == interaction.user.id) {
-                BotReply(
+                BotReply(0,
                     interaction,
                     null,
                     `You cannot give yourself coffees lul`,
@@ -232,7 +242,7 @@ client.on("interactionCreate", async (interaction) => {
                 return;
             }
             if (isNaN(parsedCoffeeAmount) || parsedCoffeeAmount <= 0) {
-                BotReply(interaction, null, `Nice try hax0r man`, true);
+                BotReply(0,interaction, null, `Nice try hax0r man`, true);
                 return;
             }
             FileIO.AddUserCoffee(
@@ -243,6 +253,7 @@ client.on("interactionCreate", async (interaction) => {
             );
 
             BotReply(
+                0,
                 interaction,
                 null,
                 `<@${interaction.user.id}> gave <@${
@@ -263,6 +274,7 @@ client.on("interactionCreate", async (interaction) => {
             if (mentionedUser) {
                 if (mentionedUser == undefined) {
                     BotReply(
+                        0,
                         interaction,
                         null,
                         `You must @ an existing person`,
@@ -273,7 +285,7 @@ client.on("interactionCreate", async (interaction) => {
             }
             if (parsedCoffeeAmount) {
                 if (isNaN(parsedCoffeeAmount) || parsedCoffeeAmount <= 0) {
-                    BotReply(interaction, null, `Nice try hax0r man`, true);
+                    BotReply(0,interaction, null, `Nice try hax0r man`, true);
                     return;
                 }
             }
@@ -283,6 +295,7 @@ client.on("interactionCreate", async (interaction) => {
                 parsedCoffeeAmount
             ) {
                 BotReply(
+                    0,
                     interaction,
                     null,
                     `<@${mentionedUser.user.id}> does not owe you ${parsedCoffeeAmount}`,
@@ -298,6 +311,7 @@ client.on("interactionCreate", async (interaction) => {
             );
 
             BotReply(
+                0,
                 interaction,
                 null,
                 `<@${
@@ -311,6 +325,7 @@ client.on("interactionCreate", async (interaction) => {
             if (curCoinflipRequest == "") {
                 curCoinflipRequest = interaction.user.id;
                 BotReply(
+                    0,
                     interaction,
                     null,
                     `<@${interaction.user.id}> is offering a **coin flip coffee bet** for **1 coffee**.  Do **/coinflip** to take the bet.`,
@@ -319,6 +334,7 @@ client.on("interactionCreate", async (interaction) => {
             } else if (curCoinflipRequest == interaction.user.id) {
                 curCoinflipRequest = "";
                 BotReply(
+                    0,
                     interaction,
                     null,
                     `<@${interaction.user.id}> revoked their coin flip offer.`,
@@ -328,6 +344,7 @@ client.on("interactionCreate", async (interaction) => {
                 let result = Coinflip(curCoinflipRequest, interaction.user.id);
                 if (result.coinSide == "side")
                     BotReply(
+                        0,
                         interaction,
                         null,
                         `The coinflip landed on its side! It is a tie and no coffees are owed!`,
@@ -337,6 +354,7 @@ client.on("interactionCreate", async (interaction) => {
                 //    BotReply(interaction,null,`The coin split in two and both halves were flipped. <@${result.coinWin}> won those coinflips! <@${result.coinLose}> paid up 2 coffees.`,false);
                 else
                     BotReply(
+                        0,
                         interaction,
                         null,
                         `<@${result.coinWin}> won the coinflip! <@${result.coinLose}> paid up 1 coffee.`,
@@ -355,6 +373,7 @@ client.on("interactionCreate", async (interaction) => {
            if(FileIO.GetUserCoffeeDebt(fromId,transferer)<amount)
             {    // if so, then ephemeral error and return
                 BotReply(
+                    0,
                     interaction,
                     null,
                     `<@${fromId}> does not owe you ${amount}`,
@@ -365,6 +384,7 @@ client.on("interactionCreate", async (interaction) => {
             if(FileIO.GetUserCoffeeDebt(transferer,toId)<amount)
             {
                 BotReply(
+                    0,
                     interaction,
                     null,
                     `You do not owe <@${toId}> ${amount}`,
@@ -374,6 +394,7 @@ client.on("interactionCreate", async (interaction) => {
             }
             if (amount < 0) {
                 BotReply(
+                    0,
                     interaction,
                     null,
                     "Cannot transfer negative amount!",
@@ -383,6 +404,7 @@ client.on("interactionCreate", async (interaction) => {
             }
             if (toId == transferer || fromId == transferer) {
                 BotReply(
+                    0,
                     interaction,
                     null,
                     "Cannot transfer to or from yourself!",
@@ -397,6 +419,7 @@ client.on("interactionCreate", async (interaction) => {
 
 
             BotReply(
+                0,
                 interaction,
                 null,
                 `<@${transferer}> is transfering ${amount} from <@${fromId}> to <@${toId}>.`,
@@ -406,7 +429,7 @@ client.on("interactionCreate", async (interaction) => {
             let spotsAmount = interaction.options.getInteger("amount"); 
 
             if (spotsAmount < 2) {
-                BotReply(interaction, null, "Must have atleast 2 spots", true);
+                BotReply(0,interaction, null, "Must have atleast 2 spots", true);
                 return;
             }
 
@@ -427,13 +450,13 @@ client.on("interactionCreate", async (interaction) => {
                 .setThumbnail(
                     "https://www.krupsusa.com/medias/?context=bWFzdGVyfGltYWdlc3wxNDQ4OTJ8aW1hZ2UvanBlZ3xpbWFnZXMvaDk5L2hiMS8xMzg3MTUxMjk0NDY3MC5iaW58NzZkZDc3MGJhYmQzMjAwYjc4NmJjN2NjOGMxN2UwZmNkODQ2ZjMwZWE0YzM4OWY4MDFmOTFkZWUxYWVkMzU5Zg"
                 );
-            BotReply(interaction, embed, "", false);
+            BotReply(0,interaction, embed, "", false);
         } else if (interaction.commandName == "joinpot") {
             let joinerId = interaction.user.id;
             let guessNumber = interaction.options.getInteger("number");
             //check if pot exists (slots == -1 means not pot exists)
             if (curCoffeePotSlots == -1) {
-                BotReply(
+                BotReply(0,
                     interaction,
                     null,
                     "No pot currently exists. Create one with **/startpot**!",
@@ -443,7 +466,7 @@ client.on("interactionCreate", async (interaction) => {
             }
             //check if number is between 1-1000
             if (guessNumber < 1 || guessNumber > 1000) {
-                BotReply(
+                BotReply(0,
                     interaction,
                     null,
                     "Your number must be between 1 and 1000!",
@@ -453,7 +476,7 @@ client.on("interactionCreate", async (interaction) => {
             }
             //check if already in pot
             if (joinerId in curCoffeePotPlayers) {
-                BotReply(
+                BotReply(0,
                     interaction,
                     null,
                     "You are already in the pot!",
@@ -517,11 +540,11 @@ client.on("interactionCreate", async (interaction) => {
                         "https://www.krupsusa.com/medias/?context=bWFzdGVyfGltYWdlc3wxNDQ4OTJ8aW1hZ2UvanBlZ3xpbWFnZXMvaDk5L2hiMS8xMzg3MTUxMjk0NDY3MC5iaW58NzZkZDc3MGJhYmQzMjAwYjc4NmJjN2NjOGMxN2UwZmNkODQ2ZjMwZWE0YzM4OWY4MDFmOTFkZWUxYWVkMzU5Zg"
                     );
 
-                BotReply(interaction, embed, "", false);
+                BotReply(0,interaction, embed, "", false);
 
                 return;
             }
-            BotReply(
+            BotReply(0,
                 interaction,
                 null,
                 `<@${interaction.user.id}> joined the pot! Slots remaining: **${
@@ -533,14 +556,14 @@ client.on("interactionCreate", async (interaction) => {
             const embed = new MessageEmbed()
                 .setTitle(":coffee: Leaderboard")
                 .setDescription(getLeaderboardString(interaction.channel));
-            BotReply(interaction, embed, "", false);
+            BotReply(0,interaction, embed, "", false);
         } else if (interaction.commandName == "talk") {
             let responseObject=await response.CommandTalk(interaction.user.id,interaction.options.getString("message"))
             BulkReplyHandler(interaction,responseObject);
         } else if (interaction.commandName == "21End") {
             if(list.length!=0&&BestOf.CommandBestOfType()=="21"&&!BestOf.CommandBestOfRunning())
             {
-                BotReply(interaction,null,"Can't end a game when a 'Best Of' set is running. Just let it play out fam.",false)
+                BotReply(0,interaction,null,"Can't end a game when a 'Best Of' set is running. Just let it play out fam.",false)
             }
             else
             {
@@ -571,7 +594,7 @@ client.on("interactionCreate", async (interaction) => {
                 }
                 else
                 {
-                    BotReply(interaction, null, "You can't start a game of 21 if there is a 'Best Of' set pending. join up to it now with ./bestjoin !", true);
+                    BotReply(0,interaction, null, "You can't start a game of 21 if there is a 'Best Of' set pending. join up to it now with ./bestjoin !", true);
                     
                 }
             }
@@ -606,7 +629,7 @@ client.on("interactionCreate", async (interaction) => {
             if (curRPSRequest == "") {
                 curRPSRequest = interaction.user.id;
                 curRPSChoice = interaction.options.getString("choice");
-                BotReply(
+                BotReply(0,
                     interaction,
                     null,
                     `<@${interaction.user.id}> is offering a game of **rock, paper, scissors** for **1 coffee**. Do **/rps [choice]** to take the bet.`,
@@ -616,7 +639,7 @@ client.on("interactionCreate", async (interaction) => {
             }
 
             if (curRPSRequest == interaction.user.id) {
-                BotReply(
+                BotReply(0,
                     interaction,
                     null,
                     `<@${interaction.user.id}> revoked their rock, paper, scissors offer.`,
@@ -643,6 +666,7 @@ client.on("interactionCreate", async (interaction) => {
             if (player1ChoiceIndex == player2ChoiceIndex) {
                 //tie
                 BotReply(
+                    0,
                     interaction,
                     null,
                     `<@${player1}> and <@${player2}> tied by both choosing ${emojis[player1ChoiceIndex]}.`,
@@ -652,6 +676,7 @@ client.on("interactionCreate", async (interaction) => {
                 //player1 won
                 FileIO.AddUserCoffee(player2, player1, 1,"RPS");
                 BotReply(
+                    0,
                     interaction,
                     null,
                     `<@${player1}>'s ${emojis[player1ChoiceIndex]} ${verbs[player1ChoiceIndex]} <@${player2}>'s ${emojis[player2ChoiceIndex]}. <@${player2}> paid up 1 :coffee:.`,
@@ -662,6 +687,7 @@ client.on("interactionCreate", async (interaction) => {
 
                 FileIO.AddUserCoffee(player1, player2, 1,"RPS");
                 BotReply(
+                    0,
                     interaction,
                     null,
                     `<@${player2}>'s ${emojis[player2ChoiceIndex]} ${verbs[player2ChoiceIndex]} <@${player1}>'s ${emojis[player1ChoiceIndex]}. <@${player1}> paid up 1 :coffee:.`,
@@ -959,7 +985,7 @@ function getProfileString(pUser, interaction,avatarUrl) {
         )
         .setDescription(pString)
         .setThumbnail(avatarUrl);
-    return BotReply(interaction, profilEmbed, "", false);
+    return BotReply(0,interaction, profilEmbed, "", false);
 }
 
 function getCoffeeLedgerString(channel) {
