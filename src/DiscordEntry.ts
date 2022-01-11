@@ -69,34 +69,12 @@ client.on("interactionCreate", async (interaction) => {
     if (!interaction.isCommand()) return;
     try {
         let commandFunction: commandExecute=Commands.get(interaction.commandName);
-
+        let commandTandCAgree: commandExecute= Commands.get('agree');
+        
         if(commandFunction!=undefined)
         {
             let args ={} as commandArgs;
-            if (!DiscordFileIO.playerAgreedToTerms(interaction.user.id)) { 
-                const embed = new MessageEmbed()
-                .setTitle("Coffee Economy Terms & Conditions")
-                .setDescription(`One must accept accept the following terms & conditions to participate in the :coffee: economy:
-                
-                :one: I agree a :coffee: is worth $2 towards a food or drink purchase
-                    
-                :two: I agree that I will not bet more than I can afford
-                
-                :three: I agree that anyone may ask to cashout coffees at any time with proof of a receipt
-                
-                :four: I agree that if I am unable to payout my coffees upon being requested, I must declare bankruptcy and will be suspended from the :coffee: system for [my net oweage * 4] days
-                
-                By doing \`/agree\` you accept to these terms & conditions`)
-                .setThumbnail(
-                    "https://lh3.googleusercontent.com/proxy/-aeVwzFtgt_rnoLyJpHjtQSUKRbDtJNLTH8w5bybehJW4ibOJA_PFlnLiSsjdPElbpoyOGCdf8otyNGFvchWfjKjUuUWmZguwe8"
-                );
-                BotReply(
-                    interaction, 
-                     embed, 
-                    ``,
-                     false);
-                return
-            } 
+
             for(let x=0;x<commandFunction.Args.length;x++) //TODO remove arguments, just pass down everything that exists and use it when needed...or not, rely just depends. 
             {
                 if(commandFunction.Args[x]==="ID")
@@ -139,7 +117,13 @@ client.on("interactionCreate", async (interaction) => {
                     args.text=ref;
                 }
             };
-            return  BulkReplyHandler(interaction,commandFunction.Func(args));
+            let response=commandTandCAgree.Func(args);
+            if(response.length==0)
+            {
+                return  BulkReplyHandler(interaction,commandFunction.Func(args));
+            }
+            else
+                return BulkReplyHandler(interaction,response);
         }
 
          if (interaction.commandName == "talk") {
