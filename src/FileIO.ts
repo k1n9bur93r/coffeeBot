@@ -131,7 +131,7 @@ module.exports = {
        playerMap.get(interactionUser).Data.OwedCoffs-=amount;
        if( !playerMap.get(mentionedUser).Data.Ledger.some(item=>item.ID===interactionUser))
        {
-           playerMap.get(mentionedUser).Dat.Ledger.push({ID:interactionUser,Amount:(0-amount)})
+           playerMap.get(mentionedUser).Data.Ledger.push({ID:interactionUser,Amount:(0-amount)})
        }
        else
        {
@@ -199,13 +199,14 @@ module.exports = {
     },
     getUserProfile:  function(userId: number) :object
     {
-       const returnData = playerMap.get(userId).Data;
+       const returnData = playerMap.get(userId);
         if (returnData==undefined) {
             console.log('No such document!'); //TOD better error handeling here
-            return {};
+            ValidateUser(userId);
+            return playerMap.get(userId).Data;
           } else {
-            console.log('Document data:', returnData);
-            return  returnData;
+            console.log('Document data:', returnData.Data);
+            return  returnData.Data;
           }
     },
     GetUserCoffeeDebt: function (interactionUser: number, mentionedUser :number) {
