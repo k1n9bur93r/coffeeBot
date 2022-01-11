@@ -9,6 +9,7 @@ module.exports={
 LoadCommands:function():Array<commandObject>
 {
     return [
+    {Name:"agreed" ,Logic:{Func:Agreed,Args:["ID",]}},
     {Name:"profile" ,Logic:{Func:Profile,Args:["ID","RefID1"]}},
     {Name:"leaderboard" ,Logic:{Func:Leader,Args:[]}},
     {Name:"ledger" ,Logic:{Func:Ledger,Args:[]}}
@@ -50,6 +51,26 @@ else
 }
     return [getProfileString(selectedUser,selectedAvatar,selectedName)];
 }
+
+function Agreed(args:commandArgs){
+    if(pfIO.playerAgreedToTerms(args.UserID)){ 
+    let embedText=`One must accept accept the following terms & conditions to participate in the :coffee: economy:
+    
+    :one: I agree a :coffee: is worth $2 towards a food or drink purchase
+        
+    :two: I agree that I will not bet more than I can afford
+    
+    :three: I agree that anyone may ask to cashout coffees at any time with proof of a receipt
+    
+    :four: I agree that if I am unable to payout my coffees upon being requested, I must declare bankruptcy and will be suspended from the :coffee: system for [my net oweage * 4] days
+    
+    By doing \`/agree\` you accept to these terms & conditions`;
+    let embed= pfCom.Embed("Coffee Economy Terms & Conditions",embedText,null,false,"YELLOW","https://lh3.googleusercontent.com/proxy/-aeVwzFtgt_rnoLyJpHjtQSUKRbDtJNLTH8w5bybehJW4ibOJA_PFlnLiSsjdPElbpoyOGCdf8otyNGFvchWfjKjUuUWmZguwe8");
+    return [pfCom.Request(pfCom.Type.Reply,embed,"",pfCom.Type.Visible)];
+    }
+    else
+    return [];
+} 
 
 function Ledger(args:commandArgs) 
 {
