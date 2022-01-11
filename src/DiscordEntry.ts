@@ -14,16 +14,14 @@ const { Client, Intents, MessageEmbed,MessageActionRow,MessageButton } = require
 let {discordToken}=require('../config.json')
 
 
-
-
-let curRPSRequest = "";
-let curRPSChoice:string = "";
-
-
-let GlobalTimers=[];
 import {commandObject} from './Commands/SharedCommandObject';
 import {commandArgs} from './Commands/SharedCommandObject';
 import {commandExecute} from './Commands/SharedCommandObject';
+
+let curRPSRequest = "";
+let curRPSChoice:string = "";
+let GlobalTimers=[];
+
 function TimerObject(timer,timerName)
 {
     return{
@@ -54,7 +52,7 @@ module.exports =
     });
 
     response.Initalize();
-    commandArray= commandArray.concat(CardGameCommand.LoadCommands());
+    commandArray=commandArray.concat(CardGameCommand.LoadCommands());
     commandArray=commandArray.concat(ProfileCommand.LoadCommands());
     commandArray=commandArray.concat(BestOfCommand.LoadCommands());
     commandArray=commandArray.concat(ProfileWriteCommand.LoadCommands());
@@ -231,7 +229,7 @@ client.on("interactionCreate", async (interaction) => {
 
 //Event and Communication
 
-function TimeOutHandler(options)
+function TimeOutHandler(options) //Rewrite/Move out of being discord centric, make generic timers that sync up with users over Websocket/WebRTC
 {
     console.log("Event FIRING "+options.actionName);
     if(options.actionName.includes('CG-'))
@@ -266,7 +264,7 @@ function TimeOutHandler(options)
     }
 }
 
-function BulkReplyHandler(interaction,communicationRequests)
+function BulkReplyHandler(interaction,communicationRequests) //Ideally there will only be one response per action and timers will be attached to global events/broadcasts and will remove the need for this function.
 {
     console.log("\n Number of communication requests "+communicationRequests.length);
     for(let x=0;x<communicationRequests.length;x++)
@@ -343,7 +341,7 @@ function BulkReplyHandler(interaction,communicationRequests)
     }
 }
 
-function BotChannelMessage(interaction, embed, message) {
+function BotChannelMessage(interaction, embed, message) { //Will be replaced with general announcement with Discord and Websocket/WebRTC clients
     if (embed && message == "") {
         client.channels.cache.get(interaction.channelId).send({ embeds: [embed] });
     } else if (embed) {
@@ -355,7 +353,7 @@ function BotChannelMessage(interaction, embed, message) {
         client.channels.cache.get(interaction.channelId).send(message);
     }
 }
-async function BotReply(interaction, embed, message, ishidden) {
+async function BotReply(interaction, embed, message, ishidden) { 
                 const row = new MessageActionRow()
 			// .addComponents(
 			// 	new MessageButton()
