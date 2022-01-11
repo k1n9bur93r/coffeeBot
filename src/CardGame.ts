@@ -262,13 +262,16 @@ module.exports =
             coffAmount=1;
         else if(coffAmount>2)
         {
-            communicationRequests.push(CardComm.Request(messageReply,null,"Can't have a buy in great than 5!",CardComm.Type.Hidden));
+            communicationRequests.push(CardComm.Request(messageReply,null,"Can't have a buy in great than 5!",CardComm.Type.Hidden)); // Action Response
             return  communicationRequests;
         }
-        if(currentGame.StartingPlayer==interactionID)
+        if(currentGame.GameRunning==true)
         {
-            if(currentGame.GameRunning==false)
-            {
+            communicationRequests.push(CardComm.Request(messageReply,null,`Sorry, there is a game currently on going!`,CardComm.Type.Hidden));
+        }
+        else if(currentGame.StartingPlayer==interactionID && currentGame.GameRunning==false)
+        {
+
                 let fields=[];
                 for(let x=0;x<currentGame.PlayerObjects.length;x++)
                     fields.push({title:`Player ${x+1}`,content:`<@${currentGame.PlayerObjects[x].userId}>`,fieldsAlign:true});
@@ -281,17 +284,12 @@ module.exports =
                     CardThumbnail
                 );
 
-                communicationRequests.push(CardComm.Request(messageReply,embed,"",CardComm.Type.Visible,CardComm.Timer(CardComm.Type.GameStart,2,2)));
+                communicationRequests.push(CardComm.Request(messageReply,embed,"",CardComm.Type.Visible,CardComm.Timer(CardComm.Type.GameStart,2,2))); 
                 currentGame.GameRunning=true;
-            }
-            else
-            {
-                communicationRequests.push(CardComm.Request(messageReply,null,`Sorry, there is a game currently on going!`,CardComm.Type.Hidden));
-            }
-        }
-        else if(currentGame.GameRunning==false)
-        {
 
+        }
+        else 
+        {
             if(currentGame.PlayerObjects.length==0)
             {
                 //TODO: Add the object that deals with ther permutations here 
@@ -311,7 +309,6 @@ module.exports =
                 );
 
                 communicationRequests.push(CardComm.Request(messageReply,embed,"",CardComm.Type.Visible,CardComm.Timer(CardComm.Type.GameInit,5,1)));
-
             }
             else
             {
@@ -327,10 +324,7 @@ module.exports =
             }
 
         }
-        else if(currentGame.GameRunning==true)
-        {
-            communicationRequests.push(CardComm.Request(messageReply,null,`Sorry, there is a game currently on going!`,CardComm.Type.Hidden));
-        }
+        
         return communicationRequests;
     },
 

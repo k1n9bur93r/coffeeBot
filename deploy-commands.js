@@ -13,7 +13,7 @@ const commands = [
     .setDescription("Add venmo to profile")
     .addStringOption((option) =>
         option
-            .setName("venmo")
+            .setName("text")
             .setDescription("Your venmo username")
             .setRequired(true)
     ), 
@@ -42,7 +42,7 @@ const commands = [
                 .setDescription("User to give coffee to")
                 .setRequired(true)
         )
-        .addNumberOption((option) =>
+        .addIntegerOption((option) =>
             option
                 .setName("amount")
                 .setDescription("Amount to give")
@@ -57,7 +57,7 @@ const commands = [
                 .setDescription("User to redeem coffee from")
                 .setRequired(true)
         )
-        .addNumberOption((option) =>
+        .addIntegerOption((option) =>
             option
                 .setName("amount")
                 .setDescription("Amount to redeem")
@@ -90,7 +90,7 @@ const commands = [
                 .setDescription("User to transfer redeemable to")
                 .setRequired(true)
         )
-        .addNumberOption((option) =>
+        .addIntegerOption((option) =>
             option
                 .setName("amount")
                 .setDescription("Coffee amount to transfer")
@@ -110,7 +110,7 @@ const commands = [
         .setDescription("Join a coffee betting pot")
         .addIntegerOption((option) =>
             option
-                .setName("number")
+                .setName("amount")
                 .setDescription("Choose a number between 1 and 1000")
                 .setRequired(true)
         ),
@@ -119,7 +119,7 @@ const commands = [
         .setDescription("Talk to Coffee Bot")
         .addStringOption((option) =>
             option
-                .setName("message")
+                .setName("text")
                 .setDescription("What you want to say")
                 .setRequired(true)
         ),
@@ -161,28 +161,28 @@ const commands = [
                 .addChoice("Paper", "Paper")
                 .addChoice("Scissors", "Scissors")
 
+        ),
+        new SlashCommandBuilder()
+        .setName("bestcreate")
+        .setDescription("Create a new 'Best Of' Set for a game")
+        .addIntegerOption((option) =>
+        option
+            .setName("rounds")
+            .setDescription("Best Of how many games?")
+            .setRequired(true)
         )
-        // new SlashCommandBuilder()
-        // .setName("bestcreate")
-        // .setDescription("Create a new 'Best Of' Set for a game")
-        // .addIntegerOption((option) =>
-        // option
-        //     .setName("rounds")
-        //     .setDescription("Best Of how many games?")
-        //     .setRequired(true)
-        // )
-        // .addIntegerOption((option) =>
-        // option
-        //     .setName("coffs")
-        //     .setDescription("How many coffees does the winner get")
-        //     .setRequired(true)
-        // ),
-        // new SlashCommandBuilder()
-        // .setName("bestjoin")
-        // .setDescription("Join a Best Of set"),
-        // new SlashCommandBuilder()
-        // .setName("bestplayers")
-        // .setDescription("Current players in a Best Of set"),
+        .addIntegerOption((option) =>
+        option
+            .setName("amount")
+            .setDescription("How many coffees does the winner get")
+            .setRequired(true)
+        ),
+        new SlashCommandBuilder()
+        .setName("bestjoin")
+        .setDescription("Join a Best Of set"),
+        new SlashCommandBuilder()
+        .setName("bestplayers")
+        .setDescription("Current players in a Best Of set"),
 ].map((command) => command.toJSON());
 
 const rest = new REST({ version: "9" }).setToken(discordToken);
