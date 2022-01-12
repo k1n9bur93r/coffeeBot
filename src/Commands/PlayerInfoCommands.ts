@@ -12,8 +12,7 @@ LoadCommands:function():Array<commandObject>
     {Name:"checkAgree" ,Logic:{Func:CheckAgree,Args:["ID",]}},
     {Name:"profile" ,Logic:{Func:Profile,Args:["ID","RefID1"]}},
     {Name:"leaderboard" ,Logic:{Func:Leader,Args:[]}},
-    {Name:"ledger" ,Logic:{Func:Ledger,Args:[]}}
-    ];
+    {Name:"ledger" ,Logic:{Func:Ledger,Args:[]}}];
 }
 
 }
@@ -53,7 +52,7 @@ else
 }
 
 function CheckAgree(args:commandArgs){
-    if(pfIO.playerAgreedToTerms(args.UserID)){ 
+    if(!pfIO.playerAgreedToTerms(args.UserID)){ 
     let embedText=`One must accept accept the following terms & conditions to participate in the :coffee: economy:
     
     :one: I agree a :coffee: is worth $2 towards a food or drink purchase
