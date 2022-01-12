@@ -69,7 +69,7 @@ client.on("interactionCreate", async (interaction) => {
     if (!interaction.isCommand()) return;
     try {
         let commandFunction: commandExecute=Commands.get(interaction.commandName);
-        let commandTandCAgree: commandExecute= Commands.get('agree');
+        let commandTandCAgree: commandExecute= Commands.get('checkAgree');
         
         if(commandFunction!=undefined)
         {
