@@ -5,7 +5,7 @@ let rpsIO= require("./FileIO");
 
 let curRPSChoice:Array<Userchoices> = [];
 
-export interface RPSResponse{success:boolean,message:string ,isWinner:boolean,winnerID:number,choices:Array<Userchoices>};
+export interface RPSResponse{success:boolean,message:string ,isWinner:boolean,winnerID:number,loserID:number,choices:Array<Userchoices>};
 interface Userchoices {id:number, choice:string};
 
 module.exports={
@@ -57,6 +57,8 @@ let response: RPSResponse;
             response.success=true;
             response.message="Player 1 Wins";
             response.isWinner =true;
+            response.winnerID=curRPSChoice[0].id;
+            response.loserID=curRPSChoice[1].id;
             response.choices=response.choices.concat(curRPSChoice);
             curRPSChoice = [];
             return response;  //player 1 wins 
@@ -67,6 +69,8 @@ let response: RPSResponse;
             response.success=true;
             response.message="Player 2 Wins";
             response.isWinner =true;
+            response.loserID=curRPSChoice[0].id;
+            response.winnerID=curRPSChoice[1].id;
             response.choices=response.choices.concat(curRPSChoice);
             curRPSChoice = [];
             return response;// player two wins 
