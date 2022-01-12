@@ -9,7 +9,7 @@ module.exports={
 LoadCommands:function():Array<commandObject>
 {
     return [
-    {Name:"agreed" ,Logic:{Func:Agreed,Args:["ID",]}},
+    {Name:"checkAgree" ,Logic:{Func:CheckAgree,Args:["ID",]}},
     {Name:"profile" ,Logic:{Func:Profile,Args:["ID","RefID1"]}},
     {Name:"leaderboard" ,Logic:{Func:Leader,Args:[]}},
     {Name:"ledger" ,Logic:{Func:Ledger,Args:[]}}
@@ -52,7 +52,7 @@ else
     return [getProfileString(selectedUser,selectedAvatar,selectedName)];
 }
 
-function Agreed(args:commandArgs){
+function CheckAgree(args:commandArgs){
     if(pfIO.playerAgreedToTerms(args.UserID)){ 
     let embedText=`One must accept accept the following terms & conditions to participate in the :coffee: economy:
     
