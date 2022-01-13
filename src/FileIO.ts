@@ -224,7 +224,13 @@ module.exports = {
             console.log(key);
             totals.push({ID:key,Total:(value.Data.ReceivingCoffs-value.Data.OwedCoffs)})
         }
-        return totals.sort((a,b)=>(a.Total<b.Total)?1:(b.Total<a.Total)?-1:0);
+        totals.sort((a,b)=>(a.Total<b.Total)?1:(b.Total<a.Total)?-1:0);
+        for(let x=0;x<totals.length;x++)
+        {
+            if(totals[x].ID==undefined||totals[x].Total==undefined)
+                totals.splice(x,1);
+        }
+        return 
     },
     GetPlayerLedger:function()
     {
