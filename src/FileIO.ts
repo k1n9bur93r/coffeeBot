@@ -1,7 +1,7 @@
 "use strict"
-
 const admin = require('firebase-admin'); 
 const playerMap = new Map();
+let {gCloudDB} = require("../config.json");
 //let cloudBuffer:object= Buffer.from(`${gCloudDB}`,'base64')
 let cloudBuffer:object= Buffer.from(`${process.env.gCloudDB}`,'base64')
 let decodedCloud :string=cloudBuffer.toString();
@@ -258,21 +258,28 @@ function ValidateUser(interactionUser :number) :void
 }
 async function  BatchUpdateDB() :Promise<void>
 {
+    let wasNullKey=false;
     console.log("DB Update Event Firing");
     const batch=db.batch();
     //var today = new Date();
     //var date = `${today.getFullYear()}${(today.getMonth()+1)}${today.getDate()}`;
-    for(const[key,value] of playerMap.entries())
-    {
-        if(value.UpdatedData==true)
+    try {
+        for(const[key,value] of playerMap.entries())
         {
-            const dataOperation= db.collection('Players').doc(key);
-            batch.set(dataOperation,value.Data)
+            if(value.UpdatedData==true&&(key!=""||key!=undefined||key!=null))
+            {
+                const dataOperation= db.collection('Players').doc(key);
+                batch.set(dataOperation,value.Data)
+            }
+            else
+            {
+                //error flag
+                wasNullKey=true;
+            }
         }
-    }
     //const updateLog=db.collection('Logging').doc('Logs').get()
     //batch.set(updateLog,Logging)
-    try {
+   
         console.log("Running Batch DB Job ");
         await batch.commit();
     }
@@ -284,4 +291,6 @@ async function  BatchUpdateDB() :Promise<void>
     timerStart=0;
     timerObject=undefined;
     console.log("Batch DB job completed");
+    //TODO FIX WHEN THERE IS A PROPER ERROR/ EVENT HANDLER 
+
 }

@@ -41,8 +41,9 @@ function Redeem(args:commandArgs) {
 } 
 function Transfer(args:commandArgs) {
 
-    console.log("This is the second ID "+args.RefID2)
-    //check if from user owes less than amount to transferer or that transferer owes less than amount to toId
+    console.log(`user RefID one ${args.RefID1} user RedID two ${args.RefID2} calling user ${args.UserID}`);
+    if (args.RefID2 == args.UserID || args.RefID1 == args.UserID) 
+        return [pfWCom.Request(pfWCom.Type.Reply,null, "Cannot transfer to or from yourself!",pfWCom.Type.Hidden)];
     if(pfWIO.GetUserCoffeeDebt(args.UserID,args.RefID1)<args.amount)
         return [pfWCom.Request(pfWCom.Type.Reply,null,`<@${args.RefID1}> does not owe you ${args.amount}`,pfWCom.Type.Hidden)];
 
@@ -51,9 +52,7 @@ function Transfer(args:commandArgs) {
 
     if (args.amount < 0) 
         return [pfWCom.Request(pfWCom.Type.Reply,null,"Cannot transfer negative amount!",pfWCom.Type.Hidden)];
-    
-    if (args.RefID2 == args.UserID || args.RefID1 == args.UserID) 
-        return [pfWCom.Request(pfWCom.Type.Reply,null, "Cannot transfer to or from yourself!",pfWCom.Type.Hidden)];
+
     console.log("This is the amount in the value thing "+args.amount)
     pfWIO.RemoveUserCoffee(args.RefID1, args.UserID, args.amount,"TRANSFER");
     pfWIO.RemoveUserCoffee(args.UserID, args.RefID2, args.amount,"TRANSFER");

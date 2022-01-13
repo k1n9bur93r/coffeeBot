@@ -16,7 +16,7 @@ module.exports=
          let returnMessages=[] as Array<CoinFlipResponse>
          if(requestAmount>maxRequestAmount||requestAmount<0)
          {
-             return [{ message:`Invalid request amount "${requestAmount} Min Amount: 0, Max Amount ${maxRequestAmount}" `,coinSide:"", coinWin:0, coinLose: 0,amount:0 }];
+             return [{ message:`You cant flip for that much! ${requestAmount} The Min Amount is 0, and  Max Amount is ${maxRequestAmount}" `,coinSide:"", coinWin:0, coinLose: 0,amount:0 }];
          }
          else
          {
@@ -75,5 +75,5 @@ module.exports=
     if (flipValue!=0) 
         flipIO.AddUserCoffee(loser, winner, flipValue,"COINFLIP");
 
-    return { message:"", coinSide: unique, coinWin: winner, coinLose: loser ,amount:flipValue };
+    return { message:"", coinSide: unique, coinWin: winner, coinLose: loser ,amount:flipValue } as CoinFlipResponse;
 }

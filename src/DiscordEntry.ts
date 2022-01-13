@@ -59,7 +59,12 @@ module.exports =
     commandArray.forEach(Command=>{
         Commands.set(Command.Name,Command.Logic);
     });
- }   
+ },
+    BroadCastError:function(message)
+    {
+        BotChannelMessage(897200312694243378,null,`THERE WAS A FATAL ERROR:${message}`);
+
+    }   
 }
 client.on("interactionCreate", async (interaction) => {
     var channelId=interaction.channelId;
