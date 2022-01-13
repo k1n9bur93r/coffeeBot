@@ -6,7 +6,7 @@ let rps= require("../RPS");
 import {commandObject} from './SharedCommandObject';
 import {commandArgs} from './SharedCommandObject';
 import {RPSResponse} from '../RPS'
-import { idText } from 'typescript';
+
 
 let verbs = ["crushes", "covers", "cuts"];
 let emojis = [":rock:", ":roll_of_paper:", ":scissors:"];
@@ -18,7 +18,7 @@ module.exports=
     LoadCommands:function():Array<commandObject>
     {
         return [
-        {Name:"rps" ,Logic:{Func:MakeSelection,Args:["ID","text"]}}
+        {Name:"rps" ,Logic:{Func:MakeSelection,Args:["ID","Text"]}}
         ];
     }
 
@@ -27,6 +27,7 @@ module.exports=
 function MakeSelection(args:commandArgs)
 {
 let response:RPSResponse=rps.CommandRPS(args.UserID,args.text);
+console.log(response);
 let replytext:string;
 if(!response.isWinner)
 {
@@ -48,7 +49,7 @@ else
     let winnerIndex= response.choices.findIndex(player=>player.id==response.winnerID);
     let loserIndex=0;
     if(winnerIndex==0) loserIndex=1;
-    replytext=`<@${response.winnerID}>'s ${emojis[choices.indexOf(response.choices[winnerIndex].choice)]} ${verbs[choices.indexOf(response.choices[winnerIndex].choice)]} <@${response.loserID}>'s ${emojis[choices.indexOf(response.choices[winnerIndex].choice)]}. <@${response.loserID}> paid up 1 :coffee:.`;
+    replytext=`<@${response.winnerID}>'s ${emojis[choices.indexOf(response.choices[winnerIndex].choice)]} ${verbs[choices.indexOf(response.choices[winnerIndex].choice)]} <@${response.loserID}>'s ${emojis[choices.indexOf(response.choices[loserIndex].choice)]}. <@${response.loserID}> paid up 1 :coffee:.`;
 }
 return [rpsCom.Request(rpsCom.Type.Reply,null, replytext, rpsCom.Type.Visible)];
 }

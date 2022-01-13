@@ -1,6 +1,9 @@
 "use strict"
 let  BestFileIO = require("./FileIO");
 let BestComm= require("./Communication");
+
+export interface BestOfResponse{gameRunning:boolean,isWinner:boolean,winnerId:number,players:Array<BestOfPlayer>,Sets:number,SetsPlayed:number};
+interface BestOfPlayer {id:number,wins:number}
 class BestOfSet{
 
     Session={
@@ -26,7 +29,7 @@ class BestOfSet{
             }
         }
                 
-        var PlayerObject={
+        var PlayerObject:BestOfPlayer={
             wins:0,
             id:playerId
         };

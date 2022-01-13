@@ -14,7 +14,6 @@ module.exports={
         {Name:"bestend" ,Logic:{Func:End,Args:[]}}
         ];
     }
-
 }
 
 function Join(args:commandArgs){

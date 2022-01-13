@@ -12,7 +12,9 @@ module.exports={
 
 CommandRPS:function(id, choice)
 {
-let response: RPSResponse;
+    console.log(choice);
+let response ={} as RPSResponse;
+response.choices=[] as Array<Userchoices>;
         if (curRPSChoice.length == 0) {
 
             response.success=true;

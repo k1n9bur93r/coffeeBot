@@ -52,6 +52,7 @@ else
 }
 
 function CheckAgree(args:commandArgs){
+    let isTandC=pfIO.playerAgreedToTerms(args.UserID);
     if(!pfIO.playerAgreedToTerms(args.UserID)){ 
     let embedText=`One must accept accept the following terms & conditions to participate in the :coffee: economy:
     

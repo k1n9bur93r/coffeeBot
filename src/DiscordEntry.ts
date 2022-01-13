@@ -1,15 +1,15 @@
 "use strict"
 
 let cardGame= require("./CardGame");
-let response=require("./Response");
 let BestOf = require("./BestOf");
-let DiscordFileIO = require("./FileIO");
 let CardGameCommand= require("./Commands/CardGameCommands")
 let ProfileCommand =require("./Commands/PlayerInfoCommands")
 let BestOfCommand= require("./Commands/BestOfCommands");
 let CoinFlipCommand= require("./Commands/CoinFlipCommands")
 let ProfileWriteCommand= require("./Commands/ProfileWriteCommands");
 let CoffeePotCommand= require("./Commands/CoffeePotCommands");
+let RPSCommand= require("./Commands/RPSCommands");
+let TalkCommand= require("./Commands/TalkCommands");
 const { Client, Intents, MessageEmbed,MessageActionRow,MessageButton } = require("discord.js");
 let {discordToken}=require('../config.json')
 
@@ -18,8 +18,6 @@ import {commandObject} from './Commands/SharedCommandObject';
 import {commandArgs} from './Commands/SharedCommandObject';
 import {commandExecute} from './Commands/SharedCommandObject';
 
-let curRPSRequest = "";
-let curRPSChoice:string = "";
 let GlobalTimers=[];
 
 function TimerObject(timer,timerName)
@@ -50,18 +48,17 @@ module.exports =
     client.once("ready", () => {
         client.user.setActivity("/commands", { type: "LISTENING" });
     });
-
-    response.Initalize();
     commandArray=commandArray.concat(CardGameCommand.LoadCommands());
     commandArray=commandArray.concat(ProfileCommand.LoadCommands());
     commandArray=commandArray.concat(BestOfCommand.LoadCommands());
     commandArray=commandArray.concat(ProfileWriteCommand.LoadCommands());
     commandArray=commandArray.concat(CoinFlipCommand.LoadCommands());
     commandArray=commandArray.concat(CoffeePotCommand.LoadCommands());
+    commandArray=commandArray.concat(TalkCommand.LoadCommands());
+    commandArray=commandArray.concat(RPSCommand.LoadCommands());
     commandArray.forEach(Command=>{
         Commands.set(Command.Name,Command.Logic);
     });
-
  }   
 }
 client.on("interactionCreate", async (interaction) => {
@@ -117,87 +114,15 @@ client.on("interactionCreate", async (interaction) => {
                     args.text=ref;
                 }
             };
-            let response=commandTandCAgree.Func(args);
-            if(response.length==0)
+            let tandCResp =commandTandCAgree.Func(args);
+            if(args.UserID==undefined||tandCResp.length==0)
             {
                 return  BulkReplyHandler(interaction,commandFunction.Func(args));
             }
             else
-                return BulkReplyHandler(interaction,response);
+                return BulkReplyHandler(interaction,tandCResp);
         }
 
-         if (interaction.commandName == "talk") {
-            let responseObject=await response.CommandTalk(interaction.user.id,interaction.options.getString("message"))
-            BulkReplyHandler(interaction,responseObject);
-        } 
-        else if (interaction.commandName == "rps") {
-            if (curRPSRequest == "") {
-                curRPSRequest = interaction.user.id;
-                curRPSChoice = interaction.options.getString("choice");
-                BotReply(
-                    interaction,
-                    null,
-                    `<@${interaction.user.id}> is offering a game of **rock, paper, scissors** for **1 coffee**. Do **/rps [choice]** to take the bet.`,
-                    false
-                );
-                return;
-            }
-
-            if (curRPSRequest == interaction.user.id) {
-                BotReply(
-                    interaction,
-                    null,
-                    `<@${interaction.user.id}> revoked their rock, paper, scissors offer.`,
-                    false
-                );
-                curRPSRequest = "";
-                return;
-            }
-
-            // if still here then execute rps
-            let player1 = curRPSRequest;
-            let player2 = interaction.user.id;
-            let player1Choice = curRPSChoice;
-            let player2Choice:string = interaction.options.getString("choice");
-            let player1ChoiceIndex=-1;
-            let player2ChoiceIndex=-1;
-            let choices = ["Rock", "Paper", "Scissors"];
-            let verbs = ["crushes", "covers", "cuts"];
-            let emojis = [":rock:", ":roll_of_paper:", ":scissors:"];
-
-            player1ChoiceIndex = choices.indexOf(player1Choice);
-            player2ChoiceIndex= choices.indexOf(player2Choice);
-            curRPSRequest = "";
-            if (player1ChoiceIndex == player2ChoiceIndex) {
-                //tie
-                BotReply(
-                    interaction,
-                    null,
-                    `<@${player1}> and <@${player2}> tied by both choosing ${emojis[player1ChoiceIndex]}.`,
-                    false
-                );
-            } else if ((player1ChoiceIndex + 1) % 3 != player2ChoiceIndex) {
-                //player1 won
-                DiscordFileIO.AddUserCoffee(player2, player1, 1,"RPS");
-                BotReply(
-                    interaction,
-                    null,
-                    `<@${player1}>'s ${emojis[player1ChoiceIndex]} ${verbs[player1ChoiceIndex]} <@${player2}>'s ${emojis[player2ChoiceIndex]}. <@${player2}> paid up 1 :coffee:.`,
-                    false
-                );
-            } else {
-                //player2 won
-
-                DiscordFileIO.AddUserCoffee(player1, player2, 1,"RPS");
-                BotReply(
-                    interaction,
-                    null,
-                    `<@${player2}>'s ${emojis[player2ChoiceIndex]} ${verbs[player2ChoiceIndex]} <@${player1}>'s ${emojis[player1ChoiceIndex]}. <@${player1}> paid up 1 :coffee:.`,
-                    false
-                );
-            
-        }
-    }
 } catch (e) {
         BotChannelMessage(
             {channelId:channelId},
@@ -250,7 +175,6 @@ function TimeOutHandler(options) //Rewrite/Move out of being discord centric, ma
 
 function BulkReplyHandler(interaction,communicationRequests) //Ideally there will only be one response per action and timers will be attached to global events/broadcasts and will remove the need for this function.
 {
-    console.log("\n Number of communication requests "+communicationRequests.length);
     for(let x=0;x<communicationRequests.length;x++)
     {
         let embed= null;
