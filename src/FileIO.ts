@@ -230,7 +230,7 @@ module.exports = {
             if(totals[x].ID==undefined||totals[x].Total==undefined)
                 totals.splice(x,1);
         }
-        return 
+        return totals;
     },
     GetPlayerLedger:function()
     {
