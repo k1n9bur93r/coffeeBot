@@ -260,9 +260,9 @@ module.exports =
         //TODO:somewhere around this point we will read in the value as either a number or a set of emoji  
         if(!coffAmount)
             coffAmount=1;
-        else if(coffAmount>2)
+        else if(coffAmount>100)
         {
-            communicationRequests.push(CardComm.Request(messageReply,null,"Can't have a buy in great than 5!",CardComm.Type.Hidden)); // Action Response
+            communicationRequests.push(CardComm.Request(messageReply,null,"Can't have a buy in greater than 100!",CardComm.Type.Hidden)); // Action Response
             return  communicationRequests;
         }
         if(currentGame.GameRunning==true)
