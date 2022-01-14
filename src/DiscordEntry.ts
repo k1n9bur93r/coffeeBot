@@ -20,13 +20,7 @@ import {commandExecute} from './Commands/SharedCommandObject';
 
 let GlobalTimers=[];
 
-function TimerObject(timer,timerName)
-{
-    return{
-        Timer:timer,
-        Name:timerName
-    }
-}
+
 const client = new Client({
     intents: [
         Intents.FLAGS.GUILDS,
@@ -216,40 +210,7 @@ function BulkReplyHandler(interaction,communicationRequests) //Ideally there wil
                 communicationRequests[x].message
             );
         }
-        if(communicationRequests[x].TimerSettings!=null)
-        {
-            if(communicationRequests[x].TimerSettings.Replace.length!=0&&GlobalTimers.length>0)
-            {
-                for(let z=0;z<communicationRequests[x].TimerSettings.Replace.length;z++)
-                {
-                    for(let y=0;y<GlobalTimers.length;y++)
-                    {
-                        if(communicationRequests[x].TimerSettings.Replace[z]==GlobalTimers[y].Name)
-                        {
-                            console.log(`REPLACED A CURRENT TIMER  '${GlobalTimers[y].Name}' with: ${communicationRequests[x].TimerSettings.Action}`);
-                            clearTimeout(GlobalTimers[y].Timer);
-                            GlobalTimers.splice(y,1);
-                            break;
-                        }
-                    }
-                }
-            }
-                GlobalTimers.push(
-                    TimerObject(
-                        setTimeout(
-                            TimeOutHandler, 
-                            communicationRequests[x].TimerSettings.Length , 
-                            {
-                            index:GlobalTimers.length,
-                            actionName:communicationRequests[x].TimerSettings.Action,
-                            functionCall:communicationRequests[x].TimerSettings.functionCall,
-                            interaction:interaction
-                            }
-                            ),
-                        communicationRequests[x].TimerSettings.Action
-                        )
-                    );
-        }
+      
 
     }
 }
