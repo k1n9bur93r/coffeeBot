@@ -1,6 +1,9 @@
 "use strict"
 let  BestFileIO = require("./FileIO");
 let BestComm= require("./Communication");
+
+export interface BestOfResponse{gameRunning:boolean,isWinner:boolean,winnerId:number,players:Array<BestOfPlayer>,Sets:number,SetsPlayed:number};
+interface BestOfPlayer {id:number,wins:number}
 class BestOfSet{
 
     Session={
@@ -26,7 +29,7 @@ class BestOfSet{
             }
         }
                 
-        var PlayerObject={
+        var PlayerObject:BestOfPlayer={
             wins:0,
             id:playerId
         };
@@ -144,7 +147,7 @@ module.exports =
         }
         else
         {
-            communicationRequests.push(BestComm.Request(BestComm.Type.Reply,null,`There is already a 'Best Of' set running, see if  you can join it!`,BestComm.Type.Visible));  
+            communicationRequests.push(BestComm.Request(BestComm.Type.Reply,null,`There is already a 'Best Of' set running, see if  you can join it!`,BestComm.Type.Hidden));  
         }
         return communicationRequests;
 
@@ -167,21 +170,13 @@ module.exports =
         }
         return returnobject;
     },
-    CommandBestOfEnd:function(InteractionID: number) :Array<object>
+    CommandBestOfEnd:function() :Array<object>
     {
         var returnObject=[];
-        if(set.Session.players.length!=0&&set.gameRunning==false &&InteractionID==set.StartingPlayer)
-        {
-            set.Reset();
-            returnObject.push( BestComm.Request(BestComm.Type.Reply,null,`The 'Best Of' Set was never started, for shame! Feel free to try again when people actually want to play...`,BestComm.Type.Visible,null));
-        }
-        else
-        {
-            returnObject.push( BestComm.Request(BestComm.Type.Reply,null,`The 'Best Of' Set was never started, for shame! Feel free to try again when people actually want to play...`,BestComm.Type.Hidden,null));
-        }
+        set.Reset();
+        returnObject.push( BestComm.Request(BestComm.Type.Brodcast,null,`The 'Best Of' Set was never started, for shame! Feel free to try again when people actually want to play...`,BestComm.Type.Visible,null));
         return returnObject;
     }
-
 
 }
 

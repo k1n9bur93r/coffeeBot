@@ -1,7 +1,7 @@
 "use strict"
 const admin = require('firebase-admin'); 
 const playerMap = new Map();
-let {gCloudDB}=require('../config.json')
+let {gCloudDB} = require("../config.json");
 //let cloudBuffer:object= Buffer.from(`${gCloudDB}`,'base64')
 let cloudBuffer:object= Buffer.from(`${process.env.gCloudDB}`,'base64')
 let decodedCloud :string=cloudBuffer.toString();
@@ -18,7 +18,7 @@ let timerObject: ReturnType<typeof setTimeout>;
 function PlayerObject(Data:Object=undefined)
 {
     let Player={
-        UpdatedData:false,
+        UpdatedData:false, 
         UserType: "DISCORD",
         ResponseObjects:{},
         Data:{}
@@ -56,7 +56,7 @@ function NewCacheAction() :void
     {
         console.log("DB Update Event Created");
         timerStart=Date.now();
-        timerObject= setTimeout(BatchUpdateDB,(1000*60*10));
+        timerObject= setTimeout(BatchUpdateDB,(1000*60*10)); 
     }
     else if(writeActions>20&&timerStart<(Date.now()+(1000*60*3)))
     {
@@ -178,10 +178,7 @@ module.exports = {
     playerAgreedToTerms: function (userId: number) :boolean
      {
         ValidateUser(userId);
-        if (playerMap.get(userId).Data.TandC!=false) {
-            return true;
-        }
-        return false;
+        return playerMap.get(userId).Data.TandC;
     },
     agreePlayer:  function (userId: number) :void
      {
@@ -224,9 +221,16 @@ module.exports = {
         let totals=[];
         for(const[key,value] of playerMap.entries())
         {
+            console.log(key);
             totals.push({ID:key,Total:(value.Data.ReceivingCoffs-value.Data.OwedCoffs)})
         }
-        return totals.sort((a,b)=>(a.Total<b.Total)?1:(b.Total<a.Total)?-1:0);
+        totals.sort((a,b)=>(a.Total<b.Total)?1:(b.Total<a.Total)?-1:0);
+        for(let x=0;x<totals.length;x++)
+        {
+            if(totals[x].ID==undefined||totals[x].Total==undefined)
+                totals.splice(x,1);
+        }
+        return totals;
     },
     GetPlayerLedger:function()
     {
@@ -260,21 +264,28 @@ function ValidateUser(interactionUser :number) :void
 }
 async function  BatchUpdateDB() :Promise<void>
 {
+    let wasNullKey=false;
     console.log("DB Update Event Firing");
     const batch=db.batch();
     //var today = new Date();
     //var date = `${today.getFullYear()}${(today.getMonth()+1)}${today.getDate()}`;
-    for(const[key,value] of playerMap.entries())
-    {
-        if(value.UpdatedData==true)
+    try {
+        for(const[key,value] of playerMap.entries())
         {
-            const dataOperation= db.collection('Players').doc(key);
-            batch.set(dataOperation,value.Data)
+            if(value.UpdatedData==true&&(key!=""||key!=undefined||key!=null))
+            {
+                const dataOperation= db.collection('Players').doc(key);
+                batch.set(dataOperation,value.Data)
+            }
+            else
+            {
+                //error flag
+                wasNullKey=true;
+            }
         }
-    }
     //const updateLog=db.collection('Logging').doc('Logs').get()
     //batch.set(updateLog,Logging)
-    try {
+   
         console.log("Running Batch DB Job ");
         await batch.commit();
     }
@@ -286,4 +297,6 @@ async function  BatchUpdateDB() :Promise<void>
     timerStart=0;
     timerObject=undefined;
     console.log("Batch DB job completed");
+    //TODO FIX WHEN THERE IS A PROPER ERROR/ EVENT HANDLER 
+
 }

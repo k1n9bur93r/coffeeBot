@@ -36,21 +36,48 @@ function Flip(args:commandArgs)
             title="Multi Flip Results";
         else
             title="Coin Flip Results";
+        let player1=0;
+        let player2=0;
+        let OtherPlayer=0;
         for(let x=0;x<responses.length;x++)
         {
+
+            if(responses[x].coinWin.toString()==args.UserID)
+            {
+            player2+=responses[x].amount;
+            }
+            else
+            {
+                OtherPlayer=responses[x].coinWin;
+                player1+=responses[x].amount;
+            }
             if(responses[x].coinSide=="side")
             {
                 coinflipResultText+=`The coinflip landed on its side! It is a tie and no coffees are owed!\n`;
             }
             else if(responses[x].coinSide=="split")
             {
-                coinflipResultText+=`The coinflip split in half! Double the winnings!\n`;
+                coinflipResultText+=`The coinflip split in half! Double the winnings for <@${responses[x].coinWin}> !\n`;
             }
             else if(responses[x].coinSide=="")
             {
-                coinflipResultText+=`<@${responses[x].coinWin}> won the coinflip! <@${responses[x].coinLose}> paid up ${responses[x].amount} coffee.\n`;
+                coinflipResultText+=`<@${responses[x].coinWin}> won the coinflip! \n`;
+
             }
         }
+        if(player1!=player2)
+        {
+            if(player2>player1)
+            {
+                coinflipResultText+=`\n<@${args.UserID}> has won ${player2-player1} :coffee: ${player2-player1 > 1 ? "s" : ""} !`;
+            }
+            else
+            {
+                coinflipResultText+=`\n<@${OtherPlayer}> has won ${player1-player2} :coffee: ${player1-player2 > 1 ? "s" : ""} !`;
+            }
+        }
+        else
+            coinflipResultText+=`\nBoth Players tied, no coffess owed!`;
         const coinFlipResults = cfCom.Embed(
             title,
             coinflipResultText,

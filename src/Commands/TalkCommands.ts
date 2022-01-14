@@ -9,6 +9,7 @@ module.exports=
 {
     LoadCommands:function() :Array<commandObject>
     {
+        tResponse.Initalize();
         return [
             {Name:"talk" ,Logic:{Func:Talk,Args:["ID"]}}
          ];

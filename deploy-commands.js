@@ -114,15 +114,15 @@ const commands = [
                 .setDescription("Choose a number between 1 and 1000")
                 .setRequired(true)
         ),
-    new SlashCommandBuilder()
-        .setName("talk")
-        .setDescription("Talk to Coffee Bot")
-        .addStringOption((option) =>
-            option
-                .setName("text")
-                .setDescription("What you want to say")
-                .setRequired(true)
-        ),
+    // new SlashCommandBuilder()
+    //     .setName("talk")
+    //     .setDescription("Talk to Coffee Bot")
+    //     .addStringOption((option) =>
+    //         option
+    //             .setName("text")
+    //             .setDescription("What you want to say")
+    //             .setRequired(true)
+    //     ),
     //new  SlashCommandBuilder().setName('serverstats').setDescription('Info for the rich and the poor'),
 
     new SlashCommandBuilder()
