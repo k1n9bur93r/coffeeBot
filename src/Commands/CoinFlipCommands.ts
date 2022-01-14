@@ -88,7 +88,7 @@ function Flip(args:commandArgs)
             );
         return [cfCom.Request(cfCom.Type.Reply,coinFlipResults,"",cfCom.Type.Visible)];
     }
-    else if(responses[0].message.toLowerCase().includes("invalid"))
+    else if(responses[0].message.toLowerCase().includes("cant"))
     {
 
         return [cfCom.Request(cfCom.Type.Reply,null,responses[0].message,cfCom.Type.Hidden)];
