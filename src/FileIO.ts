@@ -219,12 +219,12 @@ module.exports = {
     },
     GetPlayerTotals:function()
     {
-        let totals=[];
-        for(const[key,value] of playerMap.entries())
-        {
-            console.log(key);
-            totals.push({ID:key,Total:(value.Data.ReceivingCoffs-value.Data.OwedCoffs)})
-        }
+        let totals= JSON.parse(JSON.stringify(playerMap.entries()));
+        // for(const[key,value] of playerMap.entries())
+        // {
+        //     console.log(key);
+        //     totals.push({ID:key,Total:(value.Data.ReceivingCoffs-value.Data.OwedCoffs)})
+        // }
         totals.sort((a,b)=>(a.Total<b.Total)?1:(b.Total<a.Total)?-1:0);
         for(let x=0;x<totals.length;x++)
         {
@@ -277,7 +277,7 @@ async function  BatchUpdateDB() :Promise<void>
         {
             console.log("Current update key "+key+" followed by a value");
             console.log(value)
-            if(value.UpdatedData==true&&(key!=""||key!=undefined||key!=null))
+            if((key!=""&&key!=undefined&&key!=null)&&value.UpdatedData==true)
             {
                 const dataOperation= db.collection('Players').doc(key);
                 batch.set(dataOperation,value.Data)
