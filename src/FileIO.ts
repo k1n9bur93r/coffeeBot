@@ -219,19 +219,22 @@ module.exports = {
     },
     GetPlayerTotals:function()
     {
-        let totals= JSON.parse(JSON.stringify(playerMap.entries()));
-        // for(const[key,value] of playerMap.entries())
-        // {
-        //     console.log(key);
-        //     totals.push({ID:key,Total:(value.Data.ReceivingCoffs-value.Data.OwedCoffs)})
-        // }
-        totals.sort((a,b)=>(a.Total<b.Total)?1:(b.Total<a.Total)?-1:0);
-        for(let x=0;x<totals.length;x++)
+
+        let ShallowArray=[] ;
+        let totals = new Map(JSON.parse(JSON.stringify(Array.from(playerMap))));
+        for(const[key,value] of totals.entries())
         {
-            if(totals[x].ID==undefined||totals[x].Total==undefined)
-                totals.splice(x,1);
+            let tempValue:any = value;
+            console.log(key);
+            ShallowArray.push({ID:key,Total:(tempValue.Data.ReceivingCoffs-tempValue.Data.OwedCoffs)})
         }
-        return totals;
+        ShallowArray.sort((a,b)=>(a.Total<b.Total)?1:(b.Total<a.Total)?-1:0);
+        for(let x=0;x<ShallowArray.length;x++)
+        {
+            if(ShallowArray[x].ID==undefined||ShallowArray[x].Total==undefined)
+            ShallowArray.splice(x,1);
+        }
+        return ShallowArray;
     },
     GetPlayerLedger:function()
     {
