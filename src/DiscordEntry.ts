@@ -119,8 +119,10 @@ client.on("interactionCreate", async (interaction) => {
                     args.text=ref;
                 }
             };
-            let tandCResp =commandTandCAgree.Func(args);
-            if(args.UserID==undefined||tandCResp.length==0)
+            let tandCResp =[];
+		
+	    tandCResp=commandTandCAgree.Func(args);
+            if(interaction.commandName=="agree"||(args.UserID==undefined||tandCResp.length==0))
             {
                 return  BulkReplyHandler(interaction,commandFunction.Func(args));
             }
