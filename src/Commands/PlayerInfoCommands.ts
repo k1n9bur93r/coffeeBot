@@ -61,7 +61,7 @@ function CheckAgree(args:commandArgs){
 
 3️⃣ I agree that anyone may ask to cash out ☕ at any time with proof of a receipt
 
-4️⃣ I understand that a person is only obliged to pay out a max of 20 ☕️ per day (with exception). That person may elect to pay out more than 20 ☕️ per day at their discretion.
+4️⃣ I understand that a person is only obliged to pay out a max of 20 ☕️ per day (with exception), but may elect to pay out more than 20 ☕️ per day at their discretion.
 
 5️⃣ I agree to not attempt defrauding the system and people
 
