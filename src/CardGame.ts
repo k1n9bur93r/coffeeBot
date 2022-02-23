@@ -525,6 +525,8 @@ else
 {
     warText = `No one won...\n\n`;
     tempPlayerObject=currentGame.PlayerObjects;
+    currentGame.PlayerObjects=[];
+    currentGame.PastWinner=0;
 }
 tempPlayerObject= tempPlayerObject.sort((a,b)=>(a.total<b.total)? 1 : -1);
 for (let x=0;x<tempPlayerObject.length;x++)
