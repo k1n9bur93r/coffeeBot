@@ -66,13 +66,13 @@ NewBroadCastEvent:function(callingFunction:any) //some kind of object that descr
  if(callingFunction){
     let data=callingFunction();
     if(data)
-        DiscordEvent.BotChannelMessage(data,null,"755280645978325003");
+        DiscordEvent.BotChannelMessage(data,null, process.env.broadcastChannelId);
 }
 
 },
 NewBroadCast:function(message,embed=null) //this will get filled in with the channel of the OG interaction
 {
-    DiscordEvent.BotChannelMessage(message,embed,"755280645978325003")
+    DiscordEvent.BotChannelMessage(message,embed, process.env.broadcastChannelId)
 }
 }
 
