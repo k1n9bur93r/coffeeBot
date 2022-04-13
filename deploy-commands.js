@@ -66,6 +66,9 @@ const commands = [
     new SlashCommandBuilder()
         .setName("coinflip")
         .setDescription("Coinflip for 1 coffee"),
+        new SlashCommandBuilder()
+        .setName("omniflip")
+        .setDescription("Coinflip an Omni amount of times"),
     new SlashCommandBuilder()
         .setName("multiflip")
         .setDescription("Put out offer for multiple coinflips!")
@@ -134,9 +137,6 @@ const commands = [
             .setDescription("Set the buy in amount if starting a new game")
             .setRequired(false)
     ),
-        new SlashCommandBuilder()
-        .setName("players")
-        .setDescription("Show who is in the current game of 21"),
     new SlashCommandBuilder()
         .setName("hand")
         .setDescription("See your current hand"),

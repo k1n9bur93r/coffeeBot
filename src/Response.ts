@@ -3,7 +3,7 @@ const { responseJSON} = require("../config.json");
 const language = require("@google-cloud/language");
 const fileResponses = require(`../${responseJSON}`);
 let  RespFileIO = require("./FileIO");
-let RespComm= require("./Communication");
+const {Reply,}= require("./Communication");
 let {gCloudLang}=require('../config.json')
 //let langCloudBuffer:object= Buffer.from(`${gCloudLang}`,'base64')
 let langCloudBuffer= Buffer.from(`${process.env.gCloudLang}`,'base64')
@@ -39,7 +39,7 @@ Initalize: function()
         //generate response
         output = GenerateResponse(result, fileResponses, stats);
 
-        let embed = RespComm.Embed(
+        let embed = Embed(
             "Coffee Bot Says:",
             output,
             null,
@@ -48,7 +48,7 @@ Initalize: function()
             ResponseThumbnail
         );
         
-        return [RespComm.Request(true,embed,`<@${interactionID}> said\n> "*${userMessage}*"`,false)];
+        return [Reply(embed,`<@${interactionID}> said\n> "*${userMessage}*"`,true)];
     }
 }
 
@@ -290,3 +290,4 @@ function GenerateResponse(response, text, coffeeStats) :string
     }
     return output;
 }
+export{}

@@ -44,7 +44,9 @@ function NewPlayer(newLedgerUser:number=undefined) :object
         Ledger:[]
     };
     if(newLedgerUser!=undefined)
+    {
         newPlayerObject.Ledger.push({ID:newLedgerUser,Amount:0});
+    }
     Player.Data=newPlayerObject;    
 return Player;
     
@@ -224,9 +226,9 @@ module.exports = {
         let totals = new Map(JSON.parse(JSON.stringify(Array.from(playerMap))));
         for(const[key,value] of totals.entries())
         {
-            let tempValue:any = value;
-            console.log(key);
-            ShallowArray.push({ID:key,Total:(tempValue.Data.ReceivingCoffs-tempValue.Data.OwedCoffs)})
+
+            totals.push({ID:key,Total:(value.Data.ReceivingCoffs-value.Data.OwedCoffs)})
+
         }
         ShallowArray.sort((a,b)=>(a.Total<b.Total)?1:(b.Total<a.Total)?-1:0);
         for(let x=0;x<ShallowArray.length;x++)
@@ -250,20 +252,12 @@ module.exports = {
         return totals;
     }
 };
-//not being used currently
-function WriteToLog(action, amount, gainedUser, losingUser) {
-    try {
-        let logMessage = `${action}: ${gainedUser} ${amount} ${losingUser}`;
-        let timestamp = new Date().toISOString();
-    } catch (e) {
-        //think of some logging error event here
-        throw e;
-    }
-}
+
 function ValidateUser(interactionUser :number) :void
 {
     if (playerMap.get(interactionUser) == undefined) {
-        playerMap.set(interactionUser,NewPlayer());
+        console.log("Non existant user!")
+        playerMap.set(interactionUser,NewPlayer(interactionUser));
     }
 }
 async function  BatchUpdateDB() :Promise<void>
@@ -307,4 +301,15 @@ async function  BatchUpdateDB() :Promise<void>
     console.log("Batch DB job completed");
     //TODO FIX WHEN THERE IS A PROPER ERROR/ EVENT HANDLER 
 
+}
+
+//not being used currently
+function WriteToLog(action, amount, gainedUser, losingUser) {
+    try {
+        let logMessage = `${action}: ${gainedUser} ${amount} ${losingUser}`;
+        let timestamp = new Date().toISOString();
+    } catch (e) {
+        //think of some logging error event here
+        throw e;
+    }
 }

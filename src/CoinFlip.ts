@@ -1,11 +1,14 @@
 "use strict"
+let flipIO = require("./FileIO");
 
-let flipIO = require("./FileIO"); 
+
 
 export  interface CoinFlipResponse{ message:string,coinSide:string, coinWin:number, coinLose: number,amount:number };
 interface FlipRequest {ID:string, amount:number}
 
-let maxRequestAmount = 69; //TODO Testing
+
+let maxRequestAmount = 69; 
+
 let flipRequests = [] as Array<FlipRequest>;
 
 
@@ -16,7 +19,7 @@ module.exports=
          let returnMessages=[] as Array<CoinFlipResponse>
          if(requestAmount>maxRequestAmount||requestAmount<0)
          {
-             return [{ message:`You cant flip for that much! ${requestAmount} The Min Amount is 0, and  Max Amount is ${maxRequestAmount}" `,coinSide:"", coinWin:0, coinLose: 0,amount:0 }];
+             return [{ message:`You cant flip for that much! ${requestAmount} The Min Amount is 0, and  Max Amount is ${maxRequestAmount} `,coinSide:"", coinWin:0, coinLose: 0,amount:0 }];
          }
          else
          {
@@ -43,6 +46,44 @@ module.exports=
                  }
              }
          }
+     },
+     CommandOmniFlip:function(Id):Array<CoinFlipResponse>
+     {
+        let returnMessages=[] as Array<CoinFlipResponse>
+        let checkRequestID=flipRequests.findIndex(flip=>flip.ID==Id);
+        let checkRequestAmount=flipRequests.findIndex(flip=>flip.amount==-69);
+        console.log("CheckRequestID is "+checkRequestID);
+        console.log("CheckRequestAmount is "+checkRequestAmount);
+        if(checkRequestID!=-1&&checkRequestAmount==checkRequestID)
+        {
+           flipRequests.splice(checkRequestID,1);
+           return [{ message:`${Id} has revoked their omniflip request`,coinSide:"", coinWin:0, coinLose: 0,amount:0 }];
+        }
+        else
+        {
+            if(checkRequestAmount==-1)
+            {
+               flipRequests.push({ID:Id,amount:-69})
+              
+               return [{ message:`${Id} has created an OmniFlip request`,coinSide:"", coinWin:0, coinLose: 0,amount:0 }];
+            }
+            else
+            {
+                for(let y=0;y<100;y++)
+                    for(let x=0;x<100;x++)
+                        returnMessages.push(Flip(flipRequests[checkRequestAmount].ID,Id));
+               flipRequests.splice(checkRequestAmount,1);
+               return returnMessages;
+            }
+        }
+
+     },
+     CommandEndOmniRequest:function():string
+     {
+        let OmniObject=flipRequests.findIndex(flip=>flip.amount==-69);
+        let OmniCreator=flipRequests[OmniObject].ID;
+        flipRequests.splice(OmniObject,1);
+        return OmniCreator;
      }
 
 }
@@ -77,3 +118,4 @@ module.exports=
 
     return { message:"", coinSide: unique, coinWin: winner, coinLose: loser ,amount:flipValue } as CoinFlipResponse;
 }
+

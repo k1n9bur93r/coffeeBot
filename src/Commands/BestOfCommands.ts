@@ -16,14 +16,11 @@ module.exports={
 }
 
 function Join(args:commandArgs){
-
         return bs.CommandAddPlayer(args.UserID);
 } 
 function Create(args:commandArgs){
-
         return bs.CommandNewBestOf(args.UserID,"21",args.amount,args.amount2);
 } 
 function Players(args:commandArgs){
-return bs.CommandBestOfPlayerMessage();
-    
+    return bs.CommandBestOfPlayerMessage();
 } 
