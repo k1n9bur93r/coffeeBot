@@ -2,7 +2,7 @@
 
 let DiscordEvent = require("./DiscordBroadcast");
 
-let APIEvent = require("./APIEntry");
+let APIEvent = require("./ApiEntry");
 "use strict"
 
 
