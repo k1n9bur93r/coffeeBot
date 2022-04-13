@@ -1,7 +1,8 @@
 "use strict"
 
-let cardGame= require("./CardGame");
-let BestOf = require("./BestOf");
+const {DiscordClientInstance} =require ("./DiscordClient"); 
+const {BotChannelMessage}=require("./DiscordBroadcast");
+
 let CardGameCommand= require("./Commands/CardGameCommands")
 let ProfileCommand =require("./Commands/PlayerInfoCommands")
 let BestOfCommand= require("./Commands/BestOfCommands");
@@ -10,59 +11,48 @@ let ProfileWriteCommand= require("./Commands/ProfileWriteCommands");
 let CoffeePotCommand= require("./Commands/CoffeePotCommands");
 let RPSCommand= require("./Commands/RPSCommands");
 let TalkCommand= require("./Commands/TalkCommands");
-const { Client, Intents, MessageEmbed,MessageActionRow,MessageButton } = require("discord.js");
-let {discordToken}=require('../config.json')
-
 
 import {commandObject} from './Commands/SharedCommandObject';
 import {commandArgs} from './Commands/SharedCommandObject';
 import {commandExecute} from './Commands/SharedCommandObject';
 
-let GlobalTimers=[];
 
+let SentButtons= new Array();
 
-const client = new Client({
-    intents: [
-        Intents.FLAGS.GUILDS,
-        Intents.FLAGS.GUILD_MESSAGES,
-        Intents.FLAGS.GUILD_PRESENCES,
-        Intents.FLAGS.GUILD_MEMBERS,
-    ],
-});
+interface DisableButtonsObj{interaction:any,index:number,customId:string};
 
 const Commands= new Map();
-
 module.exports = 
 {
     Initalize: function()
- {
-     let commandArray:Array<commandObject>=[];
-    //client.login(discordToken);
-    client.login(process.env.discordToken);
-    client.once("ready", () => {
-        client.user.setActivity("/commands", { type: "LISTENING" });
-    });
-    commandArray=commandArray.concat(CardGameCommand.LoadCommands());
-    commandArray=commandArray.concat(ProfileCommand.LoadCommands());
-    commandArray=commandArray.concat(BestOfCommand.LoadCommands());
-    commandArray=commandArray.concat(ProfileWriteCommand.LoadCommands());
-    commandArray=commandArray.concat(CoinFlipCommand.LoadCommands());
-    commandArray=commandArray.concat(CoffeePotCommand.LoadCommands());
-    commandArray=commandArray.concat(TalkCommand.LoadCommands());
-    commandArray=commandArray.concat(RPSCommand.LoadCommands());
-    commandArray.forEach(Command=>{
-        Commands.set(Command.Name,Command.Logic);
-    });
- },
-    BroadCastError:function(message)
     {
-        BotChannelMessage(897200312694243378,null,`THERE WAS A FATAL ERROR:${message}`);
+        let commandArray:Array<commandObject>=[];
 
-    }   
+        commandArray=commandArray.concat(CardGameCommand.LoadCommands());
+        commandArray=commandArray.concat(ProfileCommand.LoadCommands());
+        commandArray=commandArray.concat(BestOfCommand.LoadCommands());
+        commandArray=commandArray.concat(ProfileWriteCommand.LoadCommands());
+        commandArray=commandArray.concat(CoinFlipCommand.LoadCommands());
+        commandArray=commandArray.concat(CoffeePotCommand.LoadCommands());
+        commandArray=commandArray.concat(TalkCommand.LoadCommands());
+        commandArray=commandArray.concat(RPSCommand.LoadCommands());
+        commandArray.forEach(Command=>{Commands.set(Command.Name,Command.Logic)}); 
+    } 
 }
-client.on("interactionCreate", async (interaction) => {
-    var channelId=interaction.channelId;
-    if (!interaction.isCommand()) return;
+
+    DiscordClientInstance.client.on("interactionCreate", async (interaction) => {HandleInteraction(interaction)});
+
+function HandleInteraction(interaction)
+{
+
+    if(interaction.isCommand())
+        CommandInteraction(interaction);
+    else if( interaction.isButton())
+        ButtonInteraction(interaction);
+}
+
+function CommandInteraction(interaction)
+{
     try {
         let commandFunction: commandExecute=Commands.get(interaction.commandName);
         let commandTandCAgree: commandExecute= Commands.get('checkAgree');
@@ -71,7 +61,7 @@ client.on("interactionCreate", async (interaction) => {
         {
             let args ={} as commandArgs;
 
-            for(let x=0;x<commandFunction.Args.length;x++) //TODO remove arguments, just pass down everything that exists and use it when needed...or not, rely just depends. 
+            for(let x=0;x<commandFunction.Args.length;x++) //TODO remove arguments, just pass down everything that exists and use it when needed...or not, just depends. 
             {
                 if(commandFunction.Args[x]==="ID")
                 {
@@ -114,146 +104,102 @@ client.on("interactionCreate", async (interaction) => {
                 }
             };
             let tandCResp =commandTandCAgree.Func(args);
-            if(args.UserID==undefined||tandCResp.length==0)
-            {
-                return  BulkReplyHandler(interaction,commandFunction.Func(args));
-            }
+            if(interaction.commandName=="agree"||(args.UserID==undefined||!tandCResp))
+                return BotReply(commandFunction.Func(args),interaction);
             else
-                return BulkReplyHandler(interaction,tandCResp);
+                return BotReply(tandCResp,interaction);
         }
 
 } catch (e) {
         BotChannelMessage(
-            {channelId:channelId},
-            null,
             `I'm Sowwy UwU~ <@${
                 interaction.user.id
             }> \n> but something happened and I'm brokie... || ${e.message}${
                 e.stack ? `\nStackTrace:\n=========\n${e.stack}` : ``
-            } ||`
+            } ||`,
+            null,
+            process.env.broadcastChannelId//BaseChannelID
         );
     }
-});
-
-//Event and Communication
-
-function TimeOutHandler(options) //Rewrite/Move out of being discord centric, make generic timers that sync up with users over Websocket/WebRTC
+}
+function ButtonInteraction(interaction)
 {
-    console.log("Event FIRING "+options.actionName);
-    if(options.actionName.includes('CG-'))
-    {
-        if(options.actionName=="CG-End")
-        {
-            for(let x=0;x<GlobalTimers.length;x++)
-            {
-                if(GlobalTimers[x].Name.includes("CG-"))
-                {
-                    clearTimeout(GlobalTimers[x].Timer);
-                    GlobalTimers.splice(x,1);
-                }  
-            }  
-        }
-        else
-        {
-            GlobalTimers.splice(options.index,1)
-            BulkReplyHandler(options.interaction,cardGame.CommandTimerEvent(options.functionCall));
-            BulkReplyHandler(options.interaction,CardGameCommand.CGBSHandler(true,true)); //TODO nasty cross code, might not even work
-        }
-    }
-    else if(options.actionName.includes('BS-'))
-    {
-        if(options.actionName.includes('Time'))
-        {
-            BulkReplyHandler(options.interaction,CardGameCommand.CGBSHandler(true,true)); //TODO nasty cross code, might not even work
-        }
-        else
-            BulkReplyHandler(options.interaction,BestOf.CommandBestOfEnd());
+    let MatchingButtons= SentButtons.filter(set=>set.customId=interaction.customId);
 
+    for(let x=0;x<MatchingButtons.length;x++)
+    {
+        DisablePastButtons(MatchingButtons[x].Timer._timerArgs[0]);
     }
+    let args ={} as commandArgs;
+    const getCommand=/.+?(?=~~)/;
+    const getValue=/(?<=\~~).*/;
+    let command=getCommand.exec(interaction.customId)[0];
+    let commandFunction: commandExecute=Commands.get(command);
+    let value=getValue.exec(interaction.customId)[0];
+    //temporary just for omniflip, will be expaned later
+    args.UserID=value;
+    
+    return BotReply(commandFunction.Func(args),interaction);
 }
 
-function BulkReplyHandler(interaction,communicationRequests) //Ideally there will only be one response per action and timers will be attached to global events/broadcasts and will remove the need for this function.
+function DisablePastButtons(obj:DisableButtonsObj)
 {
-    for(let x=0;x<communicationRequests.length;x++)
+    obj.interaction.fetchReply()
+    .then(reply=>{
+        for(let x=0;x<reply.components[0].components.length;x++)
+            reply.components[0].components[x].setDisabled(true);
+            obj.interaction.editReply({components:reply.components});
+    });
+    SentButtons.splice(obj.index,1);
+}
+
+
+
+async function BotReply(communicationRequests,interaction) { 
+    if(communicationRequests.actionRow)
     {
-        let embed= null;
-        if(communicationRequests[x].embed!=null)
-        {
-          embed= new MessageEmbed();
-                embed.setTitle(communicationRequests[x].embed.title);
-                embed.setDescription(communicationRequests[x].embed.text);
-                embed.setColor(communicationRequests[x].embed.color);
-                embed.setThumbnail(communicationRequests[x].embed.thumbnail);
-                if(communicationRequests[x].embed.fields)
-                {
-                    for(let y=0;y<communicationRequests[x].embed.fields.length;y++){
-                        embed.addField(communicationRequests[x].embed.fields[y].title,communicationRequests[x].embed.fields[y].content,communicationRequests[x].embed.fields[y].fieldsAlign);
-                    }
-                }
-        }
-        console.log("Current interaciton message number is "+x+" With text value of "+ communicationRequests[x].message);
-        console.log(" Or embed value of "+ communicationRequests[x].embed);
-        if(communicationRequests[x].reply==true)
-        {
-            BotReply(
-                interaction,
-                embed,
-                communicationRequests[x].message,
-                communicationRequests[x].hidden
-            );
-        }
+        SentButtons.push({Timer:setTimeout(DisablePastButtons,15000,{interaction:interaction,index:SentButtons.length,customId:communicationRequests.actionRow.components[0].customId})});
+    }
+//something here that tracks past buttons that were sent, then can do an action to kill off said button
+
+    if (communicationRequests.embed && communicationRequests.message == "") {
+        if(communicationRequests.actionRow)
+        interaction.reply({
+            ephemeral: communicationRequests.hidden,
+            embeds: [communicationRequests.embed],
+            components: [communicationRequests.actionRow]
+        });
         else
-        {
-            BotChannelMessage(
-                interaction,
-                embed,
-                communicationRequests[x].message
-            );
-        }
-      
-
-    }
-}
-
-function BotChannelMessage(interaction, embed, message) { //Will be replaced with general announcement with Discord and Websocket/WebRTC clients
-    if (embed && message == "") {
-        client.channels.cache.get(interaction.channelId).send({ embeds: [embed] });
-    } else if (embed) {
-        client.channels.cache.get(interaction.channelId).send({
-            content: message,
-            embeds: [embed],
-        });
-    } else {
-        client.channels.cache.get(interaction.channelId).send(message);
-    }
-}
-async function BotReply(interaction, embed, message, ishidden) { 
-                const row = new MessageActionRow()
-			// .addComponents(
-			// 	new MessageButton()
-			// 		.setCustomId('primary')
-			// 		.setLabel('Primary')
-			// 		.setStyle('PRIMARY'),
-			// );
-    if (embed && message == "") {
          interaction.reply({
-            ephemeral: ishidden,
-            embeds: [embed]//,
-            //components:[row]
+            ephemeral: communicationRequests.hidden,
+            embeds: [communicationRequests.embed]
         });
-    } else if (embed) {
+    } else if (communicationRequests.embed) {
+        if(communicationRequests.actionRow)
+        interaction.reply({
+            ephemeral: communicationRequests.hidden,
+            content: communicationRequests.message,
+            components: [communicationRequests.actionRow],
+            embeds: [communicationRequests.embed]
+        });
+        else
          interaction.reply({
-            content: message,
-            ephemeral: ishidden,
-            embeds: [embed]//,
-            //components:[row]
+            content: communicationRequests.message,
+            ephemeral: communicationRequests.hidden,
+            embeds: [communicationRequests.embed]
             
         });
     } else {
+        if(communicationRequests.actionRow)
+        interaction.reply({
+            ephemeral: communicationRequests.hidden,
+            content: communicationRequests.message,
+            components: [communicationRequests.actionRow]
+        });
+        else
          interaction.reply({
-            content: message,
-            ephemeral: ishidden//,
-            //components:[row]
+            content: communicationRequests.message,
+            ephemeral: communicationRequests.hidden
         });
     }
     

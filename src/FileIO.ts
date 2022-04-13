@@ -44,7 +44,9 @@ function NewPlayer(newLedgerUser:number=undefined) :object
         Ledger:[]
     };
     if(newLedgerUser!=undefined)
+    {
         newPlayerObject.Ledger.push({ID:newLedgerUser,Amount:0});
+    }
     Player.Data=newPlayerObject;    
 return Player;
     
@@ -221,7 +223,6 @@ module.exports = {
         let totals=[];
         for(const[key,value] of playerMap.entries())
         {
-            console.log(key);
             totals.push({ID:key,Total:(value.Data.ReceivingCoffs-value.Data.OwedCoffs)})
         }
         totals.sort((a,b)=>(a.Total<b.Total)?1:(b.Total<a.Total)?-1:0);
@@ -246,20 +247,12 @@ module.exports = {
         return totals;
     }
 };
-//not being used currently
-function WriteToLog(action, amount, gainedUser, losingUser) {
-    try {
-        let logMessage = `${action}: ${gainedUser} ${amount} ${losingUser}`;
-        let timestamp = new Date().toISOString();
-    } catch (e) {
-        //think of some logging error event here
-        throw e;
-    }
-}
+
 function ValidateUser(interactionUser :number) :void
 {
     if (playerMap.get(interactionUser) == undefined) {
-        playerMap.set(interactionUser,NewPlayer());
+        console.log("Non existant user!")
+        playerMap.set(interactionUser,NewPlayer(interactionUser));
     }
 }
 async function  BatchUpdateDB() :Promise<void>
@@ -299,4 +292,15 @@ async function  BatchUpdateDB() :Promise<void>
     console.log("Batch DB job completed");
     //TODO FIX WHEN THERE IS A PROPER ERROR/ EVENT HANDLER 
 
+}
+
+//not being used currently
+function WriteToLog(action, amount, gainedUser, losingUser) {
+    try {
+        let logMessage = `${action}: ${gainedUser} ${amount} ${losingUser}`;
+        let timestamp = new Date().toISOString();
+    } catch (e) {
+        //think of some logging error event here
+        throw e;
+    }
 }

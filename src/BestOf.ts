@@ -1,6 +1,10 @@
 "use strict"
 let  BestFileIO = require("./FileIO");
-let BestComm= require("./Communication");
+const {Reply}= require("./Communication");
+let BestEvents= require("./BuisnessEvents");
+
+let BestInit= new BestEvents.BEvent("BS-Init",["CG-Init","CG-Start","CG-Action","CG-End"],5,BestOfEnd);
+let BestTimeOut= new BestEvents.BEvent("BS-Time",["CG-Init","CG-Start","CG-Action","CG-End"],.01);
 
 export interface BestOfResponse{gameRunning:boolean,isWinner:boolean,winnerId:number,players:Array<BestOfPlayer>,Sets:number,SetsPlayed:number};
 interface BestOfPlayer {id:number,wins:number}
@@ -88,20 +92,18 @@ module.exports =
     {
         set.gameRunning=true;
     },
-    CommandAddWinner:function(winner:number,isTimeOut:boolean) :object
+    CommandAddWinner:function(winner:number,isTimeOut:boolean) 
     {
-        var returnobject=[];
         var winObject= set.PlayerWin(winner);
         if(winObject.winner==true)
-             returnobject.push(BestComm.Request(BestComm.Type.Brodcast,null,`<@${winner}> has won the 'Best Of' set!`,BestComm.Type.Visible));
+        BestEvents.NewBroadCast(`<@${winner}> has won the 'Best Of' set!`);
         else
         {
             if(isTimeOut)
-                returnobject.push(BestComm.Request(BestComm.Type.Brodcast,null,`<@${winner}> has ${winObject.wins} out of ${set.Session.count} `,BestComm.Type.Visible,BestComm.Timer(BestComm.Type.BestTimeOut,.01,0)));
-            else
-                returnobject.push(BestComm.Request(BestComm.Type.Brodcast,null,`<@${winner}> has ${winObject.wins} out of ${set.Session.count} `,BestComm.Type.Visible));
+                BestEvents.NewTimerEvent(BestTimeOut);
+
+            BestEvents.NewBroadCast(`<@${winner}> has ${winObject.wins} out of ${set.Session.count}`);
         }
-        return returnobject;
     },
     CommandBestOfRunning:function() :boolean
     {
@@ -117,10 +119,8 @@ module.exports =
         }
         return players;
     },
-    CommandBestOfPlayerMessage:function():Array<object>
+    CommandBestOfPlayerMessage:function():object
     {
-        let communicationRequests=[];
-
         if(set.StartingPlayer!=0)
         {
             var message=`Current Players in 'Best Of' Set: ${set.Session.players.length} \n`;
@@ -128,55 +128,42 @@ module.exports =
             {
                 message=message.concat(`<@${set.Session.players[x].id}> Wins: ${set.Session.players[x].wins}\n`)
             }
-            communicationRequests.push(BestComm.Request(BestComm.Type.Reply,null,message,BestComm.Type.Visible));
+            return Reply(null,message);
         }
         else
-        {
-            communicationRequests.push(BestComm.Request(BestComm.Type.Reply,null,"There is no 'Best Of' set running.",BestComm.Type.Hidden));   
-        }
-        return communicationRequests;
+            return Reply(null,"There is no 'Best Of' set running.",false);   
     },
-    CommandNewBestOf:function(InteractionID: number,gameType :string,coffAmount :number,winsRequired: number) :Array<object>
+    CommandNewBestOf:function(InteractionID: number,gameType :string,coffAmount :number,winsRequired: number) :object
     {
-        let communicationRequests=[];
         if(set.StartingPlayer==0)
         {
             set.CreateBestOf(InteractionID,gameType,coffAmount,winsRequired)
             set.AddPlayer(InteractionID);
-            communicationRequests.push(BestComm.Request(BestComm.Type.Reply,null,`<@${InteractionID}> is starting a 'Best Of' ${winsRequired} in ${gameType} for ${coffAmount} :coffee:s `,BestComm.Type.Visible,BestComm.Timer(BestComm.Type.BestInit,4,0)));
+            BestEvents.NewTimerEvent(BestInit);
+            return Reply(null,`<@${InteractionID}> is starting a 'Best Of' ${winsRequired} in ${gameType} for ${coffAmount} :coffee:s `);
         }
         else
-        {
-            communicationRequests.push(BestComm.Request(BestComm.Type.Reply,null,`There is already a 'Best Of' set running, see if  you can join it!`,BestComm.Type.Hidden));  
-        }
-        return communicationRequests;
+            return Reply(null,`There is already a 'Best Of' set running, see if  you can join it!`,false);  
 
     },
-    CommandAddPlayer:function(InteractionID:number) :Array<object>
+    CommandAddPlayer:function(InteractionID:number) :object
     {
-        var returnobject=[];
         if(set.gameRunning==false&&set.StartingPlayer!=0)
         {
             if(set.AddPlayer(InteractionID))
-                returnobject.push( BestComm.Request(BestComm.Type.Reply,null,`<@${InteractionID}> has joined the 'Best Of' set!`,BestComm.Type.Visible));
+                return Reply(null,`<@${InteractionID}> has joined the 'Best Of' set!`);
             else
-            {
-                returnobject.push( BestComm.Request(BestComm.Type.Reply,null,`You are already in this 'Best Of' set!`,BestComm.Type.Hidden));
-            }
+                return Reply(null,`You are already in this 'Best Of' set!`);
         }
         else
-        {
-            returnobject.push( BestComm.Request(BestComm.Type.Reply,null,`There is no 'Best Of' set to join!`,BestComm.Type.Hidden));
-        }
-        return returnobject;
+            return Reply(null,`There is no 'Best Of' set to join!`,false);
     },
-    CommandBestOfEnd:function() :Array<object>
-    {
-        var returnObject=[];
-        set.Reset();
-        returnObject.push( BestComm.Request(BestComm.Type.Brodcast,null,`The 'Best Of' Set was never started, for shame! Feel free to try again when people actually want to play...`,BestComm.Type.Visible,null));
-        return returnObject;
-    }
 
+
+}    
+function BestOfEnd()
+{
+    set.Reset();
+    BestEvents.NewBroadCast(`The 'Best Of' Set was never started, for shame! Feel free to try again when people actually want to play...`);
 }
 

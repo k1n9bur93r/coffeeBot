@@ -19,6 +19,6 @@ module.exports=
 
 async function Talk(args:commandArgs)
 {
-         return await [tResponse.CommandTalk(args.UserID,args.text)];
+         return await tResponse.CommandTalk(args.UserID,args.text);
         
 }

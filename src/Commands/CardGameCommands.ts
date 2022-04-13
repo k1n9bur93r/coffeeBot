@@ -1,9 +1,11 @@
 "use strict"
 let cg= require("../CardGame");
 let bscg= require("../BestOf");
-let cgCom= require("../Communication");
+const {Reply}= require("../Communication");
 import {commandObject} from './SharedCommandObject';
 import {commandArgs} from './SharedCommandObject';
+
+
 module.exports={
     LoadCommands:function() :Array<commandObject>
     {
@@ -21,69 +23,60 @@ module.exports={
 }
     function New(args:commandArgs)
     {
-        var returnList=[];
         var list=bscg.CommandBestOfPlayerList();
     if(list.length!=0&&bscg.CommandBestOfType()=="21"&&!bscg.CommandBestOfRunning())
-        {
+    {
           if(list[0]==args.UserID)
-         {
-              bscg.CommandBestOfStart();
-              cg.CommandStartJoinGame(list[0],args.amount); //returns array //Update to handle a string 
+          {
+            bscg.CommandBestOfStart();
+            cg.CommandStartJoinGame(list[0],args.amount,false); 
              for(var x=1;x<list.length;x++)
              {
-                 returnList=returnList.concat(cg.CommandStartJoinGame(list[x],args.amount,false)); //returns array
+                 cg.CommandStartJoinGame(list[x],args.amount,false); 
              }
-             returnList=returnList.concat(cg.CommandStartJoinGame(args.UserID,args.amount,false)); //returns array
-             return returnList;
-            }
+             return cg.CommandStartJoinGame(args.UserID,args.amount); 
+          }
         else
-            {
-               
-            return [cgCom.Request(cgCom.Type.Reply,null,"You can't start a game of 21 if there is a 'Best Of' set pending. join up to it now with ./bestjoin !",cgCom.Type.Visible)];
-                
-        }
+            return Reply(null,"You can't start a game of 21 if there is a 'Best Of' set pending. join up to it now with ./bestjoin !");
     }
     else
-    {
-            return cg.CommandStartJoinGame(args.UserID,args.amount); //update to handle a string 
-    }
-
+        return cg.CommandStartJoinGame(args.UserID,args.amount); 
     }
     function Stay(args:commandArgs)
     {
-        var returnList=[];
-        returnList=returnList.concat(cg.CommandStay(args.UserID));
-        returnList=returnList.concat(CGBestOfHandler());
-        return returnList;
+        let CommandReply= cg.CommandStay(args.UserID);
+        
+        CGBestOfHandler();
+        return CommandReply;
     }
     function Draw(args:commandArgs)
     {
-        var returnList=[];
-        returnList=returnList.concat(cg.CommandDraw(args.UserID));
-        returnList=returnList.concat(CGBestOfHandler());
-        return returnList;
+        let CommandReply=cg.CommandDraw(args.UserID);
+        CGBestOfHandler();
+        return CommandReply;
     }
     function Hand(args:commandArgs)
     {
         return cg.CommandHand(args.UserID);
     }
 
-
     function CGBestOfHandler(timeout=false,isGameRunning:boolean=true)
     {
-        var returnList=[];
         var pastWinner=cg.CommandGetPastWinner();
         if(bscg.CommandBestOfRunning()==isGameRunning&&pastWinner!=0&&bscg.CommandBestOfType()=="21")
-            returnList=returnList.concat(bscg.CommandAddWinner(pastWinner,timeout));
+            bscg.CommandAddWinner(pastWinner,timeout);
         if(bscg.CommandBestOfRunning()&&!cg.CommandGameRunning())
         {
             var list=bscg.CommandBestOfPlayerList();
             for(var x=0;x<list.length;x++)
             {
-                returnList=returnList.concat(cg.CommandStartJoinGame(list[x],1,false));
+                cg.CommandStartJoinGame(list[x],1,false);
             }
-            returnList=returnList.concat(cg.CommandStartJoinGame(list[0],1,false));
+            cg.CommandStartJoinGame(list[0],1,false);
             
         }  
-        return returnList;
     }
+
+
+
+

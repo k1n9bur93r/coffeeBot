@@ -1,6 +1,6 @@
 "use strict"
 let pfIO= require("../FileIO");
-let pfCom= require("../Communication");
+const {Reply,Embed}= require("../Communication");
 import {commandObject} from './SharedCommandObject';
 import {commandArgs} from './SharedCommandObject';
 
@@ -19,7 +19,7 @@ LoadCommands:function():Array<commandObject>
 
 function Leader(args:commandArgs)
 {
-    const embed = pfCom.Embed(
+    const embed =Embed(
         ":coffee: Leaderboard",
         getLeaderboardString(),
         null,
@@ -27,7 +27,7 @@ function Leader(args:commandArgs)
         "BLURPLE",
         ""
         );
-    return [pfCom.Request(pfCom.Type.Reply, embed, "", pfCom.Type.Visible)];
+    return Reply( embed, "");
 } 
 
 function Profile(args:commandArgs)
@@ -48,7 +48,7 @@ else
     selectedName=args.UIDName;
 
 }
-    return [getProfileString(selectedUser,selectedAvatar,selectedName)];
+    return getProfileString(selectedUser,selectedAvatar,selectedName);
 }
 
 function CheckAgree(args:commandArgs){
@@ -64,17 +64,15 @@ function CheckAgree(args:commandArgs){
     :four: I agree that if I am unable to payout my coffees upon being requested, I must declare bankruptcy and will be suspended from the :coffee: system for [my net oweage * 4] days
     
     By doing \`/agree\` you accept to these terms & conditions`;
-    let embed= pfCom.Embed("Coffee Economy Terms & Conditions",embedText,null,false,"YELLOW","https://lh3.googleusercontent.com/proxy/-aeVwzFtgt_rnoLyJpHjtQSUKRbDtJNLTH8w5bybehJW4ibOJA_PFlnLiSsjdPElbpoyOGCdf8otyNGFvchWfjKjUuUWmZguwe8");
-    return [pfCom.Request(pfCom.Type.Reply,embed,"",pfCom.Type.Visible)];
+    let embed= Embed("Coffee Economy Terms & Conditions",embedText,null,false,"YELLOW","https://lh3.googleusercontent.com/proxy/-aeVwzFtgt_rnoLyJpHjtQSUKRbDtJNLTH8w5bybehJW4ibOJA_PFlnLiSsjdPElbpoyOGCdf8otyNGFvchWfjKjUuUWmZguwe8");
+    return Reply(embed,"");
     }
-    else
-    return [];
+    return null;
 } 
 
 function Ledger(args:commandArgs) 
 {
-
-    const ledgerEmbed = pfCom.Embed(
+    const ledgerEmbed = Embed(
         "Coffee Ledger",
         getCoffeeLedgerString(),
         null,
@@ -82,8 +80,7 @@ function Ledger(args:commandArgs)
         "BLURPLE",
         ""
         );
-
-        return [pfCom.Request(pfCom.Type.Reply, ledgerEmbed, "", pfCom.Type.Visible)];
+        return Reply( ledgerEmbed, "");
 } 
 
 function getProfileString(id,avatar,name) {
@@ -116,7 +113,7 @@ function getProfileString(id,avatar,name) {
     if (data.Venmo!='') {
         pString += `\n\n**Venmo 💰**\n${data.Venmo}`
     }
-        const profilEmbed = new pfCom.Embed(
+        const profilEmbed = Embed(
             `${name}'s profile`,
             pString,
             null,
@@ -124,7 +121,7 @@ function getProfileString(id,avatar,name) {
             "BLURPLE",
             `https://cdn.discordapp.com/avatars/${id}/${avatar}`
         )
-    return pfCom.Request(pfCom.Type.Reply,profilEmbed,"",pfCom.Type.Visible);
+    return Reply(profilEmbed,"");
 }
 
 function getCoffeeLedgerString() {

@@ -1,6 +1,6 @@
 "use strict"
 
-let rpsCom= require("../Communication");
+const {Reply}= require("../Communication");
 let rps= require("../RPS");
 
 import {commandObject} from './SharedCommandObject';
@@ -27,7 +27,6 @@ module.exports=
 function MakeSelection(args:commandArgs)
 {
 let response:RPSResponse=rps.CommandRPS(args.UserID,args.text);
-console.log(response);
 let replytext:string;
 if(!response.isWinner)
 {
@@ -51,6 +50,6 @@ else
     if(winnerIndex==0) loserIndex=1;
     replytext=`<@${response.winnerID}>'s ${emojis[choices.indexOf(response.choices[winnerIndex].choice)]} ${verbs[choices.indexOf(response.choices[winnerIndex].choice)]} <@${response.loserID}>'s ${emojis[choices.indexOf(response.choices[loserIndex].choice)]}. <@${response.loserID}> paid up 1 :coffee:.`;
 }
-return [rpsCom.Request(rpsCom.Type.Reply,null, replytext, rpsCom.Type.Visible)];
+return Reply(null, replytext);
 }
 
