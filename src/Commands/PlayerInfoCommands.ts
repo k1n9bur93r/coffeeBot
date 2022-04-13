@@ -55,14 +55,18 @@ function CheckAgree(args:commandArgs){
     if(!pfIO.playerAgreedToTerms(args.UserID)){ 
     let embedText=`One must accept accept the following terms & conditions to participate in the :coffee: economy:
     
-    :one: I agree a :coffee: is worth $2 towards a food or drink purchase
-        
-    :two: I agree that I will not bet more than I can afford
-    
-    :three: I agree that anyone may ask to cashout coffees at any time with proof of a receipt
-    
-    :four: I agree that if I am unable to payout my coffees upon being requested, I must declare bankruptcy and will be suspended from the :coffee: system for [my net oweage * 4] days
-    
+1️⃣ I agree a ☕ is worth $1 towards a food or drink purchase
+
+2️⃣ I understand I cannot participate in coffee bets after being more than 99 coffees in debt
+
+3️⃣ I agree that anyone may ask to cash out ☕ at any time with proof of a receipt
+
+4️⃣ I understand that a person is only obliged to pay out a max of 20 ☕️ per day (with exception), but may elect to pay out more than 20 ☕️ per day at their discretion.
+
+5️⃣ I agree to not attempt defrauding the system and people
+
+6️⃣ I agree that in order to make changes to the coffconomy, a proposal must pass a vote with both #gamba majority AND coff holder majority (where 1 coff = 1 vote)
+
     By doing \`/agree\` you accept to these terms & conditions`;
     let embed= Embed("Coffee Economy Terms & Conditions",embedText,null,false,"YELLOW","https://lh3.googleusercontent.com/proxy/-aeVwzFtgt_rnoLyJpHjtQSUKRbDtJNLTH8w5bybehJW4ibOJA_PFlnLiSsjdPElbpoyOGCdf8otyNGFvchWfjKjUuUWmZguwe8");
     return Reply(embed,"");

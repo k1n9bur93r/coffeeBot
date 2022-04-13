@@ -58,10 +58,11 @@ function NewCacheAction() :void
     {
         console.log("DB Update Event Created");
         timerStart=Date.now();
-        timerObject= setTimeout(BatchUpdateDB,(1000*60*10)); 
+        timerObject= setTimeout(BatchUpdateDB,(1000*60*2)); 
     }
-    else if(writeActions>20&&timerStart<(Date.now()+(1000*60*3)))
+    else if(writeActions>20&&timerStart<(Date.now()+(1000*60*1)))
     {
+        console.log("SAVING DATA AHEAD OF TIME DUE TO HIGH ACTIVITY")
         clearTimeout(timerObject);
         writeActions=0;
         timerStart=0;
@@ -220,18 +221,22 @@ module.exports = {
     },
     GetPlayerTotals:function()
     {
-        let totals=[];
-        for(const[key,value] of playerMap.entries())
+
+        let ShallowArray=[] ;
+        let totals = new Map(JSON.parse(JSON.stringify(Array.from(playerMap))));
+        for(const[key,value] of totals.entries())
         {
+
             totals.push({ID:key,Total:(value.Data.ReceivingCoffs-value.Data.OwedCoffs)})
+
         }
-        totals.sort((a,b)=>(a.Total<b.Total)?1:(b.Total<a.Total)?-1:0);
-        for(let x=0;x<totals.length;x++)
+        ShallowArray.sort((a,b)=>(a.Total<b.Total)?1:(b.Total<a.Total)?-1:0);
+        for(let x=0;x<ShallowArray.length;x++)
         {
-            if(totals[x].ID==undefined||totals[x].Total==undefined)
-                totals.splice(x,1);
+            if(ShallowArray[x].ID==undefined||ShallowArray[x].Total==undefined)
+            ShallowArray.splice(x,1);
         }
-        return totals;
+        return ShallowArray;
     },
     GetPlayerLedger:function()
     {
@@ -262,10 +267,14 @@ async function  BatchUpdateDB() :Promise<void>
     const batch=db.batch();
     //var today = new Date();
     //var date = `${today.getFullYear()}${(today.getMonth()+1)}${today.getDate()}`;
+    console.log("Displaying the map.");
+    console.log(playerMap);
     try {
         for(const[key,value] of playerMap.entries())
         {
-            if(value.UpdatedData==true&&(key!=""||key!=undefined||key!=null))
+            console.log("Current update key "+key+" followed by a value");
+            console.log(value)
+            if((key!=""&&key!=undefined&&key!=null)&&value.UpdatedData==true)
             {
                 const dataOperation= db.collection('Players').doc(key);
                 batch.set(dataOperation,value.Data)

@@ -103,9 +103,11 @@ function CommandInteraction(interaction)
                     args.text=ref;
                 }
             };
+
             let tandCResp =commandTandCAgree.Func(args);
             if(interaction.commandName=="agree"||(args.UserID==undefined||!tandCResp))
                 return BotReply(commandFunction.Func(args),interaction);
+
             else
                 return BotReply(tandCResp,interaction);
         }

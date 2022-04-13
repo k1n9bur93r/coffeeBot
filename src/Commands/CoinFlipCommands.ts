@@ -96,7 +96,7 @@ function Flip(args:commandArgs)
             );
         return Reply(coinFlipResults,"");
     }
-    else if(responses[0].message.toLowerCase().includes("invalid"))
+    else if(responses[0].message.toLowerCase().includes("cant"))
     {
 
         return Reply(null,responses[0].message,true);
