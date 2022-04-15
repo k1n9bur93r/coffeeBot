@@ -120,14 +120,13 @@ function CommandInteraction(interaction)
                 e.stack ? `\nStackTrace:\n=========\n${e.stack}` : ``
             } ||`,
             null,
-            process.env.broadcastChannelId//BaseChannelID
+            process.env.broadcastChannelId
         );
     }
 }
 function ButtonInteraction(interaction)
 {
     let MatchingButtons= SentButtons.filter(set=>set.customId=interaction.customId);
-
     for(let x=0;x<MatchingButtons.length;x++)
     {
         DisablePastButtons(MatchingButtons[x].Timer._timerArgs[0]);
@@ -138,9 +137,11 @@ function ButtonInteraction(interaction)
     let command=getCommand.exec(interaction.customId)[0];
     let commandFunction: commandExecute=Commands.get(command);
     let value=getValue.exec(interaction.customId)[0];
+    if(value=="PROVUID")
+        value=interaction.user.id;
     //temporary just for omniflip, will be expaned later
     args.UserID=value;
-    
+
     return BotReply(commandFunction.Func(args),interaction);
 }
 

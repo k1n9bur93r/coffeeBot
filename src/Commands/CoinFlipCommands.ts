@@ -23,7 +23,8 @@ module.exports=
         {Name:"multiflip" ,Logic:{Func:Flip,Args:["ID","Amount"]}},
         {Name:"omniflip" ,Logic:{Func:OmniFlipConfirm,Args:["ID"]}},
         {Name:"omniflipaccept",Logic:{Func:OmniFlipAccept,Args:["ID"]}},
-        {Name:"omniflipdeny",Logic:{Func:OmniFlipDeny,Args:["ID"]}}
+        {Name:"omniflipdeny",Logic:{Func:OmniFlipDeny,Args:["ID"]}},
+        {Name:"omniflipchance",Logic:{Func:OmniFlipChance,Args:["ID"]}}
         ];
     }
 
@@ -149,6 +150,11 @@ function OmniFlipConfirm(args:commandArgs)
                 id:`omniflipdeny~~${args.UserID}`,
                 label:"No I'm Scared",
                 style:"DANGER",   
+            },
+            {
+                id:`omniflipchance~~${args.UserID}`,
+                label:"Choose For Me ",
+                style:"PRIMARY",   
             }
         ]
     );
@@ -235,6 +241,15 @@ function OmniFlipDeny(args:commandArgs)
         );
 
     return Reply(embed,"");
+}
+
+function OmniFlipChance(args:commandArgs)
+{
+
+if(Math.random() < 0.5)
+   return OmniFlipAccept(args);
+else
+   return OmniFlipDeny(args);
 }
 
 

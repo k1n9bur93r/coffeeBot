@@ -52,7 +52,7 @@ return Player;
     
 }
 function NewCacheAction() :void
-{
+ {
     writeActions++;
     if(writeActions!=0&&timerStart==0)
     {
@@ -204,10 +204,10 @@ module.exports = {
             console.log('No such document!'); //TOD better error handeling here
             ValidateUser(userId);
             return playerMap.get(userId).Data;
-          } else {
-            console.log('Document data:', returnData.Data);
+          } else
+          
             return  returnData.Data;
-          }
+          
     },
     GetUserCoffeeDebt: function (interactionUser: number, mentionedUser :number) {
         if( !playerMap.get(interactionUser).Data.Ledger.some(item=>item.ID===mentionedUser))
@@ -281,9 +281,7 @@ async function  BatchUpdateDB() :Promise<void>
                 wasNullKey=true;
             }
         }
-    //const updateLog=db.collection('Logging').doc('Logs').get()
-    //batch.set(updateLog,Logging)
-   
+
         console.log("Running Batch DB Job ");
         await batch.commit();
     }
