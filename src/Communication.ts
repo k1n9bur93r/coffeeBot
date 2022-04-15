@@ -21,21 +21,21 @@ module.exports =
             return embed;
 
     },
-    Reply:function(embedObject:object, botMessage:string,isHidden:boolean=false,actionRow:object=null): object
+    Reply:function(embedObject:object, botMessage:string,isHidden:boolean=false,buttonsObj:object=null): object
     {
         let object={
             winner:0,
             embed:embedObject,
             message:botMessage,
             hidden:isHidden,
-            actionRow:actionRow
+            ButtonsObj:buttonsObj
         }
         return object;
 
     },
-    Buttons:function(buttons:Array<buttons>):object//id:string,lable:string,style:string):object
+    Buttons:function(buttons:Array<buttons>,type:string="fast"):object//id:string,lable:string,style:string):object
     {
-        
+        let ButtonObj={Type:{},Button:{}};
         const row = new MessageActionRow();
         for(let x=0;x<buttons.length;x++)
         {
@@ -46,7 +46,7 @@ module.exports =
                 .setStyle(buttons[x].style),
             );
         }
-
-        return row;
+        ButtonObj.Button=row;
+        return ButtonObj;
     }
 }

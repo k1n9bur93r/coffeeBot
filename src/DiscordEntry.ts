@@ -19,7 +19,7 @@ import {commandExecute} from './Commands/SharedCommandObject';
 
 let SentButtons= new Array();
 
-interface DisableButtonsObj{interaction:any,index:number,customId:string};
+interface DisableButtonsObj{interaction:any,index:number,customId:string,buttonType:string};
 
 const Commands= new Map();
 module.exports = 
@@ -127,8 +127,10 @@ function CommandInteraction(interaction)
 function ButtonInteraction(interaction)
 {
     let MatchingButtons= SentButtons.filter(set=>set.customId=interaction.customId);
+   
     for(let x=0;x<MatchingButtons.length;x++)
     {
+        if(MatchingButtons[x].Type!="21Join") //TODO:Create some kind of proper typed system for this stuff
         DisablePastButtons(MatchingButtons[x].Timer._timerArgs[0]);
     }
     let args ={} as commandArgs;
@@ -159,18 +161,23 @@ function DisablePastButtons(obj:DisableButtonsObj)
 
 
 async function BotReply(communicationRequests,interaction) { 
-    if(communicationRequests.actionRow)
+    if(communicationRequests.ButtonsObj)
     {
-        SentButtons.push({Timer:setTimeout(DisablePastButtons,15000,{interaction:interaction,index:SentButtons.length,customId:communicationRequests.actionRow.components[0].customId})});
+        let time;
+        if(communicationRequests.ButtonsObj.Type=="fast")
+            time=15000;
+        else if(communicationRequests.ButtonsObj.Type=="21Join") //TODO:Create some kind of proper typed system for this stuff
+            time=5*60000
+        SentButtons.push({Timer:setTimeout(DisablePastButtons,15000,{interaction:interaction,index:SentButtons.length,customId:communicationRequests.ButtonsObj.Buttons.components[0].customId,buttonType:communicationRequests.ButtonsObj.Type})});
     }
 //something here that tracks past buttons that were sent, then can do an action to kill off said button
 
     if (communicationRequests.embed && communicationRequests.message == "") {
-        if(communicationRequests.actionRow)
+        if(communicationRequests.ButtonsObj)
         interaction.reply({
             ephemeral: communicationRequests.hidden,
             embeds: [communicationRequests.embed],
-            components: [communicationRequests.actionRow]
+            components: [communicationRequests.ButtonsObj.Buttons]
         });
         else
          interaction.reply({
@@ -178,11 +185,11 @@ async function BotReply(communicationRequests,interaction) {
             embeds: [communicationRequests.embed]
         });
     } else if (communicationRequests.embed) {
-        if(communicationRequests.actionRow)
+        if(communicationRequests.ButtonsObj)
         interaction.reply({
             ephemeral: communicationRequests.hidden,
             content: communicationRequests.message,
-            components: [communicationRequests.actionRow],
+            components: [communicationRequests.ButtonsObj.Buttons],
             embeds: [communicationRequests.embed]
         });
         else
@@ -193,11 +200,11 @@ async function BotReply(communicationRequests,interaction) {
             
         });
     } else {
-        if(communicationRequests.actionRow)
+        if(communicationRequests.ButtonsObj)
         interaction.reply({
             ephemeral: communicationRequests.hidden,
             content: communicationRequests.message,
-            components: [communicationRequests.actionRow]
+            components: [communicationRequests.ButtonsObj.Buttons]
         });
         else
          interaction.reply({
