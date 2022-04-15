@@ -35,8 +35,7 @@ module.exports =
     },
     Buttons:function(buttons:Array<buttons>,type:string="fast"):object//id:string,lable:string,style:string):object
     {
-        let ButtonObj={Type:{},Button:undefined};
-        ButtonObj.Button = new MessageActionRow();
+        let ButtonObj={Type:type,Button:new MessageActionRow()};
         for(let x=0;x<buttons.length;x++)
         {
             ButtonObj.Button.addComponents(
