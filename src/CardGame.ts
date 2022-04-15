@@ -526,6 +526,7 @@ function JoinButton()
              label:"Join",
              style:"PRIMARY",   
             }
-        ]
+        ],
+        "21Join"
     );
 }
