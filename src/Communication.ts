@@ -35,18 +35,17 @@ module.exports =
     },
     Buttons:function(buttons:Array<buttons>,type:string="fast"):object//id:string,lable:string,style:string):object
     {
-        let ButtonObj={Type:{},Button:{}};
-        const row = new MessageActionRow();
+        let ButtonObj={Type:{},Button:undefined};
+        ButtonObj.Button = new MessageActionRow();
         for(let x=0;x<buttons.length;x++)
         {
-            row.addComponents(
+            ButtonObj.Button.addComponents(
                 new MessageButton()
                 .setCustomId(buttons[x].id)
                 .setLabel(buttons[x].label)
                 .setStyle(buttons[x].style),
             );
         }
-        ButtonObj.Button=row;
         return ButtonObj;
     }
 }
