@@ -1,9 +1,9 @@
 "use strict"
 let  CardFileIO = require("./FileIO");
-const {Reply,Embed}= require("./Communication");
+const {Reply,Embed,Buttons}= require("./Communication");
 let CardEvents= require("./BuisnessEvents");
 
-let GameStart= new CardEvents.BEvent("CG-Start",["CG-Init","BS-Init"],2,TimeOutNoStart);
+let GameStart= new CardEvents.BEvent("CG-Start",["CG-Init","BS-Init"],2,TimeOutLongWait);
 let GameEnd= new CardEvents.BEvent("CG-End",["CG-Init","CG-Action","CG-Start"],.01,null);
 let GameAction= new CardEvents.BEvent("CG-Action",["CG-Start","CG-Action"],2,TimeOutLongWait); 
 let GameInit= new CardEvents.BEvent("CG-Init",["BS-Init"],5,TimeOutNoStart);
@@ -227,7 +227,7 @@ module.exports =
                 );
                 
                 if(messageReply)
-                CommandReply=Reply(embed,"" ); 
+                CommandReply=Reply(embed,"",); 
                 else
                     CardEvents.NewBroadCast("",embed);
                 CardEvents.NewTimerEvent(GameStart);
@@ -253,7 +253,7 @@ module.exports =
                 );
 
                 if(messageReply)
-                    CommandReply=Reply(embed,"" ); 
+                    CommandReply=Reply(embed,"",false,JoinButton() ); 
                 else
                     CardEvents.NewBroadCast("",embed);
                 CardEvents.NewTimerEvent(GameInit);
@@ -320,13 +320,15 @@ module.exports =
 
         currentGame.DealCard(playerIndex);
         CardEvents.NewTimerEvent(GameAction);
-
+        let Buttons=null;
         if(currentGame.PlayerObjects[playerIndex].isOver)
             CardEvents.NewBroadCast(`<@${currentGame.PlayerObjects[playerIndex].userId}> is done with their hand in the current game of 21.`);
+        else
+            Buttons=HandButtons(interactionID);
         let embed=CreatePlayerHandEmbed(currentGame.PlayerObjects[playerIndex],true);
         CheckWinner();
 
-        return Reply(embed,"",true); 
+        return Reply(embed,"",true,Buttons); 
     },
 
     CommandStay: function (interactionID:number):object
@@ -347,7 +349,7 @@ module.exports =
         let playerIndex = currentGame.GetPlayerIndex(interactionID);
         let CommandReply=ValidateAction(playerIndex);
         if(CommandReply) return CommandReply; 
-        return Reply(CreatePlayerHandEmbed( currentGame.PlayerObjects[playerIndex], false), "",  true)
+        return Reply(CreatePlayerHandEmbed( currentGame.PlayerObjects[playerIndex]), "",true,HandButtons(interactionID))
     },
 
     CommandGetPastWinner:function():number
@@ -358,7 +360,7 @@ module.exports =
     }
 }
 
-function CreatePlayerHandEmbed (playerObject, newDraw:boolean):object
+function CreatePlayerHandEmbed (playerObject, newDraw:boolean=false):object
 {
       let cardString = ``;
       let embedText = `Still in the game!\n`;
@@ -496,4 +498,34 @@ function ValidateAction(playerIndex:number) //this is kinda convoluted and will 
     return null;
 }
 
+function HandButtons(interactionID)
+{
+    return Buttons(
+        [
+            {
+             id:`draw~~${interactionID}`,
+             label:"Draw",
+             style:"PRIMARY",   
+            },
+            {
+                id:`stay~~${interactionID}`,
+                label:"Stay",
+                style:"SUCCESS",   
+            }
+        ]
+    );
+}
 
+function JoinButton()
+{
+
+    return Buttons(
+        [
+            {
+             id:`21~~PROVUID`,
+             label:"Join",
+             style:"PRIMARY",   
+            }
+        ]
+    );
+}
