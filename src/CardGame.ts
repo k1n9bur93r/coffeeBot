@@ -8,6 +8,8 @@ let GameEnd= new CardEvents.BEvent("CG-End",["CG-Init","CG-Action","CG-Start"],.
 let GameAction= new CardEvents.BEvent("CG-Action",["CG-Start","CG-Action"],2,TimeOutLongWait); 
 let GameInit= new CardEvents.BEvent("CG-Init",["BS-Init"],5,TimeOutNoStart);
 
+import {ButtonTypes} from "./Communication"
+
 const CardThumbnail="https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg";
 
 function cardGamePermutation(canDraw=true,canStay=true,winAmount=21,deck=[],minDraw=-1)
@@ -247,7 +249,7 @@ module.exports =
                 currentGame.DealCard(0);
                 embed=Embed(
                     "21 New Round",
-                    `<@${interactionID}> Is starting a round of 21 with a ${currentGame.PotSize} coff buy in, use /21 to join!`,
+                    `<@${interactionID}> Is starting a round of 21 with a ${currentGame.PotSize} coff buy in, use /21 to join or start the game!`,
                     null,
                     null,
                     "DARK_RED",
@@ -507,14 +509,16 @@ function HandButtons(interactionID)
     return Buttons(
         [
             {
-             id:`draw~~${interactionID}`,
-             label:"Draw",
-             style:"PRIMARY",   
+                id:`draw~~${interactionID}`,
+                label:"Draw",
+                style:"PRIMARY",
+                type:ButtonTypes.SingleLong   
             },
             {
                 id:`stay~~${interactionID}`,
                 label:"Stay",
-                style:"SUCCESS",   
+                style:"SUCCESS",
+                type:ButtonTypes.SingleLong      
             }
         ]
     );
@@ -523,14 +527,14 @@ function HandButtons(interactionID)
 function JoinButton()
 {
 
-    return Buttons(
+    return Buttons     (
         [
             {
              id:`21~~PROVUID`,
-             label:"Join",
-             style:"PRIMARY",   
+             label:"Join / Start",
+             style:"PRIMARY",  
+             type:ButtonTypes.MultiLong 
             }
-        ],
-        "21Join"
+        ]
     );
 }
