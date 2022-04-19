@@ -97,7 +97,7 @@ function Flip(args:commandArgs)
             );
         return Reply(coinFlipResults,"");
     }
-    else if(responses[0].message.toLowerCase().includes("invalid"))
+    else if(responses[0].message.toLowerCase().includes("cant"))
     {
 
         return Reply(null,responses[0].message,true);
@@ -210,7 +210,7 @@ if(responses[0].message=="")
         null,
         false,
         "LUMINOUS_VIVID_PINK",
-        "https://justflipacoin.com/img/share-a-coin.png"
+        "https://media1.popsugar-assets.com/files/thumbor/akF5W-FXSyszxgQZD--zBUaX9-g/fit-in/2048xorig/filters:format_auto-!!-:strip_icc-!!-/2012/09/39/3/192/1922195/81485b01898e48d8_404794e6026211e2af9022000a1c9e2c_7/i/Ying-Yang.jpeg"
         );
     return Reply(coinFlipResults,"");
 }

@@ -110,7 +110,7 @@ function CommandInteraction(interaction)
         let needsToAgree;
         if(interaction.commandName!="agree")needsToAgree= VerifyUser(interaction);
         if(needsToAgree) return;
-        return BotReply(commandFunction.Func(args),interaction);    
+        return BotReply(commandFunction.Func(args),interaction);  
         }
 
 } catch (e) {

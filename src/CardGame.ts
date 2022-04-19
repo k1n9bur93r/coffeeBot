@@ -207,11 +207,13 @@ module.exports =
     },
     CommandStartJoinGame: function (interactionID: number, amount:number, messageReply:boolean=true):object //TODO: Move dealing of cards/ setting of bools out to a seperate function that handles such things.
     {
+
         let CommandReply;
         if(!amount)
         amount=1;
-        else if(amount>2)
-            return  Reply(null,"Can't have a buy in great than 5!",true); 
+        else if(amount>100)
+            return  Reply(null,"Can't have a buy in greater than 100!",true); 
+
         if(currentGame.GameRunning==true)
             return Reply(null,`Sorry, there is a game currently on going!`,true); 
         else if(currentGame.StartingPlayer==interactionID && currentGame.GameRunning==false)
@@ -447,6 +449,8 @@ else
 {
     warText = `No one won...\n\n`;
     tempPlayerObject=currentGame.PlayerObjects;
+    currentGame.PlayerObjects=[];
+    currentGame.PastWinner=0;
 }
 tempPlayerObject= tempPlayerObject.sort((a,b)=>(a.total<b.total)? 1 : -1);
 for (let x=0;x<tempPlayerObject.length;x++)

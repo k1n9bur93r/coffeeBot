@@ -58,10 +58,11 @@ function NewCacheAction() :void
     {
         console.log("DB Update Event Created");
         timerStart=Date.now();
-        timerObject= setTimeout(BatchUpdateDB,(1000*60*10)); 
+        timerObject= setTimeout(BatchUpdateDB,(1000*60*2)); 
     }
-    else if(writeActions>20&&timerStart<(Date.now()+(1000*60*3)))
+    else if(writeActions>20&&timerStart<(Date.now()+(1000*60*1)))
     {
+        console.log("SAVING DATA AHEAD OF TIME DUE TO HIGH ACTIVITY")
         clearTimeout(timerObject);
         writeActions=0;
         timerStart=0;
@@ -262,10 +263,14 @@ async function  BatchUpdateDB() :Promise<void>
     const batch=db.batch();
     //var today = new Date();
     //var date = `${today.getFullYear()}${(today.getMonth()+1)}${today.getDate()}`;
+    console.log("Displaying the map.");
+    console.log(playerMap);
     try {
         for(const[key,value] of playerMap.entries())
         {
-            if(value.UpdatedData==true&&(key!=""||key!=undefined||key!=null))
+            console.log("Current update key "+key+" followed by a value");
+            console.log(value)
+            if((key!=""&&key!=undefined&&key!=null)&&value.UpdatedData==true)
             {
                 const dataOperation= db.collection('Players').doc(key);
                 batch.set(dataOperation,value.Data)

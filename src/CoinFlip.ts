@@ -6,7 +6,9 @@ let flipIO = require("./FileIO");
 export  interface CoinFlipResponse{ message:string,coinSide:string, coinWin:number, coinLose: number,amount:number };
 interface FlipRequest {ID:string, amount:number}
 
+
 let maxRequestAmount = 69; 
+
 let flipRequests = [] as Array<FlipRequest>;
 
 
