@@ -2,6 +2,8 @@
 
 const {DiscordClientInstance} =require ("./DiscordClient"); 
 const {BotChannelMessage}=require("./DiscordBroadcast");
+const {ButtonSettings}= require("./Communication");
+
 
 let CardGameCommand= require("./Commands/CardGameCommands")
 let ProfileCommand =require("./Commands/PlayerInfoCommands")
@@ -17,9 +19,11 @@ import {commandArgs} from './Commands/SharedCommandObject';
 import {commandExecute} from './Commands/SharedCommandObject';
 
 
+ interface DisableButtonsObj{interaction:any,index:number};
+
+
 let SentButtons= new Array();
 
-interface DisableButtonsObj{interaction:any,index:number,customId:string,buttonType:string};
 
 const Commands= new Map();
 module.exports = 
@@ -55,7 +59,7 @@ function CommandInteraction(interaction)
 {
     try {
         let commandFunction: commandExecute=Commands.get(interaction.commandName);
-        let commandTandCAgree: commandExecute= Commands.get('checkAgree');
+
         
         if(commandFunction!=undefined)
         {
@@ -103,11 +107,10 @@ function CommandInteraction(interaction)
                     args.text=ref;
                 }
             };
-            let tandCResp =commandTandCAgree.Func(args);
-            if(interaction.commandName=="agree"||(args.UserID==undefined||!tandCResp))
-                return BotReply(commandFunction.Func(args),interaction);
-            else
-                return BotReply(tandCResp,interaction);
+        let needsToAgree;
+        if(interaction.commandName!="agree")needsToAgree= VerifyUser(interaction);
+        if(needsToAgree) return;
+        return BotReply(commandFunction.Func(args),interaction);    
         }
 
 } catch (e) {
@@ -118,19 +121,53 @@ function CommandInteraction(interaction)
                 e.stack ? `\nStackTrace:\n=========\n${e.stack}` : ``
             } ||`,
             null,
-            process.env.broadcastChannelId
+            "755280645978325003"//process.env.broadcastChannelId
         );
     }
 }
 function ButtonInteraction(interaction)
 {
-    let MatchingButtons= SentButtons.filter(set=>set.customId=interaction.customId);
-   
+    let needsToAgree=VerifyUser(interaction);
+    if(needsToAgree) return ;
+    //TODO/DID:
+    //1.A button may either disable itself on click, or allow itself to be clicked multiple times 
+    //2. If a button has multiple instances tied to the user, and one of those instances is clicked, the other ones should disable themselves (might be better for when a button is first being loaded into the queue rather than when an action is taken) 
+    //3. Click counters? 
+    //4. Right now there is not much of a difference between the "multiInstance" and "clickOnce" properties of the buttons. Possibly not needed? 
+
+    //Determine all the interactions which have  buttons that currently exist which have a matching ID
+    let MatchingButtons= SentButtons.filter(set=>{
+        console.log(set.IDs);
+        for(let x=0;x<set.IDs.length;x++)
+            if(set.IDs[x]==interaction.customId)
+                return true;
+        return false;
+    });
+    let recalledInstance={};
+    //for all the interactions that were found above check if their included buttons should be deactivated 
     for(let x=0;x<MatchingButtons.length;x++)
     {
-        if(MatchingButtons[x].Type!="21Join") //TODO:Create some kind of proper typed system for this stuff
-        DisablePastButtons(MatchingButtons[x].Timer._timerArgs[0]);
+        if(MatchingButtons[x].Timer._timerArgs[0].id!=interaction.id)
+        {
+            for(let y=0;y<MatchingButtons[x].Types.length;y++)
+                {
+                    if(MatchingButtons[x].Types[y].clickOnce)
+                        DisablePastButton(MatchingButtons[x].Timer._timerArgs[0]);
+                }
+        }
+        else
+        {
+            recalledInstance=MatchingButtons[x].Timer. _timerArgs[0];
+            // if(MatchingButtons[x].Types[].clickOnce)
+            // {
+            //     DisablePastButton(MatchingButtons[x].Timer._timerArgs[0],x);
+            // }
+        }
     }
+
+
+   // DisableClickedMessageButtons(MatchingButtons[x].Timer._timerArgs[0]);
+
     let args ={} as commandArgs;
     const getCommand=/.+?(?=~~)/;
     const getValue=/(?<=\~~).*/;
@@ -141,34 +178,68 @@ function ButtonInteraction(interaction)
         value=interaction.user.id;
     //temporary just for omniflip, will be expaned later
     args.UserID=value;
-
+    
     return BotReply(commandFunction.Func(args),interaction);
 }
 
-function DisablePastButtons(obj:DisableButtonsObj)
+function VerifyUser(interaction)
+{
+    let commandTandCAgree: commandExecute= Commands.get('checkAgree');
+    let args ={} as commandArgs;
+    args.UserID=interaction.user.id;
+    let tandCResp =commandTandCAgree.Func(args);
+    if(tandCResp)
+        return BotReply(tandCResp,interaction);
+}
+
+function DisablePastButton(obj:DisableButtonsObj)
+{
+    obj.interaction.fetchReply()
+    .then(reply=>{ 
+        for(let x=0;x<reply.components[0].components.length;x++)
+            reply.components[0].components[x].setDisabled(true);
+        obj.interaction.editReply({components:reply.components});
+    });
+    SentButtons.splice(obj.index,1);
+}
+
+function DisableClickedMessageButtons(obj:DisableButtonsObj)
 {
     obj.interaction.fetchReply()
     .then(reply=>{
         for(let x=0;x<reply.components[0].components.length;x++)
             reply.components[0].components[x].setDisabled(true);
-            obj.interaction.editReply({components:reply.components});
+        obj.interaction.editReply({components:reply.components});
+        SentButtons.splice(obj.index,1);
     });
-    SentButtons.splice(obj.index,1);
 }
 
-
+function SaveButtons(communicationRequests,interaction)
+{
+    ////buts are able to exist for their proper length of time 
+    //currently all buttons are bound to run out as the fastest button, maybe in the future buttons can have their own options 
+    let fastestButton=9999999999; // switch to be a proper uninitalized value 
+    let IDs=[];
+    let Types=[];
+    for(let x=0;x<communicationRequests.ButtonsObj.Types.length;x++)
+    {
+        IDs.push(communicationRequests.ButtonsObj.Buttons.components[x].customId);
+        Types.push(communicationRequests.ButtonsObj.Types[x]);
+        let tempSpeed=communicationRequests.ButtonsObj.Types[x].timeout;
+        if(tempSpeed<fastestButton)
+            fastestButton=tempSpeed;
+    }
+        SentButtons.push({IDs:IDs,Types:Types,Timer:setTimeout(DisableClickedMessageButtons,fastestButton,{interaction:interaction,index:SentButtons.length})});
+    }
 
 async function BotReply(communicationRequests,interaction) { 
     if(communicationRequests.ButtonsObj)
     {
-        let time;
-        if(communicationRequests.ButtonsObj.Type=="fast")
-            time=15000;
-        else if(communicationRequests.ButtonsObj.Type=="21Join") //TODO:Create some kind of proper typed system for this stuff
-            time=5*60000
-        SentButtons.push({Timer:setTimeout(DisablePastButtons,15000,{interaction:interaction,index:SentButtons.length,customId:communicationRequests.ButtonsObj.Buttons.components[0].customId,buttonType:communicationRequests.ButtonsObj.Type})});
+        SaveButtons(communicationRequests,interaction);
     }
 //something here that tracks past buttons that were sent, then can do an action to kill off said button
+
+
 
     if (communicationRequests.embed && communicationRequests.message == "") {
         if(communicationRequests.ButtonsObj)

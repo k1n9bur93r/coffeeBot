@@ -65,7 +65,7 @@ module.exports=
             newPlayerList.push({id:player.id,guess:Math.abs(randomNum - player.guess)});
          });
         
-        newPlayerList=newPlayerList.sort((a,b)=>(a>b)?1:-1);
+        newPlayerList=newPlayerList.sort((a,b)=>(a.guess>b.guess)?1:-1);
 
         if (newPlayerList[0].guess ==newPlayerList[1].guess) {
             //THERE WAS A TIE!
