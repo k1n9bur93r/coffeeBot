@@ -1,6 +1,6 @@
 "use strict"
 let  CardFileIO = require("./FileIO");
-const {Reply,Embed,Buttons}= require("./Communication");
+const {Reply,Embed,Buttons}= require("./DiscordCommunication");
 let CardEvents= require("./BuisnessEvents");
 
 let GameStart= new CardEvents.BEvent("CG-Start",["CG-Init","BS-Init"],2,TimeOutLongWait);
@@ -8,7 +8,7 @@ let GameEnd= new CardEvents.BEvent("CG-End",["CG-Init","CG-Action","CG-Start"],.
 let GameAction= new CardEvents.BEvent("CG-Action",["CG-Start","CG-Action"],2,TimeOutLongWait); 
 let GameInit= new CardEvents.BEvent("CG-Init",["BS-Init"],5,TimeOutNoStart);
 
-import {ButtonTypes} from "./Communication"
+import {ButtonTypes} from "./DiscordCommunication"
 
 const CardThumbnail="https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg";
 
@@ -213,7 +213,8 @@ module.exports =
         amount=1;
         else if(amount>100)
             return  Reply(null,"Can't have a buy in greater than 100!",true); 
-
+        else if (amount && currentGame.StartingPlayer)
+            return Reply(null,`There is already a game you can join with a buy in of ${currentGame.PotSize}.`,true);
         if(currentGame.GameRunning==true)
             return Reply(null,`Sorry, there is a game currently on going!`,true); 
         else if(currentGame.StartingPlayer==interactionID && currentGame.GameRunning==false)
@@ -509,13 +510,13 @@ function HandButtons(interactionID)
     return Buttons(
         [
             {
-                id:`draw~~${interactionID}`,
+                id:{Command:"draw",Args:{UserID:interactionID}},
                 label:"Draw",
                 style:"PRIMARY",
                 type:ButtonTypes.SingleLong   
             },
             {
-                id:`stay~~${interactionID}`,
+                id:{Command:"stay",Args:{UserID:interactionID}},
                 label:"Stay",
                 style:"SUCCESS",
                 type:ButtonTypes.SingleLong      
@@ -530,7 +531,7 @@ function JoinButton()
     return Buttons     (
         [
             {
-             id:`21~~PROVUID`,
+             id:{Command:"21",Args:{UserID:"PROVID"}},
              label:"Join / Start",
              style:"PRIMARY",  
              type:ButtonTypes.MultiLong 

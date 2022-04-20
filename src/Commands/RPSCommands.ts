@@ -1,10 +1,11 @@
 "use strict"
 
-const {Reply}= require("../Communication");
+const {Reply,Buttons}= require("../DiscordCommunication");
 let rps= require("../RPS");
 
-import {commandObject} from './SharedCommandObject';
-import {commandArgs} from './SharedCommandObject';
+import {commandObject} from '../DiscordCommunication';
+import {commandArgs} from '../DiscordCommunication';
+import { ButtonTypes } from '../DiscordCommunication';
 import {RPSResponse} from '../RPS'
 
 
@@ -26,13 +27,37 @@ module.exports=
 
 function MakeSelection(args:commandArgs)
 {
-let response:RPSResponse=rps.CommandRPS(args.UserID,args.text);
+let response:RPSResponse=rps.CommandRPS(args.UserID,args.Text);
 let replytext:string;
+let button;
 if(!response.isWinner)
 {
+
     if(response.message.toLowerCase().includes("create"))
     {
-    replytext=`<@${args.UserID}> is offering a game of **rock, paper, scissors** for **1 coffee**. Do **/rps [choice]** to take the bet.`;
+        button= new Buttons(
+            [
+                {
+                    id:{Command:"rps",Args:{UserID:"PROVID",Text:"Rock"}},
+                    label:"Rock",
+                    style:"PRIMARY",
+                    type:ButtonTypes.SingleLong   
+                },
+                {
+                    id:{Command:"rps",Args:{UserID:"PROVID",Text:"Paper"}},
+                    label:"Paper",
+                    style:"PRIMARY",
+                    type:ButtonTypes.SingleLong   
+                },
+                {
+                    id:{Command:"rps",Args:{UserID:"PROVID",Text:"Scissors"}},
+                    label:"Scissors",
+                    style:"PRIMARY",
+                    type:ButtonTypes.SingleLong   
+                }
+            ]    
+            );
+    replytext=`<@${args.UserID}> is offering a game of **rock, paper, scissors** for **1 coffee**. Do **/rps [choice]** to take the bet, or click one of the buttons below!`;
     }
     else if(response.message.toLowerCase().includes("revoke"))
     {
@@ -50,6 +75,6 @@ else
     if(winnerIndex==0) loserIndex=1;
     replytext=`<@${response.winnerID}>'s ${emojis[choices.indexOf(response.choices[winnerIndex].choice)]} ${verbs[choices.indexOf(response.choices[winnerIndex].choice)]} <@${response.loserID}>'s ${emojis[choices.indexOf(response.choices[loserIndex].choice)]}. <@${response.loserID}> paid up 1 :coffee:.`;
 }
-return Reply(null, replytext);
+return Reply(null, replytext,false,button);
 }
 

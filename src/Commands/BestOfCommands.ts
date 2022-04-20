@@ -1,8 +1,8 @@
 "use strict"
 let bs = require("../BestOf");
 
-import {commandObject} from './SharedCommandObject';
-import {commandArgs} from './SharedCommandObject';
+import {commandObject} from '../DiscordCommunication';
+import {commandArgs} from '../DiscordCommunication';
 module.exports={
 
     LoadCommands:function():Array<commandObject>
@@ -19,7 +19,7 @@ function Join(args:commandArgs){
         return bs.CommandAddPlayer(args.UserID);
 } 
 function Create(args:commandArgs){
-        return bs.CommandNewBestOf(args.UserID,"21",args.amount,args.amount2);
+        return bs.CommandNewBestOf(args.UserID,"21",args.Amount,args.Amount2);
 } 
 function Players(args:commandArgs){
     return bs.CommandBestOfPlayerMessage();

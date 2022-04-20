@@ -2,8 +2,8 @@
 
 let tResponse= require("../Response");
 
-import {commandObject} from './SharedCommandObject';
-import {commandArgs} from './SharedCommandObject';
+import {commandObject} from '../DiscordCommunication';
+import {commandArgs} from '../DiscordCommunication';
 
 module.exports=
 {
@@ -19,6 +19,6 @@ module.exports=
 
 async function Talk(args:commandArgs)
 {
-         return await tResponse.CommandTalk(args.UserID,args.text);
+         return await tResponse.CommandTalk(args.UserID,args.Text);
         
 }

@@ -1,9 +1,9 @@
 "use strict"
 let cg= require("../CardGame");
 let bscg= require("../BestOf");
-const {Reply}= require("../Communication");
-import {commandObject} from './SharedCommandObject';
-import {commandArgs} from './SharedCommandObject';
+const {Reply}= require("../DiscordCommunication");
+import {commandObject} from '../DiscordCommunication';
+import {commandArgs} from '../DiscordCommunication';
 
 
 module.exports={
@@ -29,18 +29,18 @@ module.exports={
           if(list[0]==args.UserID)
           {
             bscg.CommandBestOfStart();
-            cg.CommandStartJoinGame(list[0],args.amount,false); 
+            cg.CommandStartJoinGame(list[0],args.Amount,false); 
              for(var x=1;x<list.length;x++)
              {
-                 cg.CommandStartJoinGame(list[x],args.amount,false); 
+                 cg.CommandStartJoinGame(list[x],args.Amount,false); 
              }
-             return cg.CommandStartJoinGame(args.UserID,args.amount); 
+             return cg.CommandStartJoinGame(args.UserID,args.Amount); 
           }
         else
             return Reply(null,"You can't start a game of 21 if there is a 'Best Of' set pending. join up to it now with ./bestjoin !");
     }
     else
-        return cg.CommandStartJoinGame(args.UserID,args.amount); 
+        return cg.CommandStartJoinGame(args.UserID,args.Amount); 
     }
     function Stay(args:commandArgs)
     {

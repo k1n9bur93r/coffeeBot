@@ -1,6 +1,6 @@
 "use strict"
 let  BestFileIO = require("./FileIO");
-const {Reply}= require("./Communication");
+const {Reply}= require("./DiscordCommunication");
 let BestEvents= require("./BuisnessEvents");
 
 let BestInit= new BestEvents.BEvent("BS-Init",["CG-Init","CG-Start","CG-Action","CG-End"],5,BestOfEnd);
