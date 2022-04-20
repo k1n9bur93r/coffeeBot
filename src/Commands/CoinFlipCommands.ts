@@ -1,6 +1,6 @@
 "use strict"
 
-const {Reply,Embed,Buttons}= require("../Communication");
+const {Reply,Embed,Buttons}= require("../DiscordCommunication");
 let cf= require("../CoinFlip");
 
 let CoinEvents= require("../BuisnessEvents");
@@ -9,10 +9,10 @@ let OmniInit= new CoinEvents.BEvent("OM-Init",[""],.5,OmniTimeOut);
 let OmniEnd= new CoinEvents.BEvent("OM-End",["OM-Init"],.01,null);
 
 
-import {commandObject} from './SharedCommandObject';
-import {commandArgs} from './SharedCommandObject';
+import {commandObject} from '../DiscordCommunication';
+import {commandArgs} from '../DiscordCommunication';
 import {CoinFlipResponse} from '../CoinFlip'
-
+import { ButtonTypes } from '../DiscordCommunication';
 module.exports=
 {
 
@@ -33,10 +33,10 @@ module.exports=
 function Flip(args:commandArgs) 
 {
     let responses=[] as Array<CoinFlipResponse>;
-    if(args.amount==undefined)
+    if(args.Amount==undefined)
         responses=responses.concat(cf.CommandSetRequest(args.UserID,1));
     else
-        responses=responses.concat(cf.CommandSetRequest(args.UserID,args.amount));
+        responses=responses.concat(cf.CommandSetRequest(args.UserID,args.Amount));
     if(responses[0].message=="")
     {
         let title:string;
@@ -105,7 +105,7 @@ function Flip(args:commandArgs)
     else if (responses[0].message.toLowerCase().includes("revoke"))
     {
         let responseString:string;
-        if(args.amount==undefined)
+        if(args.Amount==undefined)
             responseString=`<@${args.UserID}> has revoked their Coin Flip offer.`
         else
             responseString=`<@${args.UserID}> has revoked their Multi Flip offer.`
@@ -114,12 +114,37 @@ function Flip(args:commandArgs)
     }
     else if (responses[0].message.toLowerCase().includes("created"))
     {
+        let button;
         let responseString:string;
-        if(args.amount==undefined)
-            responseString=`<@${args.UserID}> is offering a **coin flip coffee bet** for **1 coffee**.  Do **/coinflip** to take the bet.`;
+        if(args.Amount==undefined)
+        {
+             button=Buttons(
+                [
+                    {
+                     id:{Command:"coinflip",Args:{UserID:"PROVID"}},
+                     label:"Take Coin Flip ",
+                     style:"SUCCESS",
+                     type:ButtonTypes.SingleLong      
+                    }
+                ]
+            );
+            responseString=`<@${args.UserID}> is offering a **coin flip coffee bet** for **1 coffee**.  Do **/coinflip** to take the bet, or click the button below!`;
+        }
         else
-            responseString=`<@${args.UserID}> is offering **${args.amount}** coin flips for 1 :coffee: each. Do **/multiflip ${args.amount}** to take the bet.`;
-        return Reply(null,responseString);
+        {
+            button=Buttons(
+                [
+                    {
+                     id:{Command:"multiflip",Args:{UserID:"PROVID",Amount:args.Amount}},
+                     label:`Take Multi Flip for ${args.Amount} coffs`,
+                     style:"SUCCESS",
+                     type:ButtonTypes.SingleLong   
+                    }
+                ]
+            );
+            responseString=`<@${args.UserID}> is offering **${args.Amount}** coin flips for 1 :coffee: each. Do **/multiflip ${args.Amount}** to take the bet, or click the button below!`;
+        }
+        return Reply(null,responseString,false,button);
 
     }
     else
@@ -138,21 +163,20 @@ function OmniFlipConfirm(args:commandArgs)
         "DARK_AQUA",
         "https://media1.popsugar-assets.com/files/thumbor/akF5W-FXSyszxgQZD--zBUaX9-g/fit-in/2048xorig/filters:format_auto-!!-:strip_icc-!!-/2012/09/39/3/192/1922195/81485b01898e48d8_404794e6026211e2af9022000a1c9e2c_7/i/Ying-Yang.jpeg"
         );
-
     let buttons=Buttons(
         [
             {
-             id:`omniflipaccept~~${args.UserID}`,
+             id:{Command:"omniflipaccept",Args:{UserID:args.UserID}},
              label:"I'm Ready",
              style:"SUCCESS",   
             },
             {
-                id:`omniflipdeny~~${args.UserID}`,
+                id:{Command:"omniflipdeny",Args:{UserID:args.UserID}},
                 label:"No I'm Scared",
                 style:"DANGER",   
             },
             {
-                id:`omniflipchance~~${args.UserID}`,
+                id:{Command:"omniflipchance",Args:{UserID:args.UserID}},
                 label:"Choose For Me ",
                 style:"PRIMARY",   
             }

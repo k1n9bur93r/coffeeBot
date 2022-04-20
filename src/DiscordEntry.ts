@@ -2,7 +2,7 @@
 
 const {DiscordClientInstance} =require ("./DiscordClient"); 
 const {BotChannelMessage}=require("./DiscordBroadcast");
-const {ButtonSettings}= require("./Communication");
+const {ButtonSettings}= require("./DiscordCommunication");
 
 
 let CardGameCommand= require("./Commands/CardGameCommands")
@@ -14,9 +14,9 @@ let CoffeePotCommand= require("./Commands/CoffeePotCommands");
 let RPSCommand= require("./Commands/RPSCommands");
 let TalkCommand= require("./Commands/TalkCommands");
 
-import {commandObject} from './Commands/SharedCommandObject';
-import {commandArgs} from './Commands/SharedCommandObject';
-import {commandExecute} from './Commands/SharedCommandObject';
+import {commandObject} from './DiscordCommunication';
+import {commandArgs} from './DiscordCommunication';
+import {commandExecute} from './DiscordCommunication';
 
 
  interface DisableButtonsObj{interaction:any,index:number};
@@ -75,11 +75,11 @@ function CommandInteraction(interaction)
                 }
                 else if(commandFunction.Args[x]==="Amount")
                 {
-                    args.amount=interaction.options.getInteger("amount");
+                    args.Amount=interaction.options.getInteger("amount");
                 }
                 else if(commandFunction.Args[x]==="Amount2")
                 {
-                    args.amount2=interaction.options.getInteger("rounds");
+                    args.Amount2=interaction.options.getInteger("rounds");
                 }
                 else if(commandFunction.Args[x]==="RefID1")
                 {
@@ -104,7 +104,7 @@ function CommandInteraction(interaction)
                     let ref=interaction.options.getString("text");
                     if(ref==undefined)
                      ref=interaction.options.getString("choice");
-                    args.text=ref;
+                    args.Text=ref;
                 }
             };
         let needsToAgree;
@@ -121,7 +121,7 @@ function CommandInteraction(interaction)
                 e.stack ? `\nStackTrace:\n=========\n${e.stack}` : ``
             } ||`,
             null,
-            "755280645978325003"//process.env.broadcastChannelId
+            process.env.broadcastChannelId
         );
     }
 }
@@ -137,7 +137,6 @@ function ButtonInteraction(interaction)
 
     //Determine all the interactions which have  buttons that currently exist which have a matching ID
     let MatchingButtons= SentButtons.filter(set=>{
-        console.log(set.IDs);
         for(let x=0;x<set.IDs.length;x++)
             if(set.IDs[x]==interaction.customId)
                 return true;
@@ -158,26 +157,17 @@ function ButtonInteraction(interaction)
         else
         {
             recalledInstance=MatchingButtons[x].Timer. _timerArgs[0];
-            // if(MatchingButtons[x].Types[].clickOnce)
-            // {
-            //     DisablePastButton(MatchingButtons[x].Timer._timerArgs[0],x);
-            // }
+            // in the future something here for click once 
+
         }
     }
 
-
-   // DisableClickedMessageButtons(MatchingButtons[x].Timer._timerArgs[0]);
-
+    let PassedJSON=JSON.parse(interaction.customId);
+    let commandFunction: commandExecute=Commands.get(PassedJSON.Command);
     let args ={} as commandArgs;
-    const getCommand=/.+?(?=~~)/;
-    const getValue=/(?<=\~~).*/;
-    let command=getCommand.exec(interaction.customId)[0];
-    let commandFunction: commandExecute=Commands.get(command);
-    let value=getValue.exec(interaction.customId)[0];
-    if(value=="PROVUID")
-        value=interaction.user.id;
-    //temporary just for omniflip, will be expaned later
-    args.UserID=value;
+    args=PassedJSON.Args;
+    if(args.UserID&&args.UserID=="PROVID")
+        args.UserID=interaction.user.id;
     
     return BotReply(commandFunction.Func(args),interaction);
 }

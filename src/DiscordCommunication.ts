@@ -1,8 +1,13 @@
 const {MessageEmbed,MessageButton,MessageActionRow}=require("discord.js");
 
 "use strict"
+export interface commandObject {Name:string,Logic:{Func:any,Args:Array<string>}};
+export interface commandExecute {Func:any,Args:Array<string>};
+export interface commandArgs {UserID:string,RefID1:string,RefID2:string,Amount:number,Amount2:number,Text:string,UIDAvatar:string,R1IDAvatar:string,UIDName:string,R1IDName:string};
 export interface ButtonSettings{multiInstances:boolean,timeout:number,name:string,clickOnce:boolean};
-interface buttons{id:string,label:string,style:string,type:number,customType:ButtonSettings};
+export interface ButtonCommmandOptions{Command:string,Args:commandArgs};
+
+interface buttons{id:ButtonCommmandOptions,label:string,style:string,type:number,customType:ButtonSettings};
 
 const DefaultButtons:Array<ButtonSettings>=[
     {multiInstances:false,timeout:60000*.25,name:"SingleShort",clickOnce:true},
@@ -41,11 +46,12 @@ module.exports =
         return object;
 
     },
-    Buttons:function(buttons:Array<buttons>):object//id:string,lable:string,style:string):object
+    Buttons:function(buttons:Array<buttons>):object
     {
         let ButtonObj={Types:[],Buttons:new MessageActionRow()};
         for(let x=0;x<buttons.length;x++)
         {
+            console.log(buttons[x].id);
             if(buttons[x].type)
                 ButtonObj.Types.push(DefaultButtons[buttons[x].type]);
             else if (buttons[x].customType)
@@ -55,7 +61,7 @@ module.exports =
 
             ButtonObj.Buttons.addComponents(
                 new MessageButton()
-                .setCustomId(buttons[x].id)
+                .setCustomId(JSON.stringify(buttons[x].id))
                 .setLabel(buttons[x].label)
                 .setStyle(buttons[x].style),
             );

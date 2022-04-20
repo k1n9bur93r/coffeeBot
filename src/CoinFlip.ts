@@ -52,8 +52,6 @@ module.exports=
         let returnMessages=[] as Array<CoinFlipResponse>
         let checkRequestID=flipRequests.findIndex(flip=>flip.ID==Id);
         let checkRequestAmount=flipRequests.findIndex(flip=>flip.amount==-69);
-        console.log("CheckRequestID is "+checkRequestID);
-        console.log("CheckRequestAmount is "+checkRequestAmount);
         if(checkRequestID!=-1&&checkRequestAmount==checkRequestID)
         {
            flipRequests.splice(checkRequestID,1);

@@ -1,10 +1,10 @@
 "use strict"
 
-const {Reply,Embed}= require("../Communication");
+const {Reply,Embed}= require("../DiscordCommunication");
 let cp=require("../CoffeePot");
 
-import {commandObject} from './SharedCommandObject';
-import {commandArgs} from './SharedCommandObject';
+import {commandObject} from '../DiscordCommunication';
+import {commandArgs} from '../DiscordCommunication';
 import {CoffeePotResponse} from '../CoffeePot';
 
 module.exports=
@@ -20,14 +20,14 @@ module.exports=
 
 function JoinPot(args:commandArgs)
 {
-let responseObject:CoffeePotResponse=cp.CommandJoinPot(args.UserID,args.amount);
+let responseObject:CoffeePotResponse=cp.CommandJoinPot(args.UserID,args.Amount);
 
 if(!responseObject.success)
     {
         if(responseObject.message.toLowerCase().includes("unavailable"))
             return Reply(null,`There is not Coffe Pot round currently running, make one with /startpot!`,true);
         else if(responseObject.message.toLowerCase().includes("invalid"))
-            return Reply(null,`Your choice ${args.amount} was not between 1 and 1000`,true);
+            return Reply(null,`Your choice ${args.Amount} was not between 1 and 1000`,true);
         else if(responseObject.message.toLowerCase().includes("exists"))
             return Reply(null,`You are already in this Coffee Pot round!`,true);
     }
@@ -73,16 +73,16 @@ if(!responseObject.success)
 }
 function StartPot(args:commandArgs)
 {
-    let responseObject:CoffeePotResponse= cp.CommandStartPot(args.amount);
+    let responseObject:CoffeePotResponse= cp.CommandStartPot(args.Amount);
     if(!responseObject.success)
         return Reply(null,"Coffee Pot must have at least two spots!",true);
     else
     {
         let coffeePotText =
-        `<@${args.UserID}> is starting a :coffee: pot with ***${args.amount}*** spots!\n\n` +
+        `<@${args.UserID}> is starting a :coffee: pot with ***${args.Amount}*** spots!\n\n` +
         `**How it works:**\n` +
         `• Players may wager 1 :coffee: by doing ***/joinpot [# between 1 and 1000]***\n` +
-        `• Once **${args.amount}** players join the pot, then a random number is selected\n` +
+        `• Once **${args.Amount}** players join the pot, then a random number is selected\n` +
         `• The closest guesser to the number takes all the :coffee: in the pot`;
         let embed=Embed("Coffee Pot",coffeePotText,null,false,"WHITE","https://www.krupsusa.com/medias/?context=bWFzdGVyfGltYWdlc3wxNDQ4OTJ8aW1hZ2UvanBlZ3xpbWFnZXMvaDk5L2hiMS8xMzg3MTUxMjk0NDY3MC5iaW58NzZkZDc3MGJhYmQzMjAwYjc4NmJjN2NjOGMxN2UwZmNkODQ2ZjMwZWE0YzM4OWY4MDFmOTFkZWUxYWVkMzU5Zg");
         return Reply(embed,"");

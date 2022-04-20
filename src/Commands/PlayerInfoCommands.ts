@@ -1,8 +1,8 @@
 "use strict"
 let pfIO= require("../FileIO");
-const {Reply,Embed}= require("../Communication");
-import {commandObject} from './SharedCommandObject';
-import {commandArgs} from './SharedCommandObject';
+const {Reply,Embed}= require("../DiscordCommunication");
+import {commandObject} from '../DiscordCommunication';
+import {commandArgs} from '../DiscordCommunication';
 
 module.exports={
 
