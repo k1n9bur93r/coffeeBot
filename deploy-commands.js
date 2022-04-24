@@ -183,6 +183,15 @@ const commands = [
         new SlashCommandBuilder()
         .setName("bestplayers")
         .setDescription("Current players in a Best Of set"),
+        new SlashCommandBuilder()
+        .setName("drop")
+        .setDescription("Drop Coffs for others to pick up!")
+        .addIntegerOption((option) =>
+        option
+            .setName("amount")
+            .setDescription("Pick up drop coffs, or set the amount you want to drop")
+            .setRequired(false)
+    ),
 ].map((command) => command.toJSON());
 
 const rest = new REST({ version: "9" }).setToken(discordToken);
