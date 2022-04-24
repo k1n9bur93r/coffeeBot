@@ -47,7 +47,7 @@ module.exports=
             }
         }
         //there is no request, create one
-        if(amount==undefined)
+        if(amount==undefined||amount<=0)
             return {Success:false,Message:"You need to specify how many coffees you want to drop "};
         let removalAmount;
         removalAmount=socialIO.GetBalancedRemoval(interactionUser,amount)
