@@ -248,7 +248,50 @@ module.exports = {
     this.AddUserCoffee(RefID1, RefID2, Amount,"TRANSFER");
 
     return {Success:true,Message:`<@${UserID}> is transfering ${Amount} from <@${RefID1}> to <@${RefID2}>.`};
-}  
+    },
+    SetPlayerAutoBalance(userId:number)
+    {
+        let Account= playerMap.get(userId).Data.Ledger.sort((a,b)=>(a.Amount<b.Amount)?1:-1);
+        let backNumber=(Account.length-1);
+        let frontNumber= 0
+        let frontAmount=0;
+        let backAmount=Account[backNumber].Amount;
+        for(frontNumber;frontNumber<Account.length;frontNumber++)
+        {
+            frontAmount=Account[frontNumber].Amount;
+             while(true)
+             {
+                let transferAmount=0;
+                if(frontAmount<=0)
+                    break;
+                else if(backAmount==0)
+                {
+                    backNumber--;
+                    if(backNumber<0)
+                        return true;
+                    backAmount=Account[backNumber].Amount;
+                }
+
+                if(backAmount>=0) return true;
+
+                if(frontAmount>=(-backAmount))
+                {
+                    transferAmount=(backAmount*-1);
+                    frontAmount=frontAmount+backAmount;
+                    backAmount=0;
+                    
+                }
+                else if(frontAmount<(-backAmount))
+                {
+                    transferAmount=frontAmount;
+                    backAmount=backAmount+frontAmount;
+                    frontAmount=0;
+                } 
+                this.GetPlayerTransfer(Account[backNumber].ID,userId,Account[frontNumber].ID,transferAmount);
+             }
+        }
+        return true;
+    } 
 
 };
 

@@ -9,6 +9,9 @@ const commands = [
     .setName("agree")
     .setDescription("Agree to terms & conditions"),
     new SlashCommandBuilder()
+    .setName("autobalance")
+    .setDescription("Automatically balance out your debts"),
+    new SlashCommandBuilder()
     .setName("venmo")
     .setDescription("Add venmo to profile")
     .addStringOption((option) =>
@@ -78,27 +81,27 @@ const commands = [
                 .setDescription("Amount of coinflips to make")
                 .setRequired(true)
         ),
-    // new SlashCommandBuilder()
-    //     .setName("transfer")
-    //     .setDescription("Transfer redeemable coffees to cover owed coffees")
-    //     .addUserOption((option) =>
-    //         option
-    //             .setName("from")
-    //             .setDescription("User to transfer redeemble from")
-    //             .setRequired(true)
-    //     )
-    //     .addUserOption((option) =>
-    //         option
-    //             .setName("to")
-    //             .setDescription("User to transfer redeemable to")
-    //             .setRequired(true)
-    //     )
-    //     .addIntegerOption((option) =>
-    //         option
-    //             .setName("amount")
-    //             .setDescription("Coffee amount to transfer")
-    //             .setRequired(true)
-    //     ),
+    new SlashCommandBuilder()
+        .setName("transfer")
+        .setDescription("Transfer redeemable coffees to cover owed coffees")
+        .addUserOption((option) =>
+            option
+                .setName("from")
+                .setDescription("User to transfer redeemble from")
+                .setRequired(true)
+        )
+        .addUserOption((option) =>
+            option
+                .setName("to")
+                .setDescription("User to transfer redeemable to")
+                .setRequired(true)
+        )
+        .addIntegerOption((option) =>
+            option
+                .setName("amount")
+                .setDescription("Coffee amount to transfer")
+                .setRequired(true)
+        ),
     new SlashCommandBuilder()
         .setName("startpot")
         .setDescription("Start a coffee betting pot")

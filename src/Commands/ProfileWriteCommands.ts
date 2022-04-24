@@ -13,7 +13,8 @@ module.exports={
         {Name:"agree" ,Logic:{Func:Agree,Args:["ID"]}},
         {Name:"give" ,Logic:{Func:Give,Args:["ID","RefID1","Amount"]}},
         {Name:"redeem" ,Logic:{Func:Redeem,Args:["ID","RefID1","Amount"]}},
-        {Name:"transfer" ,Logic:{Func:Transfer,Args:["ID","RefID1","RefID2","Amount"]}}
+        {Name:"transfer" ,Logic:{Func:Transfer,Args:["ID","RefID1","RefID2","Amount"]}},
+        {Name:"autobalance" ,Logic:{Func:AutoBalance,Args:["ID"]}}
         ];
     }
 }
@@ -67,6 +68,14 @@ function VeriftyCoffTransaction(args:commandArgs)
     if (isNaN(args.Amount) || args.Amount <= 0) 
         return Reply(null,`Nice try hax0r man`);
     
+}
+function AutoBalance(args:commandArgs)
+{
+    let response= pfWIO.SetPlayerAutoBalance(args.UserID);
+    if(response)
+        return Reply(null,"Balanced!",true);
+    else
+        return Reply(null,"There was an error, failed to Balance.",true);
 }
 
 
