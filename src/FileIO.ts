@@ -15,61 +15,7 @@ let timerObject: ReturnType<typeof setTimeout>;
 //TODO set config values for how often things are saved to the DB, test the overflow handler insta save 
 //TODO figure out how to handle logging in a way that requires only write, no reading to deterime when to add to stuff 
 
-function PlayerObject(Data:Object=undefined)
-{
-    let Player={
-        UpdatedData:false, 
-        UserType: "DISCORD",
-        ResponseObjects:{},
-        Data:{}
-    };
-    if(Data!=undefined)
-    {
-        Player.Data=Data;
-    }
-    return Player;
-}
 
-function NewPlayer(newLedgerUser:number=undefined) :object
-{
-    let Player=PlayerObject();
-    Player.UpdatedData=true;
-    let newPlayerObject={
-        Name:"",
-        OwedCoffs:0,
-        ReceivingCoffs:0,
-        TandC:false,
-        TotalRedeemed:0,
-        Venmo:"",
-        Ledger:[]
-    };
-    if(newLedgerUser!=undefined)
-    {
-        newPlayerObject.Ledger.push({ID:newLedgerUser,Amount:0});
-    }
-    Player.Data=newPlayerObject;    
-return Player;
-    
-}
-function NewCacheAction() :void
- {
-    writeActions++;
-    if(writeActions!=0&&timerStart==0)
-    {
-        console.log("DB Update Event Created");
-        timerStart=Date.now();
-        timerObject= setTimeout(BatchUpdateDB,(1000*60*2)); 
-    }
-    else if(writeActions>20&&timerStart<(Date.now()+(1000*60*1)))
-    {
-        console.log("SAVING DATA AHEAD OF TIME DUE TO HIGH ACTIVITY")
-        clearTimeout(timerObject);
-        writeActions=0;
-        timerStart=0;
-        BatchUpdateDB();
-    }
-    
-}
 module.exports = {
     Initalize: async function()
     {
@@ -89,7 +35,6 @@ module.exports = {
         }
     
     },
-    
     AddUserCoffee: function (interactionUser: number, mentionedUser: number, amount:number, action:string) :void
      {
         ValidateUser(interactionUser);
@@ -246,8 +191,124 @@ module.exports = {
             });
         }
         return totals;
+    },
+    GetBalancedRemoval:function(interactionUser,amount)
+    {
+
+        let removalActions={CanDrop:false,Removals:[]};
+    let TempLedger;
+    let amountLeftToSubtract=amount;
+    TempLedger= playerMap.get(interactionUser).Data.Ledger;
+    TempLedger=TempLedger.sort((a,b)=>(a.Amount<b.Amount)?1:-1);
+    for(let x=0;x<TempLedger.length;x++)
+    {
+        let amountToSubtract=0;
+        if(amountLeftToSubtract==0)
+        {
+            removalActions.CanDrop=true;
+            break;
+        }
+        if(TempLedger[x].Amount>0)
+        {
+            if(TempLedger[x].Amount>amountLeftToSubtract)
+            {
+                amountToSubtract=amountLeftToSubtract;
+                amountLeftToSubtract=0;
+            }
+            else
+            {
+                amountLeftToSubtract=amountLeftToSubtract-TempLedger[x].Amount;
+                amountToSubtract=TempLedger[x].Amount;
+            }
+            removalActions.Removals.push({RefID1:TempLedger[x].ID,Amount:amountToSubtract})
+        }
+        else
+            break;
     }
+    return removalActions;
+    },
+    GetPlayerTransfer:function(RefID2:number,UserID:number,RefID1:number,Amount:number)
+    {
+        if (RefID2 == UserID || RefID1 == UserID) 
+        return {Success:false,Message:"Cannot transfer to or from yourself!"}
+    if(this.GetUserCoffeeDebt(UserID,RefID1)<Amount)
+        return {Success:false,Message:`<@${RefID1}> does not owe you ${Amount}`};
+
+    if(this.GetUserCoffeeDebt(RefID2,UserID)<Amount)
+        return {Success:false,Message:`You do not owe <@${RefID2}> ${Amount}`};
+
+    if (Amount < 0) 
+        return {Success:false,Message:"Cannot transfer negative amount!"};
+
+    this.RemoveUserCoffee(RefID1, UserID, Amount,"TRANSFER");
+    this.RemoveUserCoffee(UserID, RefID2, Amount,"TRANSFER");
+
+    //if from = to then coffees cancel out!
+    if (RefID1 != RefID2) 
+    this.AddUserCoffee(RefID1, RefID2, Amount,"TRANSFER");
+
+    return {Success:true,Message:`<@${UserID}> is transfering ${Amount} from <@${RefID1}> to <@${RefID2}>.`};
+}  
+
 };
+
+
+
+function PlayerObject(Data:Object=undefined)
+{
+    let Player={
+        UpdatedData:false, 
+        UserType: "DISCORD",
+        ResponseObjects:{},
+        Data:{}
+    };
+    if(Data!=undefined)
+    {
+        Player.Data=Data;
+    }
+    return Player;
+}
+
+function NewPlayer(newLedgerUser:number=undefined) :object
+{
+    let Player=PlayerObject();
+    Player.UpdatedData=true;
+    let newPlayerObject={
+        Name:"",
+        OwedCoffs:0,
+        ReceivingCoffs:0,
+        TandC:false,
+        TotalRedeemed:0,
+        Venmo:"",
+        Ledger:[]
+    };
+    if(newLedgerUser!=undefined)
+    {
+        newPlayerObject.Ledger.push({ID:newLedgerUser,Amount:0});
+    }
+    Player.Data=newPlayerObject;    
+return Player;
+    
+}
+function NewCacheAction() :void
+ {
+    writeActions++;
+    if(writeActions!=0&&timerStart==0)
+    {
+        console.log("DB Update Event Created");
+        timerStart=Date.now();
+        timerObject= setTimeout(BatchUpdateDB,(1000*60*2)); 
+    }
+    else if(writeActions>20&&timerStart<(Date.now()+(1000*60*1)))
+    {
+        console.log("SAVING DATA AHEAD OF TIME DUE TO HIGH ACTIVITY")
+        clearTimeout(timerObject);
+        writeActions=0;
+        timerStart=0;
+        BatchUpdateDB();
+    }
+    
+}
 
 function ValidateUser(interactionUser :number) :void
 {
@@ -261,10 +322,6 @@ async function  BatchUpdateDB() :Promise<void>
     let wasNullKey=false;
     console.log("DB Update Event Firing");
     const batch=db.batch();
-    //var today = new Date();
-    //var date = `${today.getFullYear()}${(today.getMonth()+1)}${today.getDate()}`;
-    console.log("Displaying the map.");
-    console.log(playerMap);
     try {
         for(const[key,value] of playerMap.entries())
         {

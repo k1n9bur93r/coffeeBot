@@ -13,6 +13,7 @@ let ProfileWriteCommand= require("./Commands/ProfileWriteCommands");
 let CoffeePotCommand= require("./Commands/CoffeePotCommands");
 let RPSCommand= require("./Commands/RPSCommands");
 let TalkCommand= require("./Commands/TalkCommands");
+let SocialCommand= require("./Commands/SocialCommands");
 
 import {commandObject} from './DiscordCommunication';
 import {commandArgs} from './DiscordCommunication';
@@ -40,6 +41,7 @@ module.exports =
         commandArray=commandArray.concat(CoffeePotCommand.LoadCommands());
         commandArray=commandArray.concat(TalkCommand.LoadCommands());
         commandArray=commandArray.concat(RPSCommand.LoadCommands());
+        commandArray=commandArray.concat(SocialCommand.LoadCommands());
         commandArray.forEach(Command=>{Commands.set(Command.Name,Command.Logic)}); 
     } 
 }

@@ -13,7 +13,7 @@ module.exports={
         {Name:"agree" ,Logic:{Func:Agree,Args:["ID"]}},
         {Name:"give" ,Logic:{Func:Give,Args:["ID","RefID1","Amount"]}},
         {Name:"redeem" ,Logic:{Func:Redeem,Args:["ID","RefID1","Amount"]}},
-        {Name:"transfer" ,Logic:{Func:Transfer,Args:["ID","RefID1","RefID2","Amount"]}},
+        {Name:"transfer" ,Logic:{Func:Transfer,Args:["ID","RefID1","RefID2","Amount"]}}
         ];
     }
 }
@@ -40,26 +40,16 @@ function Redeem(args:commandArgs) {
     return Reply(null,`<@${args.UserID}> redeemed ${args.Amount} coffee${args.Amount > 1 ? "s" : ""} from <@${args.RefID1}>`);
 } 
 function Transfer(args:commandArgs) {
-
-    if (args.RefID2 == args.UserID || args.RefID1 == args.UserID) 
-        return Reply(null, "Cannot transfer to or from yourself!",true);
-    if(pfWIO.GetUserCoffeeDebt(args.UserID,args.RefID1)<args.Amount)
-        return Reply(null,`<@${args.RefID1}> does not owe you ${args.Amount}`,true);
-
-    if(pfWIO.GetUserCoffeeDebt(args.RefID2,args.UserID)<args.Amount)
-        return Reply(null,`You do not owe <@${args.RefID2}> ${args.Amount}`,true);
-
-    if (args.Amount < 0) 
-        return Reply(null,"Cannot transfer negative amount!",true);
-
-    pfWIO.RemoveUserCoffee(args.RefID1, args.UserID, args.Amount,"TRANSFER");
-    pfWIO.RemoveUserCoffee(args.UserID, args.RefID2, args.Amount,"TRANSFER");
-
-    //if from = to then coffees cancel out!
-    if (args.RefID1 != args.RefID2) 
-        pfWIO.AddUserCoffee(args.RefID1, args.RefID2, args.Amount,"TRANSFER");
-
-    return Reply(null, `<@${args.UserID}> is transfering ${args.Amount} from <@${args.RefID1}> to <@${args.RefID2}>.`);
+    
+    let results=pfWIO.GetPlayerTransfer(args.RefID2,args.UserID,args.RefID1,args.Amount);
+    if(results.Sucess==false)
+    {
+        return Reply(null,results.Message,true);
+    }
+    else
+    {
+        return Reply(null,results.Message);
+    }
 } 
 function Agree(args:commandArgs) {
     pfWIO.agreePlayer(args.UserID)
@@ -78,3 +68,5 @@ function VeriftyCoffTransaction(args:commandArgs)
         return Reply(null,`Nice try hax0r man`);
     
 }
+
+
