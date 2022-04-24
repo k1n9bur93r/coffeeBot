@@ -25,7 +25,11 @@ module.exports=
         {
             if(requests[x].Type==SocialGames.Drop)
             {
-
+                if(requests[x].ID==interactionUser)
+                {
+                    SocialEvents.NewBroadCast(`<@${interactionUser}> Picked up the coffs they dropped`);
+                    return {Success:false,Message:"Ohhh feeling not so generous all of a sudden???"};
+                }
                 socialIO.AddUserCoffee(requests[x].ID,interactionUser,requests[x].Amount,"DROP");
                 for(let y=0;y<requests[x].RequestData.Removals.length;y++)
                 {
