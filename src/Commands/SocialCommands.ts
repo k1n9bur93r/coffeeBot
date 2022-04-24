@@ -10,7 +10,7 @@ module.exports={
     LoadCommands:function():Array<commandObject>
     {
         return [
-        {Name:"Drop",Logic:{Func:Drop,Args:["ID","Amount"]}}
+        {Name:"drop",Logic:{Func:Drop,Args:["ID","Amount"]}}
         ];
     }
 }
