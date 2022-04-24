@@ -28,6 +28,7 @@ module.exports=
                 if(requests[x].ID==interactionUser)
                 {
                     SocialEvents.NewBroadCast(`<@${interactionUser}> Picked up the coffs they dropped`);
+                    requests.splice(x,1);
                     return {Success:false,Message:"Ohhh feeling not so generous all of a sudden???"};
                 }
                 socialIO.AddUserCoffee(requests[x].ID,interactionUser,requests[x].Amount,"DROP");
