@@ -49,7 +49,7 @@ module.exports=
         if(removalAmount.CanDrop)
         {
             requests.push({Type:SocialGames.Drop,ID:interactionUser,Amount:amount,RequestData:removalAmount});
-            return  {Success:true,Message:`<@${interactionUser}> has dropped **${amount}** :coffee: ${amount > 1 ? "s" : ""} on the ground!  `};
+            return  {Success:true,Message:`<@${interactionUser}> has dropped **${amount}** :coffee: ${amount > 1 ? "s" : ""} on the ground! Use */drop* to pick it up!`};
         }
         else
         return {Success:false,Message:"You can not drop more coffs than you are owed"};
