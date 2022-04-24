@@ -25,7 +25,12 @@ module.exports=
         {
             if(requests[x].Type==SocialGames.Drop)
             {
-
+                if(requests[x].ID==interactionUser)
+                {
+                    SocialEvents.NewBroadCast(`<@${interactionUser}> Picked up the coffs they dropped`);
+                    requests.splice(x,1);
+                    return {Success:false,Message:"Ohhh feeling not so generous all of a sudden???"};
+                }
                 socialIO.AddUserCoffee(requests[x].ID,interactionUser,requests[x].Amount,"DROP");
                 for(let y=0;y<requests[x].RequestData.Removals.length;y++)
                 {
@@ -42,14 +47,14 @@ module.exports=
             }
         }
         //there is no request, create one
-        if(amount==undefined)
+        if(amount==undefined||amount<=0)
             return {Success:false,Message:"You need to specify how many coffees you want to drop "};
         let removalAmount;
         removalAmount=socialIO.GetBalancedRemoval(interactionUser,amount)
         if(removalAmount.CanDrop)
         {
             requests.push({Type:SocialGames.Drop,ID:interactionUser,Amount:amount,RequestData:removalAmount});
-            return  {Success:true,Message:`<@${interactionUser}> has dropped **${amount}** :coffee: ${amount > 1 ? "s" : ""} on the ground!  `};
+            return  {Success:true,Message:`<@${interactionUser}> has dropped **${amount}** :coffee: ${amount > 1 ? "s" : ""} on the ground! Use */drop* to pick it up!`};
         }
         else
         return {Success:false,Message:"You can not drop more coffs than you are owed"};
