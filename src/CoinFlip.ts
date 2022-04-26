@@ -84,9 +84,25 @@ module.exports=
             }
             else
             {
+                let TotalWinInitPlayer=0;
+                let TotalWinAnswerPlayer=0;
                 for(let y=0;y<100;y++)
-                    for(let x=0;x<100;x++)
-                        returnMessages.push(Flip(flipRequests[checkRequestAmount].ID,Id));
+                    for(let x=0;x<100;x++){
+                        let FlipResponse =Flip(flipRequests[checkRequestAmount].ID,Id)
+                        if(FlipResponse.coinWin==flipRequests[checkRequestAmount].ID)
+                            TotalWinInitPlayer+=FlipResponse.amount;
+                        else
+                            TotalWinAnswerPlayer+=FlipResponse.amount;
+                        returnMessages.push(FlipResponse);
+                    }
+                    if(TotalWinInitPlayer-TotalWinAnswerPlayer>0)
+                    {
+                        flipIO.AddUserCoffee(Id, flipRequests[checkRequestAmount], TotalWinInitPlayer-TotalWinAnswerPlayer,"COINFLIP")
+                    }
+                    else if(TotalWinAnswerPlayer-TotalWinInitPlayer>0)
+                    {
+                        flipIO.AddUserCoffee(flipRequests[checkRequestAmount], Id, TotalWinAnswerPlayer-TotalWinInitPlayer,"COINFLIP")
+                    }
                flipRequests.splice(checkRequestAmount,1);
                return returnMessages;
             }
