@@ -98,6 +98,7 @@ module.exports=
                     if(TotalWinInitPlayer-TotalWinAnswerPlayer>0)
                     {
 <<<<<<< HEAD
+<<<<<<< HEAD
                         flipIO.AddUserCoffee(Id, flipRequests[checkRequestAmount].ID, TotalWinInitPlayer-TotalWinAnswerPlayer,"COINFLIP")
                     }
                     else if(TotalWinAnswerPlayer-TotalWinInitPlayer>0)
@@ -110,6 +111,13 @@ module.exports=
                     {
                         flipIO.AddUserCoffee(flipRequests[checkRequestAmount], Id, TotalWinAnswerPlayer-TotalWinInitPlayer,"COINFLIP")
 >>>>>>> 525d38a (Updated OmniFlip to match new coinflip logic)
+=======
+                        flipIO.AddUserCoffee(Id, flipRequests[checkRequestAmount].ID, TotalWinInitPlayer-TotalWinAnswerPlayer,"COINFLIP")
+                    }
+                    else if(TotalWinAnswerPlayer-TotalWinInitPlayer>0)
+                    {
+                        flipIO.AddUserCoffee(flipRequests[checkRequestAmount].ID, Id, TotalWinAnswerPlayer-TotalWinInitPlayer,"COINFLIP")
+>>>>>>> 623943a (bug  fixes)
                     }
                flipRequests.splice(checkRequestAmount,1);
                return returnMessages;
