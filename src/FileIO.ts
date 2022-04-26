@@ -2,8 +2,8 @@
 const admin = require('firebase-admin'); 
 const playerMap = new Map();
 let {gCloudDB} = require("../config.json");
-//let cloudBuffer:object= Buffer.from(`${gCloudDB}`,'base64')
-let cloudBuffer:object= Buffer.from(`${process.env.gCloudDB}`,'base64')
+let cloudBuffer:object= Buffer.from(`${gCloudDB}`,'base64')
+//let cloudBuffer:object= Buffer.from(`${process.env.gCloudDB}`,'base64')
 let decodedCloud :string=cloudBuffer.toString();
 cloudBuffer=JSON.parse(decodedCloud);
 admin.initializeApp({credential:admin.credential.cert(cloudBuffer)})
@@ -364,26 +364,26 @@ async function  BatchUpdateDB() :Promise<void>
 {
     let wasNullKey=false;
     console.log("DB Update Event Firing");
-    const batch=db.batch();
+    //const batch=db.batch();
     try {
-        for(const[key,value] of playerMap.entries())
-        {
-            console.log("Current update key "+key+" followed by a value");
-            console.log(value)
-            if((key!=""&&key!=undefined&&key!=null)&&value.UpdatedData==true)
-            {
-                const dataOperation= db.collection('Players').doc(key);
-                batch.set(dataOperation,value.Data)
-            }
-            else
-            {
-                //error flag
-                wasNullKey=true;
-            }
-        }
+        // for(const[key,value] of playerMap.entries())
+        // {
+        //     console.log("Current update key "+key+" followed by a value");
+        //     console.log(value)
+        //     if((key!=""&&key!=undefined&&key!=null)&&value.UpdatedData==true)
+        //     {
+        //         const dataOperation= db.collection('Players').doc(key);
+        //         batch.set(dataOperation,value.Data)
+        //     }
+        //     else
+        //     {
+        //         //error flag
+        //         wasNullKey=true;
+        //     }
+        // }
 
-        console.log("Running Batch DB Job ");
-        await batch.commit();
+        // console.log("Running Batch DB Job ");
+        // await batch.commit();
     }
     catch(e)
     {

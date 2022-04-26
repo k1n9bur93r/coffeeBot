@@ -1,4 +1,6 @@
 const {MessageEmbed,MessageButton,MessageActionRow}=require("discord.js");
+const crypto=require('crypto');
+
 
 "use strict"
 export interface commandObject {Name:string,Logic:{Func:any,Args:Array<string>}};
@@ -6,7 +8,14 @@ export interface commandExecute {Func:any,Args:Array<string>};
 export interface commandArgs {UserID:string,RefID1:string,RefID2:string,Amount:number,Amount2:number,Text:string,UIDAvatar:string,R1IDAvatar:string,UIDName:string,R1IDName:string};
 export interface ButtonSettings{multiInstances:boolean,timeout:number,name:string,clickOnce:boolean};
 export interface ButtonCommmandOptions{Command:string,Args:commandArgs};
+export const enum ButtonTypes 
+{
+    SingleShort=0,
+    SingleLong=1,
+    MultiShort=2,
+    MultiLong=3
 
+}
 interface buttons{id:ButtonCommmandOptions,label:string,style:string,type:number,customType:ButtonSettings};
 
 const DefaultButtons:Array<ButtonSettings>=[
@@ -48,9 +57,12 @@ module.exports =
     },
     Buttons:function(buttons:Array<buttons>):object
     {
-        let ButtonObj={Types:[],Buttons:new MessageActionRow()};
+        let ButtonObj={Row:0,Types:[],Commands:[],Hashes:[],GUIDS:[],Buttons:new MessageActionRow()};
         for(let x=0;x<buttons.length;x++)
         {
+            let tempGuid=crypto.randomBytes(16).toString("hex");
+            let tempHash=crypto.createHash('sha1').update(JSON.stringify(buttons[x].id)).digest('hex')
+            console.log("Button Hash: "+tempHash);
             console.log(buttons[x].id);
             if(buttons[x].type)
                 ButtonObj.Types.push(DefaultButtons[buttons[x].type]);
@@ -58,10 +70,12 @@ module.exports =
                 ButtonObj.Types.push(buttons[x].customType);
             else 
                 ButtonObj.Types.push(DefaultButtons[0]);
-
+            ButtonObj.Commands.push(buttons[x].id);
+            ButtonObj.Hashes.push(tempHash);
+            ButtonObj.GUIDS.push(tempGuid)
             ButtonObj.Buttons.addComponents(
                 new MessageButton()
-                .setCustomId(JSON.stringify(buttons[x].id))
+                .setCustomId(`${tempHash}~~${tempGuid}`)//;JSON.stringify(buttons[x].id))
                 .setLabel(buttons[x].label)
                 .setStyle(buttons[x].style),
             );
@@ -69,14 +83,8 @@ module.exports =
         return ButtonObj;
     }
 }
-export const enum ButtonTypes 
-{
-    SingleShort=0,
-    SingleLong=1,
-    MultiShort=2,
-    MultiLong=3
 
-}
+
 
 
 

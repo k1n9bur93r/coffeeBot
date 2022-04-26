@@ -22,8 +22,10 @@ import {commandExecute} from './DiscordCommunication';
 
  interface DisableButtonsObj{interaction:any,index:number};
 
+ interface SentButtonObj{ID:string,Interaction:string,Type:any,Command:any,Timer:any,Row:number}
 
-let SentButtons= new Array();
+let SentButtons= new Map();
+
 
 
 const Commands= new Map();
@@ -123,14 +125,19 @@ function CommandInteraction(interaction)
                 e.stack ? `\nStackTrace:\n=========\n${e.stack}` : ``
             } ||`,
             null,
-            process.env.broadcastChannelId
+            "755280645978325003"//process.env.broadcastChannelId
         );
     }
 }
 function ButtonInteraction(interaction)
 {
+    const getHash=/.+?(?=~~)/;
+    const getID=/(?<=\~~).*/;
+    let Hash=getHash.exec(interaction.customId)[0];
+    let ID=getID.exec(interaction.customId)[0];
     let needsToAgree=VerifyUser(interaction);
     if(needsToAgree) return ;
+    ProcessExistingButtons(Hash,ID);
     //TODO/DID:
     //1.A button may either disable itself on click, or allow itself to be clicked multiple times 
     //2. If a button has multiple instances tied to the user, and one of those instances is clicked, the other ones should disable themselves (might be better for when a button is first being loaded into the queue rather than when an action is taken) 
@@ -138,33 +145,33 @@ function ButtonInteraction(interaction)
     //4. Right now there is not much of a difference between the "multiInstance" and "clickOnce" properties of the buttons. Possibly not needed? 
 
     //Determine all the interactions which have  buttons that currently exist which have a matching ID
-    let MatchingButtons= SentButtons.filter(set=>{
-        for(let x=0;x<set.IDs.length;x++)
-            if(set.IDs[x]==interaction.customId)
-                return true;
-        return false;
-    });
-    let recalledInstance={};
-    //for all the interactions that were found above check if their included buttons should be deactivated 
-    for(let x=0;x<MatchingButtons.length;x++)
-    {
-        if(MatchingButtons[x].Timer._timerArgs[0].id!=interaction.id)
-        {
-            for(let y=0;y<MatchingButtons[x].Types.length;y++)
-                {
-                    if(MatchingButtons[x].Types[y].clickOnce)
-                        DisablePastButton(MatchingButtons[x].Timer._timerArgs[0]);
-                }
-        }
-        else
-        {
-            recalledInstance=MatchingButtons[x].Timer. _timerArgs[0];
-            // in the future something here for click once 
+    // let MatchingButtons= SentButtons.filter(set=>{
+    //     for(let x=0;x<set.IDs.length;x++)
+    //         if(set.IDs[x]==interaction.customId)
+    //             return true;
+    //     return false;
+    // });
+    // let recalledInstance={};
+    // //for all the interactions that were found above check if their included buttons should be deactivated 
+    // for(let x=0;x<MatchingButtons.length;x++)
+    // {
+    //     if(MatchingButtons[x].Timer._timerArgs[0].id!=interaction.id)
+    //     {
+    //         for(let y=0;y<MatchingButtons[x].Types.length;y++)
+    //             {
+    //                 if(MatchingButtons[x].Types[y].clickOnce)
+    //                     DisablePastButton(MatchingButtons[x].Timer._timerArgs[0]);
+    //             }
+    //     }
+    //     else
+    //     {
+    //         recalledInstance=MatchingButtons[x].Timer. _timerArgs[0];
+    //         // in the future something here for click once 
 
-        }
-    }
+    //     }
+    // }
 
-    let PassedJSON=JSON.parse(interaction.customId);
+    let PassedJSON=GetButtonCommand(Hash,ID);
     let commandFunction: commandExecute=Commands.get(PassedJSON.Command);
     let args ={} as commandArgs;
     args=PassedJSON.Args;
@@ -192,7 +199,7 @@ function DisablePastButton(obj:DisableButtonsObj)
             reply.components[0].components[x].setDisabled(true);
         obj.interaction.editReply({components:reply.components});
     });
-    SentButtons.splice(obj.index,1);
+    //SentButtons.splice(obj.index,1);
 }
 
 function DisableClickedMessageButtons(obj:DisableButtonsObj)
@@ -202,37 +209,117 @@ function DisableClickedMessageButtons(obj:DisableButtonsObj)
         for(let x=0;x<reply.components[0].components.length;x++)
             reply.components[0].components[x].setDisabled(true);
         obj.interaction.editReply({components:reply.components});
-        SentButtons.splice(obj.index,1);
+        //SentButtons.splice(obj.index,1);
     });
 }
 
-function SaveButtons(communicationRequests,interaction)
+function GetButtonCommand(Hash:string,ID:string)
 {
-    ////buts are able to exist for their proper length of time 
-    //currently all buttons are bound to run out as the fastest button, maybe in the future buttons can have their own options 
-    let fastestButton=9999999999; // switch to be a proper uninitalized value 
-    let IDs=[];
-    let Types=[];
-    for(let x=0;x<communicationRequests.ButtonsObj.Types.length;x++)
+    let foundIndex= SentButtons.get(Hash).findIndex(item=>item.ID==ID);
+    if(foundIndex!=-1&&SentButtons.get(Hash)[foundIndex].Type.clickOnce==true)
     {
-        IDs.push(communicationRequests.ButtonsObj.Buttons.components[x].customId);
-        Types.push(communicationRequests.ButtonsObj.Types[x]);
-        let tempSpeed=communicationRequests.ButtonsObj.Types[x].timeout;
-        if(tempSpeed<fastestButton)
-            fastestButton=tempSpeed;
+         DisableButton(Hash,SentButtons.get(Hash)[foundIndex].Row,foundIndex);
     }
-        SentButtons.push({IDs:IDs,Types:Types,Timer:setTimeout(DisableClickedMessageButtons,fastestButton,{interaction:interaction,index:SentButtons.length})});
+
+    return JSON.parse(SentButtons.get(Hash)[foundIndex].Command);
+}
+
+function DisableButton(Hash:string,ActionRow:number,Index:number)
+{
+    SentButtons.get(Hash)[Index].Interaction.fetchReply()
+    .then(reply=>{ 
+        for(let x=0;x<reply.components[ActionRow].components.length;x++)
+        {
+            if(reply.components[ActionRow].components[x].customId==`${Hash}~~${SentButtons.get(Hash)[Index].ID}`)
+                reply.components[ActionRow].components[x].setDisabled(true);
+        }
+            SentButtons.get(Hash)[Index].Interaction.editReply({components:reply.components});
+            SentButtons.get(Hash).splice(Index,1);
+    });
+}
+
+function ButtonTimeOut(ButtonProperties:any)
+{
+    console.log("button has died, here is the Hash "+ButtonProperties.Hash+" and the ID "+ButtonProperties.ID);
+    let foundIndex= SentButtons.get(ButtonProperties.Hash).findIndex(item=>item.ID==ButtonProperties.ID);
+    if(foundIndex!=-1&&SentButtons.get(ButtonProperties.Hash)[foundIndex].Type.clickOnce==true)
+    {
+        DisableButton(ButtonProperties.Hash,SentButtons.get(ButtonProperties.Hash)[foundIndex].Row,foundIndex);
+    }
+}
+
+function ProcessExistingButtons(ButtonHash,ButtonGuid=undefined)
+
+{
+    if(ButtonGuid==undefined) //if only a hash was supplied, then we are acting on buttons as a whole rather than individual buttons 
+    {
+        for(let x=0;x<SentButtons.get(ButtonHash).length;x++)
+        {
+            if(SentButtons.get(ButtonHash)[x].Type.multiInstance==false)
+            {
+                DisableButton(ButtonHash,SentButtons.get(ButtonHash)[x].Row,x);
+            }
+        }
+    }
+    else if(ButtonGuid) //if a GUID was supplied, then we know to check the individual button state
+    {
+       let foundIndex= SentButtons.get(ButtonHash).findIndex(item=>item.ID==ButtonGuid);
+       if(foundIndex!=-1&&SentButtons.get(ButtonHash)[foundIndex].Type.clickOnce==true)
+       {
+            DisableButton(ButtonHash,SentButtons.get(ButtonHash)[foundIndex].Row,foundIndex);
+       }
+    }
+}
+
+function SaveButtons(ButtonsObj,interaction)
+{
+    console.log(ButtonsObj);
+    //check if the hash for the button currently exists in the map
+    for(let x=0;x<ButtonsObj.Commands.length;x++)
+    {
+        console.log("element number "+ButtonsObj.Commands[x])
+        console.log("Current Hash and ID for the button "+ ButtonsObj.Hashes[x]+" : "+ButtonsObj.GUIDS[x] )
+        let newElement: SentButtonObj={Row: ButtonsObj.Row,Interaction:interaction,ID:ButtonsObj.GUIDS[x],Command:ButtonsObj.Commands[x],Type:ButtonsObj.Types[x],Timer:setTimeout(ButtonTimeOut,ButtonsObj.Types[x].timeout,{Hash:ButtonsObj.Hashes[x],ID:ButtonsObj.GUIDS[x]})}
+        if(SentButtons.has(ButtonsObj.Hashes[x]))
+        {
+          console.log("found matching");
+            //somekind of logic here depending on the type of button
+            ProcessExistingButtons(ButtonsObj.Hashes[x])
+            SentButtons.get(ButtonsObj.Hashes[x]).push(newElement);
+            console.log(SentButtons.get(ButtonsObj.Hashes[x]));
+        }
+        else
+        {
+            console.log("No matching");
+            SentButtons.set(ButtonsObj.Hashes[x],new Array(newElement));   
+            console.log(SentButtons.get(ButtonsObj.Hashes[x]));
+        }
+    }
+    
+    //if no then add the button to the hash
+    //if yes then look at the logic of the button to see what needs to be done to it 
+
+
+    // let fastestButton=9999999999; // switch to be a proper uninitalized value 
+    // let IDs=[];
+    // let Types=[];
+    // for(let x=0;x<communicationRequests.ButtonsObj.Types.length;x++)
+    // {
+    //     IDs.push(communicationRequests.ButtonsObj.Buttons.components[x].customId);
+    //     Types.push(communicationRequests.ButtonsObj.Types[x]);
+    //     let tempSpeed=communicationRequests.ButtonsObj.Types[x].timeout;
+    //     if(tempSpeed<fastestButton)
+    //         fastestButton=tempSpeed;
+    // }
+    //     SentButtons.push({IDs:IDs,Types:Types,Timer:setTimeout(DisableClickedMessageButtons,fastestButton,{interaction:interaction,index:SentButtons.length})});
     }
 
 async function BotReply(communicationRequests,interaction) { 
     if(communicationRequests.ButtonsObj)
     {
-        SaveButtons(communicationRequests,interaction);
+        console.log("Loading buttons");
+        SaveButtons(communicationRequests.ButtonsObj,interaction);
     }
-//something here that tracks past buttons that were sent, then can do an action to kill off said button
-
-
-
     if (communicationRequests.embed && communicationRequests.message == "") {
         if(communicationRequests.ButtonsObj)
         interaction.reply({
