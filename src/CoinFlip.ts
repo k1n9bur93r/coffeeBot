@@ -3,7 +3,7 @@ let flipIO = require("./FileIO");
 
 
 
-export  interface CoinFlipResponse{ message:string,coinSide:string, coinWin:number, coinLose: number,amount:number };
+export  interface CoinFlipResponse{ message:string,coinSide:string, coinWin:string, coinLose: string,amount:number };
 interface FlipRequest {ID:string, amount:number}
 
 
@@ -19,7 +19,7 @@ module.exports=
          let returnMessages=[] as Array<CoinFlipResponse>
          if(requestAmount>maxRequestAmount||requestAmount<0)
          {
-             return [{ message:`You cant flip for that much! ${requestAmount} The Min Amount is 0, and  Max Amount is ${maxRequestAmount} `,coinSide:"", coinWin:0, coinLose: 0,amount:0 }];
+             return [{ message:`You cant flip for that much! ${requestAmount} The Min Amount is 0, and  Max Amount is ${maxRequestAmount} `,coinSide:"", coinWin:"0", coinLose: "0",amount:0 }];
          }
          else
          {
@@ -28,19 +28,36 @@ module.exports=
              if(checkRequestID!=-1&&checkRequestAmount==checkRequestID)
              {
                 flipRequests.splice(checkRequestID,1);
-                return [{ message:`${Id} has revoked their coin flip request of amount ${requestAmount} flips`,coinSide:"", coinWin:0, coinLose: 0,amount:0 }];
+                return [{ message:`${Id} has revoked their coin flip request of amount ${requestAmount} flips`,coinSide:"", coinWin:"", coinLose: "",amount:0 }];
              }
              else
              {
                  if(checkRequestAmount==-1)
                  {
                     flipRequests.push({ID:Id,amount:requestAmount})
-                    return [{ message:`${Id} has created a coin flip request of amount ${requestAmount} flips`,coinSide:"", coinWin:0, coinLose: 0,amount:0 }];
+                    return [{ message:`${Id} has created a coin flip request of amount ${requestAmount} flips`,coinSide:"", coinWin:"", coinLose: "",amount:0 }];
                  }
                  else
                  {
-                    for(let x=0;x<requestAmount;x++)
-                        returnMessages.push(Flip(flipRequests[checkRequestAmount].ID,Id));
+                     let TotalWinInitPlayer=0;
+                     let TotalWinAnswerPlayer=0;
+                    for(let x=0;x<requestAmount;x++){
+                    let FlipResponse =Flip(flipRequests[checkRequestAmount].ID,Id)
+                        if(FlipResponse.coinWin==flipRequests[checkRequestAmount].ID)
+                            TotalWinInitPlayer+=FlipResponse.amount;
+                        else
+                            TotalWinAnswerPlayer+=FlipResponse.amount;
+                        returnMessages.push(FlipResponse);
+                    }
+                    if(TotalWinInitPlayer-TotalWinAnswerPlayer>0)
+                    {
+                        flipIO.AddUserCoffee(Id, flipRequests[checkRequestAmount], TotalWinInitPlayer-TotalWinAnswerPlayer,"COINFLIP")
+                    }
+                    else if(TotalWinAnswerPlayer-TotalWinInitPlayer>0)
+                    {
+                        flipIO.AddUserCoffee(flipRequests[checkRequestAmount], Id, TotalWinAnswerPlayer-TotalWinInitPlayer,"COINFLIP")
+                    }
+
                     flipRequests.splice(checkRequestAmount,1);
                     return returnMessages;
                  }
@@ -55,7 +72,7 @@ module.exports=
         if(checkRequestID!=-1&&checkRequestAmount==checkRequestID)
         {
            flipRequests.splice(checkRequestID,1);
-           return [{ message:`${Id} has revoked their omniflip request`,coinSide:"", coinWin:0, coinLose: 0,amount:0 }];
+           return [{ message:`${Id} has revoked their omniflip request`,coinSide:"", coinWin:"", coinLose: "",amount:0 }];
         }
         else
         {
@@ -63,7 +80,7 @@ module.exports=
             {
                flipRequests.push({ID:Id,amount:-69})
               
-               return [{ message:`${Id} has created an OmniFlip request`,coinSide:"", coinWin:0, coinLose: 0,amount:0 }];
+               return [{ message:`${Id} has created an OmniFlip request`,coinSide:"", coinWin:"", coinLose: "",amount:0 }];
             }
             else
             {
@@ -86,7 +103,7 @@ module.exports=
 
 }
 
- function Flip(flipper1, flipper2,initFlipValue:number=1,easterEggs:boolean=true):CoinFlipResponse
+ function Flip(flipper1:string, flipper2:string,initFlipValue:number=1,easterEggs:boolean=true):CoinFlipResponse
   {
     let winner;
     let loser;

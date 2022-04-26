@@ -47,7 +47,7 @@ function Flip(args:commandArgs)
             title="Coin Flip Results";
         let player1=0;
         let player2=0;
-        let OtherPlayer=0;
+        let OtherPlayer;
         for(let x=0;x<responses.length;x++)
         {
 
@@ -200,7 +200,7 @@ if(responses[0].message=="")
 
     let player1=0;
     let player2=0;
-    let OtherPlayer=0;
+    let OtherPlayer;
     for(let x=0;x<responses.length;x++)
     {
 
