@@ -22,7 +22,7 @@ import {commandExecute} from './DiscordCommunication';
 
  interface DisableButtonsObj{interaction:any,index:number};
 
- interface SentButtonObj{ID:string,Interaction:string,Type:any,Command:any,Timer:any,Row:number}
+ interface SentButtonObj{SameTimeout:boolean,ID:string,Interaction:string,Type:any,Command:any,Timer:any,Row:number}
 
 let SentButtons= new Map();
 
@@ -224,13 +224,13 @@ function GetButtonCommand(Hash:string,ID:string)
     return JSON.parse(SentButtons.get(Hash)[foundIndex].Command);
 }
 
-function DisableButton(Hash:string,ActionRow:number,Index:number)
+function DisableButton(Hash:string,ActionRow:number,Index:number,SameTimeout=false)
 {
     SentButtons.get(Hash)[Index].Interaction.fetchReply()
     .then(reply=>{ 
         for(let x=0;x<reply.components[ActionRow].components.length;x++)
         {
-            if(reply.components[ActionRow].components[x].customId==`${Hash}~~${SentButtons.get(Hash)[Index].ID}`)
+            if(SameTimeout||reply.components[ActionRow].components[x].customId==`${Hash}~~${SentButtons.get(Hash)[Index].ID}`)
                 reply.components[ActionRow].components[x].setDisabled(true);
         }
             SentButtons.get(Hash)[Index].Interaction.editReply({components:reply.components});
@@ -244,7 +244,7 @@ function ButtonTimeOut(ButtonProperties:any)
     let foundIndex= SentButtons.get(ButtonProperties.Hash).findIndex(item=>item.ID==ButtonProperties.ID);
     if(foundIndex!=-1&&SentButtons.get(ButtonProperties.Hash)[foundIndex].Type.clickOnce==true)
     {
-        DisableButton(ButtonProperties.Hash,SentButtons.get(ButtonProperties.Hash)[foundIndex].Row,foundIndex);
+        DisableButton(ButtonProperties.Hash,SentButtons.get(ButtonProperties.Hash)[foundIndex].Row,foundIndex,ButtonProperties.SameTimeout);
     }
 }
 
@@ -257,6 +257,7 @@ function ProcessExistingButtons(ButtonHash,ButtonGuid=undefined)
         {
             if(SentButtons.get(ButtonHash)[x].Type.multiInstance==false)
             {
+                console.log("This cannot be a multi instance button");
                 DisableButton(ButtonHash,SentButtons.get(ButtonHash)[x].Row,x);
             }
         }
@@ -279,7 +280,7 @@ function SaveButtons(ButtonsObj,interaction)
     {
         console.log("element number "+ButtonsObj.Commands[x])
         console.log("Current Hash and ID for the button "+ ButtonsObj.Hashes[x]+" : "+ButtonsObj.GUIDS[x] )
-        let newElement: SentButtonObj={Row: ButtonsObj.Row,Interaction:interaction,ID:ButtonsObj.GUIDS[x],Command:ButtonsObj.Commands[x],Type:ButtonsObj.Types[x],Timer:setTimeout(ButtonTimeOut,ButtonsObj.Types[x].timeout,{Hash:ButtonsObj.Hashes[x],ID:ButtonsObj.GUIDS[x]})}
+        let newElement: SentButtonObj={SameTimeout:ButtonsObj.SameTimeout,Row: ButtonsObj.Row,Interaction:interaction,ID:ButtonsObj.GUIDS[x],Command:ButtonsObj.Commands[x],Type:ButtonsObj.Types[x],Timer:setTimeout(ButtonTimeOut,ButtonsObj.Types[x].timeout,{Hash:ButtonsObj.Hashes[x],ID:ButtonsObj.GUIDS[x],SameTimeout:ButtonsObj.SameTimeout})}
         if(SentButtons.has(ButtonsObj.Hashes[x]))
         {
           console.log("found matching");

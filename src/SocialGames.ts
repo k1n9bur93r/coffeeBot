@@ -35,7 +35,7 @@ module.exports=
                 for(let y=0;y<requests[x].RequestData.Removals.length;y++)
                 {
                    let item= socialIO.GetPlayerTransfer(interactionUser,requests[x].ID,requests[x].RequestData.Removals[y].RefID1,requests[x].RequestData.Removals[y].Amount);
-                    if(item.Success==false)
+                    if(item.Success==false&&requests[x].RequestData.Removals[y].RefID1!=interactionUser)
                     {
                         SocialEvents.NewBroadCast(`<@${requests[x].ID}> is a loser that spent coffs that they dropped lul.`);
                     }
