@@ -58,6 +58,7 @@ module.exports =
     Buttons:function(buttons:Array<buttons>):object
     {
 <<<<<<< HEAD
+<<<<<<< HEAD
 
         let PastButton:ButtonSettings=undefined;
         let ButtonObj={SameTimeout:true,Row:0,Types:[],Commands:[],Hashes:[],GUIDS:[],Buttons:new MessageActionRow()};
@@ -75,6 +76,20 @@ module.exports =
         for(let x=0;x<buttons.length;x++)
         {
 >>>>>>> bfd4f4c (work in progress button rewrite)
+=======
+
+        let PastButton:ButtonSettings=undefined;
+        let ButtonObj={SameTimeout:true,Row:0,Types:[],Commands:[],Hashes:[],GUIDS:[],Buttons:new MessageActionRow()};
+        for(let x=0;x<buttons.length;x++)
+        {
+            if(PastButton==undefined)
+                PastButton=DefaultButtons[buttons[x].type]
+            else if(PastButton.timeout!=DefaultButtons[buttons[x].type].timeout)
+            {
+                ButtonObj.SameTimeout=false;
+            }
+                
+>>>>>>> cb48f75 (more mroe mroe in prog)
             let tempGuid=crypto.randomBytes(16).toString("hex");
             let tempHash=crypto.createHash('sha1').update(JSON.stringify(buttons[x].id)).digest('hex')
             console.log("Button Hash: "+tempHash);
