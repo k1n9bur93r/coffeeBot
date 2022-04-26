@@ -51,11 +51,11 @@ module.exports=
                     }
                     if(TotalWinInitPlayer-TotalWinAnswerPlayer>0)
                     {
-                        flipIO.AddUserCoffee(Id, flipRequests[checkRequestAmount], TotalWinInitPlayer-TotalWinAnswerPlayer,"COINFLIP")
+                        flipIO.AddUserCoffee(Id, flipRequests[checkRequestAmount].ID, TotalWinInitPlayer-TotalWinAnswerPlayer,"COINFLIP")
                     }
                     else if(TotalWinAnswerPlayer-TotalWinInitPlayer>0)
                     {
-                        flipIO.AddUserCoffee(flipRequests[checkRequestAmount], Id, TotalWinAnswerPlayer-TotalWinInitPlayer,"COINFLIP")
+                        flipIO.AddUserCoffee(flipRequests[checkRequestAmount].ID, Id, TotalWinAnswerPlayer-TotalWinInitPlayer,"COINFLIP")
                     }
 
                     flipRequests.splice(checkRequestAmount,1);
@@ -97,11 +97,11 @@ module.exports=
                     }
                     if(TotalWinInitPlayer-TotalWinAnswerPlayer>0)
                     {
-                        flipIO.AddUserCoffee(Id, flipRequests[checkRequestAmount], TotalWinInitPlayer-TotalWinAnswerPlayer,"COINFLIP")
+                        flipIO.AddUserCoffee(Id, flipRequests[checkRequestAmount].ID, TotalWinInitPlayer-TotalWinAnswerPlayer,"COINFLIP")
                     }
                     else if(TotalWinAnswerPlayer-TotalWinInitPlayer>0)
                     {
-                        flipIO.AddUserCoffee(flipRequests[checkRequestAmount], Id, TotalWinAnswerPlayer-TotalWinInitPlayer,"COINFLIP")
+                        flipIO.AddUserCoffee(flipRequests[checkRequestAmount].ID, Id, TotalWinAnswerPlayer-TotalWinInitPlayer,"COINFLIP")
                     }
                flipRequests.splice(checkRequestAmount,1);
                return returnMessages;
@@ -143,9 +143,6 @@ module.exports=
         winner = flipper2;
         loser = flipper1;
     }
-
-    if (flipValue!=0) 
-        flipIO.AddUserCoffee(loser, winner, flipValue,"COINFLIP");
 
     return { message:"", coinSide: unique, coinWin: winner, coinLose: loser ,amount:flipValue } as CoinFlipResponse;
 }
