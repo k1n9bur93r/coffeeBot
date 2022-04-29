@@ -7,7 +7,7 @@ export  interface CoinFlipResponse{ message:string,coinSide:string, coinWin:stri
 interface FlipRequest {ID:string, amount:number}
 
 
-let maxRequestAmount = 69; 
+let maxRequestAmount = 5; 
 
 let flipRequests = [] as Array<FlipRequest>;
 

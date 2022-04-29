@@ -77,7 +77,3 @@ export const enum ButtonTypes
     MultiLong=3
 
 }
-
-
-
-
