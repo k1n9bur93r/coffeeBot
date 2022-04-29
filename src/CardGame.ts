@@ -213,8 +213,8 @@ module.exports =
         amount=1;
         else if(amount>2)
             return  Reply(null,"Can't have a buy in greater than 2!",true); 
-        // else if (amount && currentGame.StartingPlayer) // No amount is needed right now since this value is not checked
-        //     return Reply(null,`There is already a game you can join with a buy in of ${currentGame.PotSize}.`,true);
+        else if (amount && currentGame.StartingPlayer) 
+            return Reply(null,`There is already a game you can join with a buy in of ${currentGame.PotSize}.`,true);
         if(currentGame.GameRunning==true)
             return Reply(null,`Sorry, there is a game currently on going!`,true); 
         else if(currentGame.StartingPlayer==interactionID && currentGame.GameRunning==false)
