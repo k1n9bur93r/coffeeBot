@@ -143,6 +143,7 @@ function getLeaderboardString() {
     let coffeeLeaderboardString = "";
     for(let x=0;x<leaderboard.length;x++)
     {
+        if(leaderboard[x].Total==0)continue;
         if(x==0)
         {
             coffeeLeaderboardString += `**${leaderboard[x].Total}** <@${leaderboard[x].ID}> :crown:\n\n`; 
@@ -156,5 +157,6 @@ function getLeaderboardString() {
             coffeeLeaderboardString += `**${leaderboard[x].Total}** <@${leaderboard[x].ID}> \n\n`; 
         }
     }
+    if(coffeeLeaderboardString=="") coffeeLeaderboardString="No one owes anyone anything and no one has anything from anyone. There are no coffees to be made or coffees to be had. The banks are barren. The debt is gone. Wealth does not exist as we are all equal. For this brief moment let us hold hands in what is, and forget about what was. Enjoy the moment, before someone becomes beholden to their fellow man. "
     return coffeeLeaderboardString;
 }
