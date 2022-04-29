@@ -23,6 +23,7 @@ module.exports={
 }
     function New(args:commandArgs)
     {
+        args.Amount=2;
         var list=bscg.CommandBestOfPlayerList();
     if(list.length!=0&&bscg.CommandBestOfType()=="21"&&!bscg.CommandBestOfRunning())
     {
