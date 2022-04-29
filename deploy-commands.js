@@ -133,13 +133,13 @@ const commands = [
 
     new SlashCommandBuilder()
         .setName("21")
-        .setDescription("Start or join a new game of 21!"),
-        //.addIntegerOption((option) =>
-        //option
-          //  .setName("amount")
-          //  .setDescription("Set the buy in amount if starting a new game")
-          //  .setRequired(false)
-    //),
+        .setDescription("Start or join a new game of 21!")
+        .addIntegerOption((option) =>
+        option
+           .setName("amount")
+           .setDescription("Set the buy in amount if starting a new game")
+           .setRequired(false)
+    ),
     new SlashCommandBuilder()
         .setName("hand")
         .setDescription("See your current hand"),
