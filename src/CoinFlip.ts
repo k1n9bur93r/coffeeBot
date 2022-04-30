@@ -95,29 +95,15 @@ module.exports=
                             TotalWinAnswerPlayer+=FlipResponse.amount;
                         returnMessages.push(FlipResponse);
                     }
-                    if(TotalWinInitPlayer-TotalWinAnswerPlayer>0)
+                    if(TotalWinInitPlayer-TotalWinAnswerPlayer>0) //this stuff could be a possible regression, test it 
                     {
-<<<<<<< HEAD
-<<<<<<< HEAD
+
                         flipIO.AddUserCoffee(Id, flipRequests[checkRequestAmount].ID, TotalWinInitPlayer-TotalWinAnswerPlayer,"COINFLIP")
                     }
                     else if(TotalWinAnswerPlayer-TotalWinInitPlayer>0)
                     {
                         flipIO.AddUserCoffee(flipRequests[checkRequestAmount].ID, Id, TotalWinAnswerPlayer-TotalWinInitPlayer,"COINFLIP")
-=======
-                        flipIO.AddUserCoffee(Id, flipRequests[checkRequestAmount], TotalWinInitPlayer-TotalWinAnswerPlayer,"COINFLIP")
-                    }
-                    else if(TotalWinAnswerPlayer-TotalWinInitPlayer>0)
-                    {
-                        flipIO.AddUserCoffee(flipRequests[checkRequestAmount], Id, TotalWinAnswerPlayer-TotalWinInitPlayer,"COINFLIP")
->>>>>>> 525d38a (Updated OmniFlip to match new coinflip logic)
-=======
-                        flipIO.AddUserCoffee(Id, flipRequests[checkRequestAmount].ID, TotalWinInitPlayer-TotalWinAnswerPlayer,"COINFLIP")
-                    }
-                    else if(TotalWinAnswerPlayer-TotalWinInitPlayer>0)
-                    {
-                        flipIO.AddUserCoffee(flipRequests[checkRequestAmount].ID, Id, TotalWinAnswerPlayer-TotalWinInitPlayer,"COINFLIP")
->>>>>>> 623943a (bug  fixes)
+
                     }
                flipRequests.splice(checkRequestAmount,1);
                return returnMessages;
