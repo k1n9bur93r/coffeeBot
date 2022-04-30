@@ -57,55 +57,35 @@ module.exports =
     },
     Buttons:function(buttons:Array<buttons>):object
     {
-<<<<<<< HEAD
-<<<<<<< HEAD
 
         let PastButton:ButtonSettings=undefined;
         let ButtonObj={SameTimeout:true,Row:0,Types:[],Commands:[],Hashes:[],GUIDS:[],Buttons:new MessageActionRow()};
         for(let x=0;x<buttons.length;x++)
         {
-            if(PastButton==undefined)
-                PastButton=DefaultButtons[buttons[x].type]
-            else if(PastButton.timeout!=DefaultButtons[buttons[x].type].timeout)
-            {
-                ButtonObj.SameTimeout=false;
-            }
-                
-=======
-        let ButtonObj={Row:0,Types:[],Commands:[],Hashes:[],GUIDS:[],Buttons:new MessageActionRow()};
-        for(let x=0;x<buttons.length;x++)
-        {
->>>>>>> bfd4f4c (work in progress button rewrite)
-=======
 
-        let PastButton:ButtonSettings=undefined;
-        let ButtonObj={SameTimeout:true,Row:0,Types:[],Commands:[],Hashes:[],GUIDS:[],Buttons:new MessageActionRow()};
-        for(let x=0;x<buttons.length;x++)
-        {
-            if(PastButton==undefined)
-                PastButton=DefaultButtons[buttons[x].type]
-            else if(PastButton.timeout!=DefaultButtons[buttons[x].type].timeout)
-            {
-                ButtonObj.SameTimeout=false;
-            }
-                
->>>>>>> cb48f75 (more mroe mroe in prog)
             let tempGuid=crypto.randomBytes(16).toString("hex");
             let tempHash=crypto.createHash('sha1').update(JSON.stringify(buttons[x].id)).digest('hex')
             console.log("Button Hash: "+tempHash);
             console.log(buttons[x].id);
+            if(PastButton==undefined)
+                PastButton=DefaultButtons[buttons[x].type]
+            else if(PastButton.timeout!=DefaultButtons[buttons[x].type].timeout)
+            {
+                ButtonObj.SameTimeout=false;
+            }
             if(buttons[x].type)
                 ButtonObj.Types.push(DefaultButtons[buttons[x].type]);
             else if (buttons[x].customType)
                 ButtonObj.Types.push(buttons[x].customType);
             else 
                 ButtonObj.Types.push(DefaultButtons[0]);
+
             ButtonObj.Commands.push(buttons[x].id);
             ButtonObj.Hashes.push(tempHash);
             ButtonObj.GUIDS.push(tempGuid)
             ButtonObj.Buttons.addComponents(
                 new MessageButton()
-                .setCustomId(`${tempHash}~~${tempGuid}`)//;JSON.stringify(buttons[x].id))
+                .setCustomId(`${tempHash}~~${tempGuid}`)
                 .setLabel(buttons[x].label)
                 .setStyle(buttons[x].style),
             );
@@ -113,20 +93,5 @@ module.exports =
         return ButtonObj;
     }
 }
-<<<<<<< HEAD
 
 
-
-
-
-
-=======
-export const enum ButtonTypes 
-{
-    SingleShort=0,
-    SingleLong=1,
-    MultiShort=2,
-    MultiLong=3
-
-}
->>>>>>> master
