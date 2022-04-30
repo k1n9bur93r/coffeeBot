@@ -113,9 +113,20 @@ module.exports =
         return ButtonObj;
     }
 }
+<<<<<<< HEAD
 
 
 
 
 
 
+=======
+export const enum ButtonTypes 
+{
+    SingleShort=0,
+    SingleLong=1,
+    MultiShort=2,
+    MultiLong=3
+
+}
+>>>>>>> master
