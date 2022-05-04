@@ -75,7 +75,7 @@ function Flip(args:commandArgs)
         coinflipResultText+=`\n<@${args.UserID}> had ${player2} flip${player2 > 1 ? "s" : ""} in their favor.`;
         coinflipResultText+=`\n<@${OtherPlayer}> had ${player1} flip${player1 > 1 ? "s" : ""} in their favor.`;
         coinflipResultText+=`\n\n${splitCounter} coin${splitCounter > 1||splitCounter==0 ? "s" : ""} split`;
-        coinflipResultText+=`\n${sideCounter} coin${sideCounter > 1||sideCounter==0 ? "s" : ""}landed on their side`;
+        coinflipResultText+=`\n${sideCounter} coin${sideCounter > 1||sideCounter==0 ? "s" : ""} landed on their side`;
 
         if(player1!=player2)
         {
