@@ -48,6 +48,8 @@ function Flip(args:commandArgs)
         let player1=0;
         let player2=0;
         let OtherPlayer;
+        let splitCounter=0;
+        let sideCounter=0;
         for(let x=0;x<responses.length;x++)
         {
 
@@ -62,18 +64,20 @@ function Flip(args:commandArgs)
             }
             if(responses[x].coinSide=="side")
             {
-                coinflipResultText+=`The coinflip landed on its side! It is a tie and no coffees are owed!\n`;
+                sideCounter++;
             }
             else if(responses[x].coinSide=="split")
             {
-                coinflipResultText+=`The coinflip split in half! Double the winnings for <@${responses[x].coinWin}> !\n`;
-            }
-            else if(responses[x].coinSide=="")
-            {
-                coinflipResultText+=`<@${responses[x].coinWin}> won the coinflip! \n`;
+                splitCounter++;
 
             }
+
         }
+        coinflipResultText+=`\n<@${args.UserID}> had ${player2} flip ${player2 > 1 ? "s" : ""} in their favor`
+        coinflipResultText+=`\n<@${OtherPlayer}> had ${player1} flip ${player1 > 1 ? "s" : ""} in their favor `
+        coinflipResultText+=`\n\n There were ${splitCounter} coin${splitCounter > 1 ? "s" : ""} that were split`
+        coinflipResultText+=`\n\n There were ${sideCounter} coin${splitCounter > 1 ? "s" : ""} that landed on their side`
+
         if(player1!=player2)
         {
             if(player2>player1)
