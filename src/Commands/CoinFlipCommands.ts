@@ -13,6 +13,7 @@ import {commandObject} from '../DiscordCommunication';
 import {commandArgs} from '../DiscordCommunication';
 import {CoinFlipResponse} from '../CoinFlip'
 import { ButtonTypes } from '../DiscordCommunication';
+import {ButtonRowSettings} from '../DiscordCommunication';
 module.exports=
 {
 
@@ -168,19 +169,44 @@ function OmniFlipConfirm(args:commandArgs)
             {
              id:{Command:"omniflipaccept",Args:{UserID:args.UserID}},
              label:"I'm Ready",
-             style:"SUCCESS",   
+             style:"SUCCESS", 
+             type:ButtonTypes.Stack1  
             },
             {
                 id:{Command:"omniflipdeny",Args:{UserID:args.UserID}},
                 label:"No I'm Scared",
-                style:"DANGER",   
+                style:"DANGER", 
+                type:ButtonTypes.Stack2     
+            },
+            {
+                id:{Command:"omniflipdeny",Args:{UserID:args.UserID}},
+                label:"No I'm Scared",
+                style:"DANGER", 
+                type:ButtonTypes.Stack2     
             },
             {
                 id:{Command:"omniflipchance",Args:{UserID:args.UserID}},
                 label:"Choose For Me ",
-                style:"PRIMARY",   
+                style:"PRIMARY"  , 
+                type:ButtonTypes.Stack3   
+            },
+            {
+                id:{Command:"omniflipchance",Args:{UserID:args.UserID}},
+                label:"Choose For Me ",
+                style:"PRIMARY"  , 
+                type:ButtonTypes.Stack3   
+            },
+            {
+                id:{Command:"omniflipchance",Args:{UserID:args.UserID}},
+                label:"Choose For Me ",
+                style:"PRIMARY"  , 
+                type:ButtonTypes.Stack3   
             }
-        ]
+        ],
+        {
+            rowCount:3,
+            rowLength:3
+        }
     );
     return Reply(embed,"",true,buttons);
     
