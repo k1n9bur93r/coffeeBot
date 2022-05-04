@@ -50,6 +50,10 @@ function Flip(args:commandArgs)
         let OtherPlayer;
         let splitCounter=0;
         let sideCounter=0;
+        if(responses[0].coinWin==args.UserID)
+            OtherPlayer=responses[0].coinLose;
+        else
+            OtherPlayer=responses[0].coinWin;
         for(let x=0;x<responses.length;x++)
         {
 
@@ -63,34 +67,29 @@ function Flip(args:commandArgs)
                 player1+=responses[x].amount;
             }
             if(responses[x].coinSide=="side")
-            {
                 sideCounter++;
-            }
             else if(responses[x].coinSide=="split")
-            {
                 splitCounter++;
 
-            }
-
         }
-        coinflipResultText+=`\n<@${args.UserID}> had ${player2} flip ${player2 > 1 ? "s" : ""} in their favor`
-        coinflipResultText+=`\n<@${OtherPlayer}> had ${player1} flip ${player1 > 1 ? "s" : ""} in their favor `
-        coinflipResultText+=`\n\n There were ${splitCounter} coin${splitCounter > 1 ? "s" : ""} that were split`
-        coinflipResultText+=`\n\n There were ${sideCounter} coin${splitCounter > 1 ? "s" : ""} that landed on their side`
+        coinflipResultText+=`\n<@${args.UserID}> had ${player2} flip${player2 > 1 ? "s" : ""} in their favor.`;
+        coinflipResultText+=`\n<@${OtherPlayer}> had ${player1} flip${player1 > 1 ? "s" : ""} in their favor.`;
+        coinflipResultText+=`\n\n${splitCounter} coin${splitCounter > 1||splitCounter==0 ? "s" : ""} split`;
+        coinflipResultText+=`\n${sideCounter} coin${sideCounter > 1||sideCounter==0 ? "s" : ""}landed on their side`;
 
         if(player1!=player2)
         {
             if(player2>player1)
             {
-                coinflipResultText+=`\n<@${args.UserID}> has won ${player2-player1} :coffee: ${player2-player1 > 1 ? "s" : ""} !`;
+                coinflipResultText+=`\n\n<@${args.UserID}> has won ${player2-player1} :coffee: ${player2-player1 > 1 ? "s" : ""} !`;
             }
             else
             {
-                coinflipResultText+=`\n<@${OtherPlayer}> has won ${player1-player2} :coffee: ${player1-player2 > 1 ? "s" : ""} !`;
+                coinflipResultText+=`\n\n<@${OtherPlayer}> has won ${player1-player2} :coffee: ${player1-player2 > 1 ? "s" : ""} !`;
             }
         }
         else
-            coinflipResultText+=`\nBoth Players tied, no coffess owed!`;
+            coinflipResultText+=`\n\nBoth Players tied, no coffess owed!`;
         const coinFlipResults = Embed(
             title,
             coinflipResultText,
