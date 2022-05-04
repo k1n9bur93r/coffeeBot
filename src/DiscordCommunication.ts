@@ -153,13 +153,10 @@ module.exports =
         }
         for(let x=0;x<sameRowTimeOutTracker.length;x++)
         {
-            console.log(sameRowTimeOutTracker[x]);
             if(sameRowTimeOutTracker[x])
                 ButtonObj.ButtonRows.MasterRowButton[x]=sameRowPastButtonGUID[x];
-            console.log(ButtonObj.ButtonRows.MasterRowButton[x]);
             ButtonObj.ButtonRows.SameTimeouts[x]=sameRowTimeOutTracker[x];
         }
-        console.log(ButtonObj.SameTotalTimeout);
         if(ButtonObj.SameTotalTimeout)
             ButtonObj.MasterButton=ButtonObj.GUIDS[0];
         return ButtonObj;

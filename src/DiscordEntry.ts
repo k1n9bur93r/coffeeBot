@@ -179,11 +179,11 @@ function DisableButton(Hash:string,ID:string,ActionRow:number,SameTotalTimeout=f
     //- if they don't then just disable the current button in the row
     let index=SentButtons.get(Hash).findIndex(item=>item.ID==ID);
     let overrideAllExpire=SentButtons.get(Hash)[index].Type.overrideAllExpire;
-    console.log(overrideAllExpire);
-    console.log(SameTotalTimeout);
-    console.log(SameRowTimeout);
-    console.log(SameTotalTimeout==true&&ID==MasterButton);
-    console.log(SameRowTimeout==true&&MasterRowButton==ID);
+    console.log("Over ride all "+ overrideAllExpire);
+    console.log(" same total timeout  "+SameTotalTimeout);
+    console.log(" same row timeout "+SameRowTimeout);
+    console.log(" same total timeout is true AND ID is the same as master button "+ (SameTotalTimeout==true&&ID==MasterButton));
+    console.log(" Same row timeout is true AND ID is the same as row master button "+ (SameRowTimeout==true&&MasterRowButton==ID));
     if(overrideAllExpire||SameTotalTimeout==false||SameTotalTimeout==true&&ID==MasterButton)
     {
     SentButtons.get(Hash)[index].Interaction.fetchReply()
@@ -226,7 +226,7 @@ function ButtonTimeOut(ButtonProperties:any)
 {
     
     let foundIndex= SentButtons.get(ButtonProperties.Hash).findIndex(item=>item.ID==ButtonProperties.ID);
-    console.log(SentButtons.get(ButtonProperties.Hash)[foundIndex].Type);
+    //console.log(SentButtons.get(ButtonProperties.Hash)[foundIndex].Type);
     if(foundIndex!=-1)
     {
         console.log("button has died Here is the  ID "+ButtonProperties.ID+ " and it's row "+SentButtons.get(ButtonProperties.Hash)[foundIndex].Row);
@@ -234,13 +234,17 @@ function ButtonTimeOut(ButtonProperties:any)
     }
 }
 
-function CheckMultiInstance(ButtonObj,IgnoredButtons:Set<string>)
-{
-    for(let x=0;x<SentButtons.get(ButtonObj.Hash).length;x++)
+function CheckMultiInstance(ButtonHash,IgnoredButtons:Set<string>)
+{  
+    if(SentButtons.has(ButtonHash))
     {
-        if(!IgnoredButtons.has(SentButtons.get(ButtonObj.Hash)[x].ID))
+        for(let x=0;x<SentButtons.get(ButtonHash).length;x++)
         {
-            DisableButton(SentButtons.get(ButtonObj.Hash)[x].Hash,SentButtons.get(ButtonObj.Hash)[x].ID,SentButtons.get(ButtonObj.Hash)[x].Row);
+            if(!IgnoredButtons.has(SentButtons.get(ButtonHash)[x].ID))
+            {
+                //console.log(SentButtons.get(ButtonHash));
+                DisableButton(ButtonHash,SentButtons.get(ButtonHash)[x].ID,SentButtons.get(ButtonHash)[x].Row);
+            }
         }
     }
 }
@@ -272,7 +276,7 @@ function SaveButtons(ButtonsObj,interaction)
 {
     //check if the hash for the button currently exists in the map
     //handling buttons that have same timeouts
-
+    let newMultiInstnace:Set<string>= new Set();
     for(let x=0;x<ButtonsObj.GUIDS.length;x++)
     {
         let newElement: SentButtonObj=
@@ -298,9 +302,10 @@ function SaveButtons(ButtonsObj,interaction)
                 )
         };
         //check Multi Instance 
-        if(ButtonsObj.Types[x].multiInstance==false)
+        if(!ButtonsObj.Types[x].multiInstance)
         {
-            
+            newMultiInstnace.add(ButtonsObj.GUIDS[x]);
+            CheckMultiInstance(ButtonsObj.Hashes[x],newMultiInstnace);
         }
         
         if(SentButtons.has(ButtonsObj.Hashes[x]))
