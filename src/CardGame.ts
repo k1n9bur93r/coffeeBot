@@ -3,9 +3,9 @@ let  CardFileIO = require("./FileIO");
 const {Reply,Embed,Buttons}= require("./DiscordCommunication");
 let CardEvents= require("./BuisnessEvents");
 
-let GameStart= new CardEvents.BEvent("CG-Start",["CG-Init","BS-Init"],5,TimeOutLongWait);
+let GameStart= new CardEvents.BEvent("CG-Start",["CG-Init","BS-Init"],5,TimerWarning);
 let GameEnd= new CardEvents.BEvent("CG-End",["CG-Init","CG-Action","CG-Start,","CG-Warning"],.01,null);
-let GameAction= new CardEvents.BEvent("CG-Action",["CG-Start","CG-Action"],4,TimerWarning); 
+let GameAction= new CardEvents.BEvent("CG-Action",["CG-Start","CG-Action","CG-Warning"],4,TimerWarning); 
 let GameEndWarning= new CardEvents.BEvent("CG-Warning",["CG-Start","CG-Action"],1,TimeOutLongWait); 
 let GameInit= new CardEvents.BEvent("CG-Init",["BS-Init"],5,TimeOutNoStart);
 
@@ -398,7 +398,7 @@ function TimeOutNoStart():string
 }
 function TimeOutLongWait():string
 {
-    let message="The current game of 21 has gone stale! No one has played an action in over two minutes. Wrapping up the game!";
+    let message="The current game of 21 has gone stale! No one has played an action in over five minutes. Wrapping up the game!";
 
     for(let x=0;x<currentGame.PlayerObjects.length;x++)
         currentGame.StayHand(x);
