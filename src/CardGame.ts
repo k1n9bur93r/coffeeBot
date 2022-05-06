@@ -3,9 +3,10 @@ let  CardFileIO = require("./FileIO");
 const {Reply,Embed,Buttons}= require("./DiscordCommunication");
 let CardEvents= require("./BuisnessEvents");
 
-let GameStart= new CardEvents.BEvent("CG-Start",["CG-Init","BS-Init"],2,TimeOutLongWait);
-let GameEnd= new CardEvents.BEvent("CG-End",["CG-Init","CG-Action","CG-Start"],.01,null);
-let GameAction= new CardEvents.BEvent("CG-Action",["CG-Start","CG-Action"],2,TimeOutLongWait); 
+let GameStart= new CardEvents.BEvent("CG-Start",["CG-Init","BS-Init"],5,TimeOutLongWait);
+let GameEnd= new CardEvents.BEvent("CG-End",["CG-Init","CG-Action","CG-Start,","CG-Warning"],.01,null);
+let GameAction= new CardEvents.BEvent("CG-Action",["CG-Start","CG-Action"],4,TimerWarning); 
+let GameEndWarning= new CardEvents.BEvent("CG-Warning",["CG-Start","CG-Action"],1,TimeOutLongWait); 
 let GameInit= new CardEvents.BEvent("CG-Init",["BS-Init"],5,TimeOutNoStart);
 
 import {ButtonTypes} from "./DiscordCommunication"
@@ -403,6 +404,12 @@ function TimeOutLongWait():string
         currentGame.StayHand(x);
     CheckWinner();
     return message; 
+}
+
+function TimerWarning()
+{
+    CardEvents.NewBroadCast("Players of the current 21 Game have 60 seconds left to perform an action before the game goes stale.");
+    CardEvents.NewTimerEvent(GameEndWarning);
 }
 
 function CheckWinner () //TODO: take the logic that handles ties and move it back into the main card game object
