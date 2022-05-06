@@ -20,11 +20,12 @@ import {commandObject} from './DiscordCommunication';
 import {commandArgs} from './DiscordCommunication';
 import {commandExecute} from './DiscordCommunication';
 
- interface SentButtonObj{SameTotalTimeout:boolean,ID:string,Interaction:string,Type:any,Command:any,Timer:any,Row:number}
+ interface SentButtonObj{ParentMessage:string,ID:string,Type:any,Command:any,Timer:any,Row:number}
+ interface SentMessageObj{ID:string,SameTotalTimeout:boolean,SameRowTimeout:boolean,MasterButton:string,MasterRowButton:string,Interaction:string}
+
 
 let SentButtons= new Map();
-
-
+let SentMessages=new Map();
 
 const Commands= new Map();
 module.exports = 
@@ -164,24 +165,29 @@ function VerifyUser(interaction)
         return BotReply(tandCResp,interaction);
 }
 
+function DisableButtonComposite(Interaction:any,IDs:Array<string>,ParentMessage:string)
+{
+
+      Interaction.fetchReply()
+    .then(reply=>{
+
+            for(let x=0;x<reply.components.length;x++)
+            {
+                for(let y=0;y<reply.components[x].components.length;y++)
+                {
+                    if(IDs.includes(reply.components[x].components.CustomId))
+                        reply.components[x].components[y].setDisabled(true);
+                }
+            }
+            Interaction.editReply({components:reply.components});
+    });
+}
+
 
 function DisableButton(Hash:string,ID:string,ActionRow:number,SameTotalTimeout=false,MasterButton:string=undefined,SameRowTimeout:boolean=undefined,MasterRowButton:string=undefined)
 {
-    // check if all buttons expire at the same time,
-    //- if they do then check if the button calling is the master button
-    //--if it is the master button then disable all other buttons
-    //--if it is not then just remove the button from the map
-    //-if they don't then go the loop that checks the current row
-    //check if all the buttons in the row expire at the same time 
-    //- if they do then check if the button calling is the master button
-    //--if it is the master button then disable all the row's buttons 
-    //--if it is not the master button then just remove the button from the map
-    //- if they don't then just disable the current button in the row
     let index=SentButtons.get(Hash).findIndex(item=>item.ID==ID);
     let overrideAllExpire=SentButtons.get(Hash)[index].Type.overrideAllExpire;
-    console.log("Over ride all "+ overrideAllExpire);
-    console.log(" same total timeout  "+SameTotalTimeout);
-    console.log(" same row timeout "+SameRowTimeout);
     console.log(" same total timeout is true AND ID is the same as master button "+ (SameTotalTimeout==true&&ID==MasterButton));
     console.log(" Same row timeout is true AND ID is the same as row master button "+ (SameRowTimeout==true&&MasterRowButton==ID));
     if(overrideAllExpire||SameTotalTimeout==false||SameTotalTimeout==true&&ID==MasterButton)
@@ -189,6 +195,7 @@ function DisableButton(Hash:string,ID:string,ActionRow:number,SameTotalTimeout=f
     SentButtons.get(Hash)[index].Interaction.fetchReply()
     .then(reply=>{
         let updatedIndex=SentButtons.get(Hash).findIndex(item=>item.ID==ID); 
+        if (updatedIndex==-1) return;
         if(overrideAllExpire||SameTotalTimeout)
         {
             for(let x=0;x<reply.components.length;x++)
@@ -199,6 +206,7 @@ function DisableButton(Hash:string,ID:string,ActionRow:number,SameTotalTimeout=f
                 }
             }
             SentButtons.get(Hash)[updatedIndex].Interaction.editReply({components:reply.components});
+
         }
         else
         {
@@ -209,6 +217,8 @@ function DisableButton(Hash:string,ID:string,ActionRow:number,SameTotalTimeout=f
                     if(SameRowTimeout||reply.components[ActionRow].components[x].customId==`${Hash}~~${ID}`)
                         reply.components[ActionRow].components[x].setDisabled(true);
                 }
+                console.log(`This is the Hash ${Hash} and the ID ${ID}`);
+               
                 SentButtons.get(Hash)[updatedIndex].Interaction.editReply({components:reply.components});
             }
         }
@@ -221,7 +231,9 @@ function DisableButton(Hash:string,ID:string,ActionRow:number,SameTotalTimeout=f
         SentButtons.get(Hash).splice(updatedIndex,1);  
     }
 }
-   
+
+
+
 function ButtonTimeOut(ButtonProperties:any)
 {
     
@@ -230,7 +242,7 @@ function ButtonTimeOut(ButtonProperties:any)
     if(foundIndex!=-1)
     {
         console.log("button has died Here is the  ID "+ButtonProperties.ID+ " and it's row "+SentButtons.get(ButtonProperties.Hash)[foundIndex].Row);
-        DisableButton(ButtonProperties.Hash,ButtonProperties.ID,SentButtons.get(ButtonProperties.Hash)[foundIndex].Row,ButtonProperties.SameTotalTimeout,ButtonProperties.MasterButton,ButtonProperties.SameRowTimeout,ButtonProperties.MasterRowButton);
+                DisableButton(ButtonProperties.Hash,ButtonProperties.ID,SentButtons.get(ButtonProperties.Hash)[foundIndex].Row,SentButtons.get(ButtonProperties.Hash)[foundIndex].SameTotalTimeout,SentButtons.get(ButtonProperties.Hash)[foundIndex].MasterButton,SentButtons.get(ButtonProperties.Hash)[foundIndex].SameRowTimeout,SentButtons.get(ButtonProperties.Hash)[foundIndex].MasterRowButton);
     }
 }
 
@@ -243,7 +255,7 @@ function CheckMultiInstance(ButtonHash,IgnoredButtons:Set<string>)
             if(!IgnoredButtons.has(SentButtons.get(ButtonHash)[x].ID))
             {
                 //console.log(SentButtons.get(ButtonHash));
-                DisableButton(ButtonHash,SentButtons.get(ButtonHash)[x].ID,SentButtons.get(ButtonHash)[x].Row);
+                DisableButton(ButtonHash,SentButtons.get(ButtonHash)[x].ID,SentButtons.get(ButtonHash)[x].Row,SentButtons.get(ButtonHash)[x].SameTotalTimeout,SentButtons.get(ButtonHash)[x].MasterButton,SentButtons.get(ButtonHash)[x].SameRowTimeout,SentButtons.get(ButtonHash)[x].MasterRowButton);
             }
         }
     }
@@ -272,39 +284,37 @@ function ProcessExistingButtons(ButtonHash,ButtonGuid=undefined)
     }
 }
 
-function SaveButtons(ButtonsObj,interaction)
+function SaveButtons(ButtonsObj)
 {
     //check if the hash for the button currently exists in the map
     //handling buttons that have same timeouts
     let newMultiInstnace:Set<string>= new Set();
+    let counter=1;
     for(let x=0;x<ButtonsObj.GUIDS.length;x++)
     {
         let newElement: SentButtonObj=
         {
-            SameTotalTimeout:ButtonsObj.SameTotalTimeout,
-            Row: ButtonsObj.ButtonRows.Rows[x],
-            Interaction:interaction,
-            ID:ButtonsObj.GUIDS[x],
-            Command:ButtonsObj.Commands[x],
-            Type:ButtonsObj.Types[x],
-            Timer:setTimeout(
-                ButtonTimeOut,
+            ParentMessage:ButtonsObj.ParentMessage, //BUTTON
+            Row: ButtonsObj.ButtonRows.Rows[x], //BUTTON
+            ID:ButtonsObj.GUIDS[x], //BUTTON
+            Command:ButtonsObj.Commands[x], //BUTTON
+            Type:ButtonsObj.Types[x], //BUTTON
+            Timer:setTimeout( //BUTTON
+                ButtonTimeOut, 
                 ButtonsObj.Types[x].timeout,
                     {
                         Hash:ButtonsObj.Hashes[x],
                         ID:ButtonsObj.GUIDS[x],
-                        SameTotalTimeout:ButtonsObj.SameTotalTimeout,
-                        MasterButton:ButtonsObj.MasterButton,
-                        SameRowTimeout:ButtonsObj.ButtonRows.SameTimeouts[ButtonsObj.ButtonRows.Rows[x]],
-                        MasterRowButton:ButtonsObj.ButtonRows.MasterRowButton[ButtonsObj.ButtonRows.Rows[x]]
-
                     }
                 )
         };
+        
         //check Multi Instance 
         if(!ButtonsObj.Types[x].multiInstance)
         {
             newMultiInstnace.add(ButtonsObj.GUIDS[x]);
+            console.log(counter);
+            counter++;
             CheckMultiInstance(ButtonsObj.Hashes[x],newMultiInstnace);
         }
         
@@ -320,10 +330,17 @@ function SaveButtons(ButtonsObj,interaction)
     }
 }
 
+function SaveMessage(ButtonsObj,interaction)
+{
+    let messageObj:SentMessageObj={ID:ButtonsObj.ParentMessage,SameTotalTimeout:ButtonsObj.SameTotalTimeout,SameRowTimeout:ButtonsObj.SameRowTimeout,MasterRowButton:ButtonsObj.MasterRowButton,MasterButton:ButtonsObj.MasterButton,Interaction:interaction};
+    SentMessages.set(ButtonsObj.ParentMessage,messageObj);
+}
+
 async function BotReply(communicationRequests,interaction) { 
     if(communicationRequests.ButtonsObj)
     {
-        SaveButtons(communicationRequests.ButtonsObj,interaction);
+        SaveButtons(communicationRequests.ButtonsObj);
+        SaveMessage(communicationRequests.ButtonsObj,interaction);
     }
     if (communicationRequests.embed && communicationRequests.message == "") {
         if(communicationRequests.ButtonsObj)

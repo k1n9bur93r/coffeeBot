@@ -75,6 +75,7 @@ module.exports =
         let sameRowTimeOutTracker= new Array();
         let sameRowPastButtonType= new Array();
         let sameRowPastButtonGUID= new Array();
+        let messageGuid=crypto.randomBytes(16).toString("hex");
         let rowCount=buttons.length/5|1;
         if(buttons.length>25)
             throw new Error("A Message cannot have more than 25 buttons. 5 Buttons across 5 Rows");
@@ -94,7 +95,7 @@ module.exports =
             
         }
         let PastButton:ButtonSettings=undefined;
-        let ButtonObj={SameTotalTimeout:true,MasterButton:"",ButtonRows:{SameTimeouts:[],Rows:[],MasterRowButton:[]},Types:[],Commands:[],Hashes:[],GUIDS:[],Buttons:actionRows};
+        let ButtonObj={ParentMessage:messageGuid,SameTotalTimeout:true,MasterButton:"",ButtonRows:{SameTimeouts:[],Rows:[],MasterRowButton:[]},Types:[],Commands:[],Hashes:[],GUIDS:[],Buttons:actionRows};
         for(let x=0;x<buttons.length;x++)
         {
 
