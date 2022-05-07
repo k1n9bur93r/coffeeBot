@@ -366,24 +366,24 @@ async function  BatchUpdateDB() :Promise<void>
     console.log("DB Update Event Firing");
     const batch=db.batch();
     try {
-        // for(const[key,value] of playerMap.entries())
-        // {
-        //     console.log("Current update key "+key+" followed by a value");
-        //     console.log(value)
-        //     if((key!=""&&key!=undefined&&key!=null)&&value.UpdatedData==true)
-        //     {
-        //         const dataOperation= db.collection('Players').doc(key);
-        //         batch.set(dataOperation,value.Data)
-        //     }
-        //     else
-        //     {
-        //         //error flag
-        //         wasNullKey=true;
-        //     }
-        // }
+        for(const[key,value] of playerMap.entries())
+        {
+            console.log("Current update key "+key+" followed by a value");
+            console.log(value)
+            if((key!=""&&key!=undefined&&key!=null)&&value.UpdatedData==true)
+            {
+                const dataOperation= db.collection('Players').doc(key);
+                batch.set(dataOperation,value.Data)
+            }
+            else
+            {
+                //error flag
+                wasNullKey=true;
+            }
+        }
 
-        // console.log("Running Batch DB Job ");
-        // await batch.commit();
+        console.log("Running Batch DB Job ");
+        await batch.commit();
     }
     catch(e)
     {
@@ -399,5 +399,5 @@ async function  BatchUpdateDB() :Promise<void>
 
 
 function WriteToLog(action, amount, gainedUser, losingUser) {
-    FileIOLogger.info(`IO: ${action} for ${amount} to ${gainedUser} from ${losingUser}`)
+    FileIOLogger.info(`IO: ${action} for ${amount} to ${losingUser} from ${gainedUser}`)
 }
