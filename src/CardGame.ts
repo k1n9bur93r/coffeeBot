@@ -365,7 +365,6 @@ module.exports =
         return 0;
     }
 }
-
 function CreatePlayerHandEmbed (playerObject, newDraw:boolean=false):object
 {
       let cardString = ``;
@@ -396,6 +395,7 @@ function TimeOutNoStart():string
     currentGame.ResetGame();
     return message;
 }
+
 function TimeOutLongWait():string
 {
     let message="The current game of 21 has gone stale! No one has played an action in over five minutes. Wrapping up the game!";
@@ -499,7 +499,6 @@ for (let x=0;x<tempPlayerObject.length;x++)
         currentGame.ResetGame();
     }
 }
-
 function ValidateAction(playerIndex:number) //this is kinda convoluted and will be updated 
 {
   
