@@ -65,7 +65,7 @@ NewTimerEvent:function(IndividualEvent)
 NewBroadCastEvent:function(EventInfo:any) //some kind of object that describes the broadcast
 {
     EventLogger.info(`TIMER FIRE: ${EventInfo.TimerName}`);
- if(EventInfo.CallingFunction){
+ if(EventInfo.CallbackFunction){
     let data=EventInfo.CallbackFunction();
     if(data)
         DiscordEvent.BotChannelMessage(data,null,process.env.broadcastChannelId);
