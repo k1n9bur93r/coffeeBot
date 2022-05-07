@@ -5,8 +5,8 @@ const fileResponses = require(`../${responseJSON}`);
 let  RespFileIO = require("./FileIO");
 const {Reply,Embed}= require("./DiscordCommunication");
 let {gCloudLang}=require('../config.json')
-//let langCloudBuffer:object= Buffer.from(`${gCloudLang}`,'base64')
-let langCloudBuffer= Buffer.from(`${process.env.gCloudLang}`,'base64')
+let langCloudBuffer:object= Buffer.from(`${gCloudLang}`,'base64')
+//let langCloudBuffer= Buffer.from(`${process.env.gCloudLang}`,'base64')
 let langDecodedCloud=langCloudBuffer.toString();
 langCloudBuffer=JSON.parse(langDecodedCloud);
 

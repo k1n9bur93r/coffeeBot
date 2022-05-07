@@ -1,10 +1,11 @@
 
 
+
 let DiscordEvent = require("./DiscordBroadcast");
 
 let APIEvent = require("./ApiEntry");
 "use strict"
-
+let EventLogger= require("./logger");
 
 interface TimerObject{Timer:ReturnType<typeof setTimeout>,Name:string}
 
@@ -50,7 +51,7 @@ NewTimerEvent:function(IndividualEvent)
                 {
                     if(IndividualEvent.Replace[z]==TimerLists[y].Name)
                     {
-                        console.log(`REPLACED A CURRENT TIMER  '${TimerLists[y].Name}' with: ${IndividualEvent.Name}`);
+                        EventLogger.info(`TIMER REPLACE:  '${TimerLists[y].Name}' with: ${IndividualEvent.Name}`);
                         clearTimeout(TimerLists[y].Timer);
                         TimerLists.splice(y,1);
                         break;
@@ -59,20 +60,21 @@ NewTimerEvent:function(IndividualEvent)
             }
         }
         if(IndividualEvent.CallBack)
-            TimerLists.push({Timer:setTimeout(this.NewBroadCastEvent, IndividualEvent.Minutes,IndividualEvent.CallBack),Name: IndividualEvent.Name} );
+            TimerLists.push({Timer:setTimeout(this.NewBroadCastEvent, IndividualEvent.Minutes,{CallbackFunction:IndividualEvent.CallBack,TimerName:IndividualEvent.Name}),Name: IndividualEvent.Name} );
 },
-NewBroadCastEvent:function(callingFunction:any) //some kind of object that describes the broadcast
+NewBroadCastEvent:function(EventInfo:any) //some kind of object that describes the broadcast
 {
- if(callingFunction){
-    let data=callingFunction();
+    EventLogger.info(`TIMER FIRE: ${EventInfo.TimerName}`);
+ if(EventInfo.CallingFunction){
+    let data=EventInfo.callingFunction();
     if(data)
-        DiscordEvent.BotChannelMessage(data,null,process.env.broadcastChannelId);
+        DiscordEvent.BotChannelMessage(data,null,"755280645978325003")//process.env.broadcastChannelId);
 }
 
 },
 NewBroadCast:function(message,embed=null) //this will get filled in with the channel of the OG interaction
 {
-    DiscordEvent.BotChannelMessage(message,embed,process.env.broadcastChannelId)
+    DiscordEvent.BotChannelMessage(message,embed,"755280645978325003")//process.env.broadcastChannelId)
 }
 }
 

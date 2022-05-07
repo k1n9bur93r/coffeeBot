@@ -14,6 +14,7 @@ let CoffeePotCommand= require("./Commands/CoffeePotCommands");
 let RPSCommand= require("./Commands/RPSCommands");
 let TalkCommand= require("./Commands/TalkCommands");
 let SocialCommand= require("./Commands/SocialCommands");
+let DiscordLogger= require("./logger");
 
 import {commandObject} from './DiscordCommunication';
 import {commandArgs} from './DiscordCommunication';
@@ -50,16 +51,27 @@ module.exports =
 
 function HandleInteraction(interaction)
 {
-
-    if(interaction.isCommand())
-        CommandInteraction(interaction);
-    else if( interaction.isButton())
-        ButtonInteraction(interaction);
+    try {
+        if(interaction.isCommand())
+            CommandInteraction(interaction);
+        else if( interaction.isButton())
+            ButtonInteraction(interaction);
+    } catch (e) {
+        BotChannelMessage(
+            `I'm Sowwy UwU~ <@${
+                interaction.user.id
+            }> \n> but something happened and I'm brokie... || ${e.message}${
+                e.stack ? `\nStackTrace:\n=========\n${e.stack}` : ``
+            } ||`,
+            null,
+            "755280645978325003"//process.env.broadcastChannelId
+        );
+    }
 }
 
 function CommandInteraction(interaction)
 {
-    try {
+   
         let commandFunction: commandExecute=Commands.get(interaction.commandName);
 
         
@@ -115,17 +127,7 @@ function CommandInteraction(interaction)
         return BotReply(commandFunction.Func(args),interaction);  
         }
 
-} catch (e) {
-        BotChannelMessage(
-            `I'm Sowwy UwU~ <@${
-                interaction.user.id
-            }> \n> but something happened and I'm brokie... || ${e.message}${
-                e.stack ? `\nStackTrace:\n=========\n${e.stack}` : ``
-            } ||`,
-            null,
-            process.env.broadcastChannelId
-        );
-    }
+
 }
 function ButtonInteraction(interaction)
 {
@@ -165,6 +167,7 @@ function ButtonInteraction(interaction)
     }
 
     let PassedJSON=JSON.parse(interaction.customId);
+    DiscordLogger.info(`BUTTON CLICK : ${interaction.customId}`);
     let commandFunction: commandExecute=Commands.get(PassedJSON.Command);
     let args ={} as commandArgs;
     args=PassedJSON.Args;
@@ -197,6 +200,7 @@ function DisablePastButton(obj:DisableButtonsObj)
 
 function DisableClickedMessageButtons(obj:DisableButtonsObj)
 {
+    DiscordLogger.info(`BUTTON EXPIRED`);
     obj.interaction.fetchReply()
     .then(reply=>{
         for(let x=0;x<reply.components[0].components.length;x++)

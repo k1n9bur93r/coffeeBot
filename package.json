@@ -12,7 +12,10 @@
     "firebase-admin": "^10.0.1",
     "source-map-loader": "^3.0.1",
     "tslib": "^2.3.1",
-    "typescript": "^3.9.10"
+    "typescript": "^3.9.10",
+    "winston": "^3.7.2",
+    "winston-papertrail": "^1.0.5",
+    "winston-syslog": "^2.5.0"
   },
   "scripts": {
     "build": "tsc --build",

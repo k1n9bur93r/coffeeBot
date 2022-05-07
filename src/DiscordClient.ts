@@ -15,8 +15,8 @@ class TrueDiscordClient
                 Intents.FLAGS.GUILD_MEMBERS,
             ],
         });
-        //this.client.login(discordToken);
-        this.client.login(process.env.discordToken);
+        this.client.login(discordToken);
+        //this.client.login(process.env.discordToken);
         this.client.once("ready", () => 
         {
             this.client.user.setActivity("/commands", { type: "LISTENING" });

@@ -51,7 +51,6 @@ module.exports =
         let ButtonObj={Types:[],Buttons:new MessageActionRow()};
         for(let x=0;x<buttons.length;x++)
         {
-            console.log(buttons[x].id);
             if(buttons[x].type)
                 ButtonObj.Types.push(DefaultButtons[buttons[x].type]);
             else if (buttons[x].customType)

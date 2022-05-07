@@ -3,11 +3,12 @@
 let FileIO = require("./FileIO");
 let Discord= require("./DiscordEntry");
 let API=require("./ApiEntry");
-
+let loggers = require("./logger");
 FileIO.Initalize();
 Discord.Initalize();
 API.Initalize();
 console.log("Ready!");
+loggers.info('hello papertrail');
 // Need to do fast TODO: 
 // Track the channel ID of the og request that was made so any broadcasts related to the request happen in the same channel
 

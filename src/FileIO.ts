@@ -2,18 +2,20 @@
 const admin = require('firebase-admin'); 
 const playerMap = new Map();
 let {gCloudDB} = require("../config.json");
-//let cloudBuffer:object= Buffer.from(`${gCloudDB}`,'base64')
-let cloudBuffer:object= Buffer.from(`${process.env.gCloudDB}`,'base64')
+let cloudBuffer:object= Buffer.from(`${gCloudDB}`,'base64')
+//let cloudBuffer:object= Buffer.from(`${process.env.gCloudDB}`,'base64')
 let decodedCloud :string=cloudBuffer.toString();
 cloudBuffer=JSON.parse(decodedCloud);
 admin.initializeApp({credential:admin.credential.cert(cloudBuffer)})
+
 const db= admin.firestore();
 let writeActions: number=0;
 let timerStart: number=0;
 let timerObject: ReturnType<typeof setTimeout>;
-//const Logging=[];
+
+let FileIOLogger=require(`./logger`);
 //TODO set config values for how often things are saved to the DB, test the overflow handler insta save 
-//TODO figure out how to handle logging in a way that requires only write, no reading to deterime when to add to stuff 
+
 
 
 module.exports = {
@@ -62,7 +64,7 @@ module.exports = {
         playerMap.get(mentionedUser).UpdatedData=true;
         playerMap.get(interactionUser).UpdatedData=true;
         NewCacheAction()
-        //WriteToLog(action, amount, interactionUser, mentionedUser);
+        WriteToLog(action, amount, interactionUser, mentionedUser);
     },
     RemoveUserCoffee: function (interactionUser: number,mentionedUser: number,amount: number,action: string) :void 
     {
@@ -91,7 +93,7 @@ module.exports = {
         playerMap.get(mentionedUser).UpdatedData=true;
         playerMap.get(interactionUser).UpdatedData=true;
         NewCacheAction()
-        //WriteToLog(action, amount, interactionUser, mentionedUser);
+        WriteToLog(action, amount, interactionUser, mentionedUser);
     },
     GetDebts: function (userId :number) :object
     {
@@ -295,8 +297,6 @@ module.exports = {
 
 };
 
-
-
 function PlayerObject(Data:Object=undefined)
 {
     let Player={
@@ -366,24 +366,24 @@ async function  BatchUpdateDB() :Promise<void>
     console.log("DB Update Event Firing");
     const batch=db.batch();
     try {
-        for(const[key,value] of playerMap.entries())
-        {
-            console.log("Current update key "+key+" followed by a value");
-            console.log(value)
-            if((key!=""&&key!=undefined&&key!=null)&&value.UpdatedData==true)
-            {
-                const dataOperation= db.collection('Players').doc(key);
-                batch.set(dataOperation,value.Data)
-            }
-            else
-            {
-                //error flag
-                wasNullKey=true;
-            }
-        }
+        // for(const[key,value] of playerMap.entries())
+        // {
+        //     console.log("Current update key "+key+" followed by a value");
+        //     console.log(value)
+        //     if((key!=""&&key!=undefined&&key!=null)&&value.UpdatedData==true)
+        //     {
+        //         const dataOperation= db.collection('Players').doc(key);
+        //         batch.set(dataOperation,value.Data)
+        //     }
+        //     else
+        //     {
+        //         //error flag
+        //         wasNullKey=true;
+        //     }
+        // }
 
-        console.log("Running Batch DB Job ");
-        await batch.commit();
+        // console.log("Running Batch DB Job ");
+        // await batch.commit();
     }
     catch(e)
     {
@@ -397,13 +397,7 @@ async function  BatchUpdateDB() :Promise<void>
 
 }
 
-//not being used currently
+
 function WriteToLog(action, amount, gainedUser, losingUser) {
-    try {
-        let logMessage = `${action}: ${gainedUser} ${amount} ${losingUser}`;
-        let timestamp = new Date().toISOString();
-    } catch (e) {
-        //think of some logging error event here
-        throw e;
-    }
+    FileIOLogger.info(`IO: ${action} for ${amount} to ${gainedUser} from ${losingUser}`)
 }
