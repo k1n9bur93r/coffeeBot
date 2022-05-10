@@ -342,7 +342,7 @@ function NewCacheAction() :void
         timerStart=Date.now();
         timerObject= setTimeout(BatchUpdateDB,(1000*30)); //thirty second save period 
     }
-    else if(writeActions>20&&timerStart<(Date.now()+(1000*10))) //ten second save period 
+    else if(writeActions>10&&timerStart<(Date.now()+(1000*10))) //ten second save period 
     {
         FileIOLogger("SAVING DATA AHEAD OF TIME DUE TO HIGH ACTIVITY")
         clearTimeout(timerObject);
