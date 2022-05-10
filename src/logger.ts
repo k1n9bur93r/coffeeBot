@@ -22,4 +22,32 @@ const logger = winston.createLogger({
   exceptionHandlers:[papertrail]
 });
 
-module.exports=logger;
+function MultiSink(statement:string,level:string=undefined)
+{
+  if(!level) level="INFO";
+  level=level.toUpperCase();
+//heroku specific sink
+console.log(`${level}: ${statement}`);
+
+//papertrial specif sink
+switch(level)
+{
+  case "ERROR" : {
+    logger.error(statement);
+    break;
+  }
+  case "INFO" :
+  {
+    logger.info(statement);
+    break;
+  }
+  default :
+  {
+    logger.info(statement);
+  }
+}
+
+
+}
+
+module.exports=MultiSink;

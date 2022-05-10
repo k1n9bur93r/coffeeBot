@@ -23,17 +23,17 @@ module.exports = {
     {
         try
         {
-            console.log("Fetching Player Information from FireStore DB ");
+            FileIOLogger("Fetching Player Information from FireStore DB ");
             let playerData=await db.collection('Players').get();
-            console.log("Player Information Fetched, Storing in Hashmap");
+            FileIOLogger("Player Information Fetched, Storing in Hashmap");
             playerData.forEach(document=>{
                 playerMap.set(document.id,PlayerObject(document.data()));
             });
-            console.log("Player Information Stored in Hash Map");
+            FileIOLogger("Player Information Stored in Hash Map");
         }
         catch(e)
         {
-            console.log("Failed to load up local DB cache,"+e.logMessage);
+            FileIOLogger("Failed to load up local DB cache,"+e.logMessage, "ERROR");
         }
     
     },
@@ -148,7 +148,7 @@ module.exports = {
     {
        const returnData = playerMap.get(userId);
         if (returnData==undefined) {
-            console.log('No such document!'); //TOD better error handeling here
+            FileIOLogger('No such document!',"ERROR"); //TOD better error handeling here
             ValidateUser(userId);
             return playerMap.get(userId).Data;
           } else
@@ -338,13 +338,13 @@ function NewCacheAction() :void
     writeActions++;
     if(writeActions!=0&&timerStart==0)
     {
-        console.log("DB Update Event Created");
+        FileIOLogger("DB Update Event Created");
         timerStart=Date.now();
-        timerObject= setTimeout(BatchUpdateDB,(1000*60*2)); 
+        timerObject= setTimeout(BatchUpdateDB,(1000*30)); //thirty second save period 
     }
-    else if(writeActions>20&&timerStart<(Date.now()+(1000*60*1)))
+    else if(writeActions>20&&timerStart<(Date.now()+(1000*10))) //ten second save period 
     {
-        console.log("SAVING DATA AHEAD OF TIME DUE TO HIGH ACTIVITY")
+        FileIOLogger("SAVING DATA AHEAD OF TIME DUE TO HIGH ACTIVITY")
         clearTimeout(timerObject);
         writeActions=0;
         timerStart=0;
@@ -356,20 +356,18 @@ function NewCacheAction() :void
 function ValidateUser(interactionUser :number) :void
 {
     if (playerMap.get(interactionUser) == undefined) {
-        console.log("Non existant user!")
+        FileIOLogger("Non existant user!")
         playerMap.set(interactionUser,NewPlayer(interactionUser));
     }
 }
 async function  BatchUpdateDB() :Promise<void>
 {
     let wasNullKey=false;
-    console.log("DB Update Event Firing");
+    FileIOLogger("DB Update Event Firing");
     const batch=db.batch();
     try {
         for(const[key,value] of playerMap.entries())
         {
-            console.log("Current update key "+key+" followed by a value");
-            console.log(value)
             if((key!=""&&key!=undefined&&key!=null)&&value.UpdatedData==true)
             {
                 const dataOperation= db.collection('Players').doc(key);
@@ -382,22 +380,22 @@ async function  BatchUpdateDB() :Promise<void>
             }
         }
 
-        console.log("Running Batch DB Job ");
+        FileIOLogger("Running Batch DB Job ");
         await batch.commit();
     }
     catch(e)
     {
-        console.log("FAILED TO UPDATE FIRESTORE DB "+e.message);
+        FileIOLogger("FAILED TO UPDATE FIRESTORE DB "+e.message, "ERROR");
     }
     writeActions=0;
     timerStart=0;
     timerObject=undefined;
-    console.log("Batch DB job completed");
+    FileIOLogger("Batch DB job completed");
     //TODO FIX WHEN THERE IS A PROPER ERROR/ EVENT HANDLER 
 
 }
 
 
 function WriteToLog(action, amount, gainedUser, losingUser) {
-    FileIOLogger.info(`IO: ${action} for ${amount} to ${losingUser} from ${gainedUser}`)
+    FileIOLogger(`IO: ${action} for ${amount} to ${losingUser} from ${gainedUser}`)
 }

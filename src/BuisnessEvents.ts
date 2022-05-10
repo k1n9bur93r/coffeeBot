@@ -51,7 +51,7 @@ NewTimerEvent:function(IndividualEvent)
                 {
                     if(IndividualEvent.Replace[z]==TimerLists[y].Name)
                     {
-                        EventLogger.info(`TIMER REPLACE:  '${TimerLists[y].Name}' with: ${IndividualEvent.Name}`);
+                        EventLogger(`TIMER REPLACE:  '${TimerLists[y].Name}' with: ${IndividualEvent.Name}`);
                         clearTimeout(TimerLists[y].Timer);
                         TimerLists.splice(y,1);
                         break;
@@ -64,7 +64,7 @@ NewTimerEvent:function(IndividualEvent)
 },
 NewBroadCastEvent:function(EventInfo:any) //some kind of object that describes the broadcast
 {
-    EventLogger.info(`TIMER FIRE: ${EventInfo.TimerName}`);
+    EventLogger(`TIMER FIRE: ${EventInfo.TimerName}`);
  if(EventInfo.CallbackFunction){
     let data=EventInfo.CallbackFunction();
     if(data)

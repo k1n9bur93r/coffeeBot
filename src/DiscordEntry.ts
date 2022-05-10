@@ -155,7 +155,7 @@ function ButtonInteraction(interaction)
             for(let y=0;y<MatchingButtons[x].Types.length;y++)
                 {
                     if(MatchingButtons[x].Types[y].clickOnce)
-                        DisablePastButton(MatchingButtons[x].Timer._timerArgs[0]);
+                    DisableClickedMessageButtons(MatchingButtons[x].Timer._timerArgs[0]);
                 }
         }
         else
@@ -167,7 +167,7 @@ function ButtonInteraction(interaction)
     }
 
     let PassedJSON=JSON.parse(interaction.customId);
-    DiscordLogger.info(`BUTTON CLICK : ${interaction.customId}`);
+    DiscordLogger(`BUTTON CLICK : ${interaction.customId}`);
     let commandFunction: commandExecute=Commands.get(PassedJSON.Command);
     let args ={} as commandArgs;
     args=PassedJSON.Args;
@@ -187,26 +187,19 @@ function VerifyUser(interaction)
         return BotReply(tandCResp,interaction);
 }
 
-function DisablePastButton(obj:DisableButtonsObj)
-{
-    obj.interaction.fetchReply()
-    .then(reply=>{ 
-        for(let x=0;x<reply.components[0].components.length;x++)
-            reply.components[0].components[x].setDisabled(true);
-        obj.interaction.editReply({components:reply.components});
-    });
-    SentButtons.splice(obj.index,1);
-}
-
 function DisableClickedMessageButtons(obj:DisableButtonsObj)
 {
-    DiscordLogger.info(`BUTTON EXPIRED`);
+    DiscordLogger(`BUTTON EXPIRED`);
     obj.interaction.fetchReply()
     .then(reply=>{
+        if (reply)
+        {
+        let updatedIndex=SentButtons.findIndex(objProp=>objProp.interaction=obj.interaction);
         for(let x=0;x<reply.components[0].components.length;x++)
             reply.components[0].components[x].setDisabled(true);
         obj.interaction.editReply({components:reply.components});
-        SentButtons.splice(obj.index,1);
+        SentButtons.splice(updatedIndex,1);
+        }
     });
 }
 
