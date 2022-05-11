@@ -27,7 +27,7 @@ const DefaultButtons:Array<ButtonSettings>=[
     {multiInstances:false,timeout:5*60000,name:"SingleLong",clickOnce:true,overrideAllExpire:true,overrideAllClick:true,row:0},
     {multiInstances:false,timeout:2*60000,name:"MultiShort",clickOnce:false,overrideAllExpire:true,overrideAllClick:true,row:0},
     {multiInstances:false,timeout:5*60000,name:"MultiLong",clickOnce:false,overrideAllExpire:true,overrideAllClick:true,row:0},
-    {multiInstances:false,timeout:.25*60000,name:"Stack1",clickOnce:false,overrideAllExpire:false,overrideAllClick:true,row:0},
+    {multiInstances:true,timeout:.25*60000,name:"Stack1",clickOnce:false,overrideAllExpire:false,overrideAllClick:true,row:0},
     {multiInstances:false,timeout:2*60000,name:"Stack2",clickOnce:false,overrideAllExpire:false,overrideAllClick:true,row:1},
     {multiInstances:false,timeout:1*60000,name:"Stack3",clickOnce:false,overrideAllExpire:false,overrideAllClick:true,row:2},
 ];
