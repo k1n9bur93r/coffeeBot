@@ -12,8 +12,10 @@ let OmniEnd= new CoinEvents.BEvent("OM-End",["OM-Init"],.01,null);
 import {commandObject} from '../DiscordCommunication';
 import {commandArgs} from '../DiscordCommunication';
 import {CoinFlipResponse} from '../CoinFlip'
-import { ButtonTypes } from '../DiscordCommunication';
-import {ButtonRowSettings} from '../DiscordCommunication';
+import {QwikCreate,QwikButtonTypes}  from '../DiscordButtons';
+
+const CreateButtons = new QwikCreate();
+
 module.exports=
 {
 
@@ -30,6 +32,7 @@ module.exports=
     }
 
 }
+
 
 function Flip(args:commandArgs) 
 {
@@ -125,7 +128,7 @@ function Flip(args:commandArgs)
                      id:{Command:"coinflip",Args:{UserID:"PROVID"}},
                      label:"Take Coin Flip ",
                      style:"SUCCESS",
-                     type:ButtonTypes.SingleLong      
+                     type:QwikButtonTypes.SingleLong      
                     }
                 ]
             );
@@ -139,7 +142,7 @@ function Flip(args:commandArgs)
                      id:{Command:"multiflip",Args:{UserID:"PROVID",Amount:args.Amount}},
                      label:`Take Multi Flip for ${args.Amount} coffs`,
                      style:"SUCCESS",
-                     type:ButtonTypes.SingleLong   
+                     type:QwikButtonTypes.SingleLong   
                     }
                 ]
             );
@@ -164,54 +167,31 @@ function OmniFlipConfirm(args:commandArgs)
         "DARK_AQUA",
         "https://media1.popsugar-assets.com/files/thumbor/akF5W-FXSyszxgQZD--zBUaX9-g/fit-in/2048xorig/filters:format_auto-!!-:strip_icc-!!-/2012/09/39/3/192/1922195/81485b01898e48d8_404794e6026211e2af9022000a1c9e2c_7/i/Ying-Yang.jpeg"
         );
-    let buttons=Buttons(
+    let buttons=CreateButtons.CreateButtonComponent(
         [
             {
              id:{Command:"omniflipaccept",Args:{UserID:args.UserID}},
              label:"I'm Ready",
              style:"SUCCESS", 
-             type:ButtonTypes.Stack1  
+             type:QwikButtonTypes.SingleShort  
             },
             {
                 id:{Command:"omniflipdeny",Args:{UserID:args.UserID}},
                 label:"No I'm Scared",
                 style:"DANGER", 
-                type:ButtonTypes.Stack2     
-            },
-            {
-                id:{Command:"omniflipdeny",Args:{UserID:args.UserID}},
-                label:"No I'm Scared",
-                style:"DANGER", 
-                type:ButtonTypes.Stack2     
+                type:QwikButtonTypes.SingleShort     
             },
             {
                 id:{Command:"omniflipchance",Args:{UserID:args.UserID}},
                 label:"Choose For Me ",
                 style:"PRIMARY"  , 
-                type:ButtonTypes.Stack3   
-            },
-            {
-                id:{Command:"omniflipchance",Args:{UserID:args.UserID}},
-                label:"Choose For Me ",
-                style:"PRIMARY"  , 
-                type:ButtonTypes.Stack3   
-            },
-            {
-                id:{Command:"omniflipchance",Args:{UserID:args.UserID}},
-                label:"Choose For Me ",
-                style:"PRIMARY"  , 
-                type:ButtonTypes.Stack3   
+                type:QwikButtonTypes.SingleShort   
             }
-        ],
-        {
-            rowCount:3,
-            rowLength:3
-        }
+        ]
     );
     return Reply(embed,"",true,buttons);
-    
-
 }
+
 function OmniFlipAccept(args:commandArgs)
 {
     let responses=[] as Array<CoinFlipResponse>;

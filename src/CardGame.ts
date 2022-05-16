@@ -9,6 +9,8 @@ let GameAction= new CardEvents.BEvent("CG-Action",["CG-Start","CG-Action"],2,Tim
 let GameInit= new CardEvents.BEvent("CG-Init",["BS-Init"],5,TimeOutNoStart);
 
 import {ButtonTypes} from "./DiscordCommunication"
+import {ButtonStyles} from './DiscordCommunication'
+import {ButtonAttributes} from './DiscordCommunication'
 
 const CardThumbnail="https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg";
 
@@ -505,6 +507,8 @@ function ValidateAction(playerIndex:number) //this is kinda convoluted and will 
     return null;
 }
 
+//Button UI Logic
+
 function HandButtons(interactionID)
 {
     return Buttons(
@@ -534,8 +538,20 @@ function JoinButton()
              id:{Command:"21",Args:{UserID:"PROVID"}},
              label:"Join / Start",
              style:"PRIMARY",  
-             type:ButtonTypes.MultiLong 
+             type:ButtonTypes.MultiLong,
+             postProcess:{overrideDisableLogic:true,function:DisableJoinButtonOnStart}
             }
         ]
     );
+}
+
+
+function DisableJoinButtonOnStart(UserID) : ButtonAttributes
+{
+    console.log("I am in the postprocess function")
+    if(UserID==currentGame.StartingPlayer)
+        return {style:ButtonStyles.Secondary,disable:true,text:"Started"};
+    else
+        return{style:ButtonStyles.Primary,disable:false,text:""};
+
 }
