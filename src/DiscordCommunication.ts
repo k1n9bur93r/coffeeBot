@@ -1,5 +1,5 @@
 const { MessageEmbed} = require("discord.js");
-import {QwikButtons} from './DiscordButtons';
+import {QwikGeneratedButtons} from './DiscordButtons';
 
 
 "use strict"
@@ -29,7 +29,7 @@ module.exports =
         return embed;
 
     },
-    Reply: function (embedObject: object, botMessage: string, isHidden: boolean = false, buttonsObj: QwikButtons = null) {
+    Reply: function (embedObject: object, botMessage: string, isHidden: boolean = false, buttonsObj: QwikGeneratedButtons = null) {
         let object = {
             winner: 0,
             embed: embedObject,

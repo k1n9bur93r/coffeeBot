@@ -2,8 +2,7 @@
 
 const {DiscordClientInstance} =require ("./DiscordClient"); 
 const {BotChannelMessage}=require("./DiscordBroadcast");
-const {ButtonSettings}= require("./DiscordCommunication");
-
+let  QwikButtonService = require( './DiscordButtons').QwikButtonService;
 
 let CardGameCommand= require("./Commands/CardGameCommands")
 let ProfileCommand =require("./Commands/PlayerInfoCommands")
@@ -17,25 +16,12 @@ let SocialCommand= require("./Commands/SocialCommands");
 
 
 
-import {ButtonIDPair, commandObject} from './DiscordCommunication';
+import {commandObject} from './DiscordCommunication';
 import {commandArgs} from './DiscordCommunication';
 import {commandExecute} from './DiscordCommunication';
-import {ButtonStyles} from './DiscordCommunication'
-import {ButtonAttributes} from './DiscordCommunication'
-import {ButtonProcessed} from './DiscordButtons'
-
- interface SentButtonObj{ParentMessage:string,ID:string,Type:any,Command:any,PostProcess:any}
- interface SentMessageObj{ID:string,Interaction:string,Timer:any}
- interface MultiInstanceButtons{MessageID:string,ButtonID:string};
-
-
-
-
-let SentButtons= new Map();
-let ButtonGroupTimers= new Map();
-let SentMessages=new Map();
 
 const Commands= new Map();
+const ButtonService= new QwikButtonService();
 module.exports = 
 {
     Initalize: function()
@@ -138,26 +124,9 @@ function CommandInteraction(interaction)
 }
 function ButtonInteraction(interaction)
 {
-    const getHash=/.+?(?=~~)/; //coverd
-    const getID=/(?<=\~~).*/; //coverd
-    let Hash=getHash.exec(interaction.customId)[0]; //coverd
-    let ID=getID.exec(interaction.customId)[0]; //coverd
-
-
     let needsToAgree=VerifyUser(interaction); 
     if(needsToAgree) return ;
-
-    let foundIndex= SentButtons.get(Hash).findIndex(item=>item.ID==ID); //coverd
-    let PassedJSON= SentButtons.get(Hash)[foundIndex].Command; //coverd
-    let commandFunction: commandExecute=Commands.get(PassedJSON.Command);
-
-    let args:commandArgs;
-
-    args=JSON.parse(JSON.stringify(PassedJSON.Args));
-    if(args.UserID&&args.UserID=="PROVID")
-        args.UserID=interaction.user.id;
-    ProcessExistingButtons({Hash:Hash,ID:ID},interaction.user.id);    //coverd
-    return BotReply(commandFunction.Func(args),interaction);
+    return BotReply(ButtonService.PressButton(interaction,Commands),interaction);
 }
 
 function VerifyUser(interaction)
@@ -169,248 +138,12 @@ function VerifyUser(interaction)
     if(tandCResp)
         return BotReply(tandCResp,interaction);
 }
-//covered
-function DisableMultipleMessageButtons(MessageID:string,ButtonIDs:Array<ButtonIDPair>,overrides:{click:boolean,expire:boolean,ignoredButton:string}={click:false,expire:false,ignoredButton:""}){
-
-    let overrideAll=false;
-    if(SentMessages.has(MessageID))
-    {
-        if(overrides)
-        {
-            for(let x=0;x<ButtonIDs.length;x++)
-            {
-                let index=SentButtons.get(ButtonIDs[x].Hash).findIndex(item=>item.ID==ButtonIDs[x].ID);
-                if(index!=-1)
-                {
-                    if(overrides.expire)
-                        overrideAll= SentButtons.get(ButtonIDs[x].Hash)[index].Type.overrideAllExpire;
-                    else if(overrides.click)
-                        overrideAll= SentButtons.get(ButtonIDs[x].Hash)[index].Type.overrideAllClick;
-                }
-            }
-        }
-        SentMessages.get(MessageID).Interaction.fetchReply()
-        .then(reply=>{ 
-            for(let x=0;x<reply.components.length;x++)
-            {
-                for(let y=0;y<reply.components[x].components.length;y++)
-                {
-                    let overrideIgnoreIndividual=true;
-                    let checkExists=ButtonIDs.findIndex(item=>{ 
-
-                        if(item.Hash+"~~"+item.ID== reply.components[x].components[y].customId) {
-                            if(item.ID==overrides.ignoredButton)
-                                overrideIgnoreIndividual=false;
-                            return true;
-                        }
-                        else 
-                            return false;    
-                    });
-                    if(overrideIgnoreIndividual && (overrideAll || checkExists!=-1))
-                        reply.components[x].components[y]=UpdateButtonAttribute(reply.components[x].components[y]); 
-                }
-            }
-            SentMessages.get(MessageID).Interaction.editReply({components:reply.components});
-        });
-    }
-
-}
-
-//coverd
-function UpdateIndividualMessageButton(MessageID:string,Button:ButtonIDPair,attributes:ButtonAttributes)
-{
-    SentMessages.get(MessageID).Interaction.fetchReply()
-    .then(reply=>{ 
-        for(let x=0;x<reply.components.length;x++)
-        {
-            for(let y=0;y<reply.components[x].components.length;y++)
-            {
-                    if(reply.components[x].components[y].customId==`${Button.Hash}~~${Button.ID}`)
-                        reply.components[x].components[y]=UpdateButtonAttribute(reply.components[x].components[y],attributes); 
-            }
-        }
-        SentMessages.get(MessageID).Interaction.editReply({components:reply.components});
-    });
-}
-//covered
-function UpdateButtonAttribute(buttonRef:any,attributes:ButtonAttributes={style:ButtonStyles.NOACTION,text:"",disable:true})
-{   
-    if(attributes.text!="")
-    {
-        buttonRef.setLabel(attributes.text);
-    }
-    if(attributes.style!=ButtonStyles.NOACTION)
-    {
-        buttonRef.setStyle(attributes.style);
-    }
-    
-    buttonRef.setDisabled(attributes.disable);
-    return buttonRef;
-}
-//covered
-function ButtonTimeOut(TimedOutSet)
-{
-    DisableMultipleMessageButtons(TimedOutSet.MessageID,TimedOutSet.Buttons,{click:false,expire:true,ignoredButton:""});
-}
-//covered
-function MessageTimeOut(MessageID)
-{
-if(SentMessages.has(MessageID))
-{
-    SentMessages.delete(MessageID);
-}
-else
-{
-    console.log("Temp statement replace with logging later");
-    //message reference does not exist for some reason, log it 
-}
-}
-function CheckMultiInstance(ButtonHash:Array<string>,IgnoredButtons:Array<MultiInstanceButtons>) //checked
-{  
-    let GroupedButtons:ButtonIDPair;
-    let GroupedAction: {MessageID:string,Buttons:typeof GroupedButtons[]};
-    let GroupedMessages= new Array<typeof GroupedAction>();
-    
-   for(let y=0;y<ButtonHash.length;y++)
-    {
-        if(SentButtons.has(ButtonHash[y]))
-        {
-            for(let x=0;x<SentButtons.get(ButtonHash[y]).length;x++)
-            {
-                if(!IgnoredButtons.some(item=>item.ButtonID==SentButtons.get(ButtonHash[y])[x].ID)){
-                    let messageIndex=GroupedMessages.findIndex(item=>item.MessageID ==SentButtons.get(ButtonHash[y])[x].ParentMessage);
-                    let newArrayElement={Hash:ButtonHash[y],ID:SentButtons.get(ButtonHash[y])[x].ID};
-                    console.log(messageIndex);
-                    
-                    if(messageIndex==-1)
-                        GroupedMessages.push({MessageID:SentButtons.get(ButtonHash[y])[x].ParentMessage,Buttons:[newArrayElement]});
-                    else 
-                        GroupedMessages[messageIndex].Buttons.push(newArrayElement);
-                }
-
-            }
-        }
-    }
-    for(let x=0;x<GroupedMessages.length;x++)
-    {
-        
-        DisableMultipleMessageButtons(GroupedMessages[x].MessageID,GroupedMessages[x].Buttons);
-    }
-}
-function ProcessExistingButtons(Button:ButtonIDPair,ClickingUser) //checked
-{
-
-       let foundIndex= SentButtons.get(Button.Hash).findIndex(item=>item.ID==Button.ID);
-       if(foundIndex==-1) return; //some kind of logging warning here in the future 
-       if(SentButtons.get(Button.Hash)[foundIndex].PostProcess)
-       {
-           let returnedAttributes:ButtonAttributes
-           if(SentButtons.get(Button.Hash)[foundIndex].PostProcess.function)
-           {
-                returnedAttributes=SentButtons.get(Button.Hash)[foundIndex].PostProcess.function(ClickingUser);
-                UpdateIndividualMessageButton(SentButtons.get(Button.Hash)[foundIndex].ParentMessage,Button,returnedAttributes);
-           }
-           if(SentButtons.get(Button.Hash)[foundIndex].PostProcess.overrideDisableLogic)
-            return;
-
-       }
-       if(SentButtons.get(Button.Hash)[foundIndex].Type.clickOnce==true||SentButtons.get(Button.Hash)[foundIndex].Type.overrideAllClick==true)
-       {
-           let savedButtonGUID="";
-           if(SentButtons.get(Button.Hash)[foundIndex].Type.clickOnce==false)
-                savedButtonGUID=Button.ID;
-            console.log(savedButtonGUID);
-            DisableMultipleMessageButtons(SentButtons.get(Button.Hash)[foundIndex].ParentMessage,[Button],{expire:false,click:true,ignoredButton:savedButtonGUID});
-       }
-
-}
-function SaveButtons(ButtonsObj:ButtonProcessed)
-{
-    //check if the hash for the button currently exists in the map
-    //handling buttons that have same timeouts
-   
-    let newMultiInstnace = new Array<MultiInstanceButtons>();
-    let matchedMultInstanceHashes= new Array<string>();
-    for(let x=0;x<ButtonsObj.GUIDS.length;x++)
-    {
-        let newElement: SentButtonObj=
-        {
-            ParentMessage:ButtonsObj.ParentMessage, 
-            ID:ButtonsObj.GUIDS[x], 
-            Command:ButtonsObj.Commands[x], 
-            Type:ButtonsObj.Types[x],
-            PostProcess:ButtonsObj.PostProcess[x]
-        };
-        console.log(newElement.PostProcess);
-        //check Multi Instance 
-        if(ButtonsObj.Types[x].multiInstances==false)
-        {
-            console.log(`Looked at the following button type, and it NOT multiInstance ${ButtonsObj.Types[x].name}`)
-            newMultiInstnace.push({MessageID:ButtonsObj.ParentMessage,ButtonID:ButtonsObj.GUIDS[x]});
-            if(matchedMultInstanceHashes.findIndex(item=>item==ButtonsObj.Hashes[x])==-1)
-                matchedMultInstanceHashes.push(ButtonsObj.Hashes[x])
-        }
-        
-        if(SentButtons.has(ButtonsObj.Hashes[x]))
-        {
-            SentButtons.get(ButtonsObj.Hashes[x]).push(newElement);
-        }
-        else
-        {
-            SentButtons.set(ButtonsObj.Hashes[x],new Array(newElement));   
-        }
-    }
-    CheckMultiInstance(matchedMultInstanceHashes,newMultiInstnace);
-    for(let x=0;x<ButtonsObj.TimeOutGroups.length;x++)
-    {
-        if(x==0)
-        {
-            ButtonGroupTimers.set(ButtonsObj.ParentMessage,new Array(
-                setTimeout( 
-                    ButtonTimeOut, 
-                    ButtonsObj.TimeOutGroups[x].TimerLength,
-                    {
-                        MessageID:ButtonsObj.ParentMessage,
-                        Buttons:ButtonsObj.TimeOutGroups[x].Buttons
-                    }
-                    )
-                )
-            );  
-            
-        }
-        else
-        {
-            ButtonGroupTimers.get(ButtonsObj.ParentMessage).push(
-                setTimeout( 
-                    ButtonTimeOut, 
-                    ButtonsObj.TimeOutGroups[x].TimerLength,
-                    {
-                        MessageID:ButtonsObj.ParentMessage,
-                        Buttons:ButtonsObj.TimeOutGroups[x].Buttons
-                    }
-                    )
-                );
-        }
-    }
-}
-function SaveMessage(ButtonsObj,interaction)
-{
-    console.log(`The longest timer is ${ButtonsObj.TimeOutGroups[0].TimerLength}`)
-    let messageObj:SentMessageObj={ID:ButtonsObj.ParentMessage,Interaction:interaction,
-        Timer:setTimeout(
-            MessageTimeOut,
-            ButtonsObj.TimeOutGroups[0].TimerLength+10000,
-            ButtonsObj.ParentMessage
-        )};
-    SentMessages.set(ButtonsObj.ParentMessage,messageObj);
-}
 
 async function BotReply(communicationRequests,interaction) 
 { 
     if(communicationRequests.ButtonsObj)
     {
-        SaveButtons(communicationRequests.ButtonsObj);
-        SaveMessage(communicationRequests.ButtonsObj,interaction);
+        ButtonService.ProcessQwikButtons(communicationRequests.ButtonsObj,interaction);
     }
     if (communicationRequests.embed && communicationRequests.message == "") {
         if(communicationRequests.ButtonsObj)
