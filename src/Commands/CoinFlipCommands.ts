@@ -12,7 +12,7 @@ let OmniEnd= new CoinEvents.BEvent("OM-End",["OM-Init"],.01,null);
 import {commandObject} from '../DiscordCommunication';
 import {commandArgs} from '../DiscordCommunication';
 import {CoinFlipResponse} from '../CoinFlip'
-import {QwikButtonTypes,QwikButtonConfig}  from '../DiscordButtons';
+import {QwikButtonTypes,QwikButtonConfig,QwikButtonStyles,QwikAttributes,QwikPostProcess}  from '../DiscordButtons';
 
 const QwikButtons = new QwikButtonCreate();
 
@@ -128,7 +128,8 @@ function Flip(args:commandArgs)
                      command:{Command:"coinflip",Args:{UserID:"PROVID"}},
                      label:"Take Coin Flip ",
                      style:"SUCCESS",
-                     type:QwikButtonTypes.SingleLong      
+                     type:QwikButtonTypes.SingleLong,
+                     postProcess:{ overrideDisableLogic: false, function: DisableFlipButtonAfterClick }     
                     } 
                 ]
             );
@@ -142,7 +143,8 @@ function Flip(args:commandArgs)
                      command:{Command:"multiflip",Args:{UserID:"PROVID",Amount:args.Amount}},
                      label:`Take Multi Flip for ${args.Amount} coffs`,
                      style:"SUCCESS",
-                     type:QwikButtonTypes.SingleLong   
+                     type:QwikButtonTypes.SingleLong,
+                     postProcess:{ overrideDisableLogic: false, function: DisableFlipButtonAfterClick }     
                     }
                 ]
             );
@@ -282,10 +284,17 @@ else
    return OmniFlipDeny(args);
 }
 
-
 function OmniTimeOut()
 {
     let OmniCreator=cf.CommandEndOmniRequest();
     CoinEvents.NewBroadCast(`Nobody has taken up <@${OmniCreator}>'s Omniflip, grow a pair people!`);
+
+}
+
+
+function DisableFlipButtonAfterClick() : QwikAttributes
+{
+
+        return{style:QwikButtonStyles.Secondary,disable:true,text:"taken"};
 
 }

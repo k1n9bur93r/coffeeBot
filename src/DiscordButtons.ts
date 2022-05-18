@@ -20,7 +20,7 @@ interface QwikTimeOut { TimerLength: number, Buttons: QwikIDGroup[] }
 
 interface QwikIDGroup { Hash: string, ID: string, MessageID?:string };
 
-interface Qwik{ParentMessage:string,ID:string,Type:any,Command:any,PostProcess:any};
+interface Qwik{ParentMessage:string,ID:string,Type:any,Command:QwikCommmandOptions,PostProcess:QwikPostProcess};
 
 interface QwikMessage{ID:string,Interaction:any,Timer:any};
 
@@ -59,7 +59,7 @@ export const enum QwikGridTypes {
 
     public PressButton(Interaction:any, Commands:any)
     {
-        let IDs= this.GetButtonIdentity(Interaction.customId);
+        let IDs:QwikIDGroup= this.GetButtonIdentity(Interaction.customId);
         let StoredCommand:QwikCommmandOptions= this.GetButtonCommand(IDs);
         let CommandAction: QwikCommand=Commands.get(StoredCommand.Command);
         let ButtonCommandArgument:commandArgs;
@@ -67,6 +67,7 @@ export const enum QwikGridTypes {
         ButtonCommandArgument=JSON.parse(JSON.stringify(StoredCommand.Args));
         if(ButtonCommandArgument.UserID&&ButtonCommandArgument.UserID=="PROVID")
         ButtonCommandArgument.UserID=Interaction.user.id;
+        this.ProcessButtonInteraction(IDs,Interaction.user.id);
         return CommandAction.Func(ButtonCommandArgument);
     }
 
@@ -96,27 +97,33 @@ export const enum QwikGridTypes {
 
     public ProcessButtonInteraction(ButtonIdentidy:QwikIDGroup,InteractionUser:string)
     {
+        let returnedAttributes:QwikAttributes=undefined;
         let foundIndex= this.ActiveQwiks.get(ButtonIdentidy.Hash).findIndex(item=>item.ID==ButtonIdentidy.ID);
+        let savedButtonGUID="";
         if(foundIndex==-1) return; //some kind of logging warning here in the future 
         if(this.ActiveQwiks.get(ButtonIdentidy.Hash)[foundIndex].PostProcess)
         {
-            let returnedAttributes:QwikAttributes
+
             if(this.ActiveQwiks.get(ButtonIdentidy.Hash)[foundIndex].PostProcess.function)
             {
                  returnedAttributes=this.ActiveQwiks.get(ButtonIdentidy.Hash)[foundIndex].PostProcess.function(InteractionUser);
-                 this.PostIndividualButtonUpdate(ButtonIdentidy,returnedAttributes);
+                 savedButtonGUID=ButtonIdentidy.ID;
             }
             if(this.ActiveQwiks.get(ButtonIdentidy.Hash)[foundIndex].PostProcess.overrideDisableLogic)
-             return;
+            {
+                this.PostIndividualButtonUpdate(ButtonIdentidy,returnedAttributes);
+                return;
+            }
  
         }
+        console.log(returnedAttributes);
+        console.log(savedButtonGUID);
         if(this.ActiveQwiks.get(ButtonIdentidy.Hash)[foundIndex].Type.clickOnce==true||this.ActiveQwiks.get(ButtonIdentidy.Hash)[foundIndex].Type.overrideAllClick==true)
         {
-            let savedButtonGUID="";
-            if(this.ActiveQwiks.get(ButtonIdentidy.Hash)[foundIndex].Type.clickOnce==false)
+
+            if(this.ActiveQwiks.get(ButtonIdentidy.Hash)[foundIndex].Type.clickOnce==false||returnedAttributes)
                  savedButtonGUID=ButtonIdentidy.ID;
-             console.log(savedButtonGUID);
-             this.DisableMultipleMessageButtons(this.ActiveQwiks.get(ButtonIdentidy.Hash)[foundIndex].ParentMessage,[ButtonIdentidy],{expire:false,click:true,ignoredButton:savedButtonGUID});
+             this.UpdateMultipleMessageButtons(this.ActiveQwiks.get(ButtonIdentidy.Hash)[foundIndex].ParentMessage,[ButtonIdentidy],{expire:false,click:true,specialButton:{id:savedButtonGUID,updatedAttribute:returnedAttributes}});
         }
     }
 
@@ -152,11 +159,9 @@ export const enum QwikGridTypes {
                 Type:ButtonsObj.Types[x],
                 PostProcess:ButtonsObj.PostProcess[x]
             };
-            console.log(newElement.PostProcess);
             //check Multi Instance 
             if(ButtonsObj.Types[x].multiInstances==false)
             {
-                console.log(`Looked at the following button type, and it NOT multiInstance ${ButtonsObj.Types[x].name}`)
                 newMultiInstnace.push({MessageID:ButtonsObj.ParentMessage,ID:ButtonsObj.GUIDS[x], Hash:ButtonsObj.Hashes[x]});
                 if(matchedMultInstanceHashes.findIndex(item=>item==ButtonsObj.Hashes[x])==-1)
                     matchedMultInstanceHashes.push(ButtonsObj.Hashes[x])
@@ -221,7 +226,7 @@ export const enum QwikGridTypes {
         return buttonRef;
     }
 
-    private  DisableMultipleMessageButtons(MessageID:string,ButtonIdentidies:Array<QwikIDGroup>,overrides:{click:boolean,expire:boolean,ignoredButton:string}={click:false,expire:false,ignoredButton:""}){
+    private  UpdateMultipleMessageButtons(MessageID:string,ButtonIdentidies:Array<QwikIDGroup>,overrides:{click:boolean,expire:boolean,specialButton:any}={click:false,expire:false,specialButton:{id:"",updatedAttribute: undefined}}){
 
         let overrideAll=false;
         if(this.ActiveQwikMessages.has(MessageID))
@@ -247,18 +252,23 @@ export const enum QwikGridTypes {
                     for(let y=0;y<reply.components[x].components.length;y++)
                     {
                         let overrideIgnoreIndividual=true;
+                        let defaultUpdate:QwikAttributes={style:QwikButtonStyles.NOACTION,disable:true,text:""};
                         let checkExists=ButtonIdentidies.findIndex(item=>{ 
-    
-                            if(item.Hash+"~~"+item.ID== reply.components[x].components[y].customId) {
-                                if(item.ID==overrides.ignoredButton)
+
+                            if(item.Hash+"~~"+item.ID== reply.components[x].components[y].customId) 
+                            {
+                                if(item.ID==overrides.specialButton.id&&overrides.specialButton.updatedAttribute==undefined)
                                     overrideIgnoreIndividual=false;
+                                else if(item.ID==overrides.specialButton.id&&overrides.specialButton.updatedAttribute)
+                                defaultUpdate=overrides.specialButton.updatedAttribute;
                                 return true;
                             }
                             else 
                                 return false;    
                         });
+                        console.log(defaultUpdate);
                         if(overrideIgnoreIndividual && (overrideAll || checkExists!=-1))
-                            reply.components[x].components[y]=this.UpdateButtonAttribute(reply.components[x].components[y]); 
+                            reply.components[x].components[y]=this.UpdateButtonAttribute(reply.components[x].components[y],defaultUpdate); 
                     }
                 }
                 this.ActiveQwikMessages.get(MessageID).Interaction.editReply({components:reply.components});
@@ -268,7 +278,7 @@ export const enum QwikGridTypes {
     }
     private  ButtonTimeOut(TimedOutSet)
     {
-        this.DisableMultipleMessageButtons(TimedOutSet.MessageID,TimedOutSet.Buttons,{click:false,expire:true,ignoredButton:""});
+        this.UpdateMultipleMessageButtons(TimedOutSet.MessageID,TimedOutSet.Buttons,{click:false,expire:true,specialButton:{id:"",updatedAttribute:undefined}});
     }
     private  MessageTimeOut(MessageID)
     {
@@ -297,7 +307,6 @@ export const enum QwikGridTypes {
                     if(!IgnoredButtons.some(item=>item.ID==this.ActiveQwiks.get(ButtonHash[y])[x].ID)){
                         let messageIndex=GroupedMessages.findIndex(item=>item.MessageID ==this.ActiveQwiks.get(ButtonHash[y])[x].ParentMessage);
                         let newArrayElement={Hash:ButtonHash[y],ID:this.ActiveQwiks.get(ButtonHash[y])[x].ID,MessageID:this.ActiveQwiks.get(ButtonHash[y])[x].ParentMessage};
-                        console.log(messageIndex);
                         if(messageIndex==-1)
                             GroupedMessages.push({MessageID:this.ActiveQwiks.get(ButtonHash[y])[x].ParentMessage,Buttons:[newArrayElement]});
                         else 
@@ -310,12 +319,11 @@ export const enum QwikGridTypes {
         for(let x=0;x<GroupedMessages.length;x++)
         {
             
-            this.DisableMultipleMessageButtons(GroupedMessages[x].MessageID,GroupedMessages[x].Buttons);
+            this.UpdateMultipleMessageButtons(GroupedMessages[x].MessageID,GroupedMessages[x].Buttons);
         }
     }
     private  ProcessMessage(ButtonsObj,interaction)
     {
-    console.log(`The longest timer is ${ButtonsObj.TimeOutGroups[0].TimerLength}`)
     let messageObj:QwikMessage={ID:ButtonsObj.ParentMessage,Interaction:interaction,
         Timer:setTimeout(
             this.MessageTimeOut.bind(this),
@@ -432,7 +440,6 @@ export const enum QwikGridTypes {
             }
         }
         ButtonObj.TimeOutGroups = TimeOutGroups;
-        console.log(ButtonObj.Buttons);
         return ButtonObj;
     }
 }
