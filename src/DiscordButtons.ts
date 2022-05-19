@@ -287,7 +287,9 @@ export const enum QwikGridTypes {
                             reply.components[x].components[y]=this.UpdateButtonAttribute(reply.components[x].components[y],defaultUpdate); 
                             if(defaultUpdate.disable)
                             {
-                                this.ActiveQwiks.get(foundHash).splice(checkExists,1);
+                                this.logger(`This is the found hash and the index of the button that was diabled Hash: ${foundHash} Index: ${checkExists}`)
+                                if(foundHash &&checkExists!=-1)
+                                    this.ActiveQwiks.get(foundHash).splice(checkExists,1);
                             }
 
                         }
