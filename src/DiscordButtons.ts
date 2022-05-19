@@ -303,7 +303,7 @@ export const enum QwikGridTypes {
             this.logger(`BUTTON GROUP TIMEOUT: Deleting expired Button timeout group instance`);
             this.ActiveQwikTimeouts.get(TimedOutSet.MessageID).splice(1,foundIndex);
             this.logger(`TEST TEST TEST: length of current time out refs ${this.ActiveQwikTimeouts.get(TimedOutSet.MessageID).length}`);
-            this.logger(this.ActiveQwikTimeouts);
+            this.logger(this.ActiveQwikTimeouts.entries());
             if(this.ActiveQwikTimeouts.get(TimedOutSet.MessageID).length==0)
             {
                 this.logger(`BUTTON GROUP TIMEOUT: No button timeout groups left for the current tracked parent message, removing...`);
