@@ -2,8 +2,8 @@
 const admin = require('firebase-admin'); 
 const playerMap = new Map();
 let {gCloudDB} = require("../config.json");
-let cloudBuffer:object= Buffer.from(`${gCloudDB}`,'base64')
-//let cloudBuffer:object= Buffer.from(`${process.env.gCloudDB}`,'base64')
+//let cloudBuffer:object= Buffer.from(`${gCloudDB}`,'base64')
+let cloudBuffer:object= Buffer.from(`${process.env.gCloudDB}`,'base64')
 let decodedCloud :string=cloudBuffer.toString();
 cloudBuffer=JSON.parse(decodedCloud);
 admin.initializeApp({credential:admin.credential.cert(cloudBuffer)})
