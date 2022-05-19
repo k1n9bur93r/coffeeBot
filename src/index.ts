@@ -2,7 +2,7 @@
 
 let FileIO = require("./FileIO");
 let Discord= require("./DiscordEntry");
-let API=require("./ApiEntry");
+//let API=require("./ApiEntry");
 let IndexLogger = require("./logger");
 FileIO.Initalize();
 Discord.Initalize();
