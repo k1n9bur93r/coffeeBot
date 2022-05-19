@@ -11,7 +11,6 @@ let CoinFlipCommand= require("./Commands/CoinFlipCommands")
 let ProfileWriteCommand= require("./Commands/ProfileWriteCommands");
 let CoffeePotCommand= require("./Commands/CoffeePotCommands");
 let RPSCommand= require("./Commands/RPSCommands");
-let TalkCommand= require("./Commands/TalkCommands");
 let SocialCommand= require("./Commands/SocialCommands");
 let DiscordLogger= require("./logger");
 
@@ -35,7 +34,6 @@ module.exports =
         commandArray=commandArray.concat(ProfileWriteCommand.LoadCommands());
         commandArray=commandArray.concat(CoinFlipCommand.LoadCommands());
         commandArray=commandArray.concat(CoffeePotCommand.LoadCommands());
-        commandArray=commandArray.concat(TalkCommand.LoadCommands());
         commandArray=commandArray.concat(RPSCommand.LoadCommands());
         commandArray=commandArray.concat(SocialCommand.LoadCommands());
         commandArray.forEach(Command=>{Commands.set(Command.Name,Command.Logic)}); 
