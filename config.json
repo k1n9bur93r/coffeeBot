@@ -1,1 +1,9 @@
-{}
+{
+    "discordToken": "",
+    "discordClientId": "",
+    "discordGuildId": "",
+    "responseJSON": "",
+    "BroadCastChannelID":"",
+    "gCloudLang" : "",
+    "gCloudDB":"",
+    "loggingPort":""}
