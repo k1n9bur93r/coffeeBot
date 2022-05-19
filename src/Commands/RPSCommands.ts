@@ -1,14 +1,15 @@
 "use strict"
 
-const {Reply,Buttons}= require("../DiscordCommunication");
+const {Reply}= require("../DiscordCommunication");
 let rps= require("../RPS");
+let QwikButtonCreate= require("../DiscordButtons").QwikButtonCreate;
 
 import {commandObject} from '../DiscordCommunication';
 import {commandArgs} from '../DiscordCommunication';
-import { ButtonTypes } from '../DiscordCommunication';
+import {QwikButtonTypes } from '../DiscordButtons';
 import {RPSResponse} from '../RPS'
 
-
+const QwikButtons= new QwikButtonCreate();
 let verbs = ["crushes", "covers", "cuts"];
 let emojis = [":rock:", ":roll_of_paper:", ":scissors:"];
 let choices:Array<string> = ["Rock", "Paper", "Scissors"];
@@ -35,25 +36,25 @@ if(!response.isWinner)
 
     if(response.message.toLowerCase().includes("create"))
     {
-        button= new Buttons(
+        button=  QwikButtons.CreateButtonComponent(
             [
                 {
-                    id:{Command:"rps",Args:{UserID:"PROVID",Text:"Rock"}},
+                    command:{Command:"rps",Args:{UserID:"PROVID",Text:"Rock"}},
                     label:"Rock",
                     style:"PRIMARY",
-                    type:ButtonTypes.SingleLong   
+                    type:QwikButtonTypes.SingleLong   
                 },
                 {
-                    id:{Command:"rps",Args:{UserID:"PROVID",Text:"Paper"}},
+                    command:{Command:"rps",Args:{UserID:"PROVID",Text:"Paper"}},
                     label:"Paper",
                     style:"PRIMARY",
-                    type:ButtonTypes.SingleLong   
+                    type:QwikButtonTypes.SingleLong   
                 },
                 {
-                    id:{Command:"rps",Args:{UserID:"PROVID",Text:"Scissors"}},
+                    command:{Command:"rps",Args:{UserID:"PROVID",Text:"Scissors"}},
                     label:"Scissors",
                     style:"PRIMARY",
-                    type:ButtonTypes.SingleLong   
+                    type:QwikButtonTypes.SingleLong   
                 }
             ]    
             );

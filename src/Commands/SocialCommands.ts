@@ -1,9 +1,9 @@
-const {Reply,Buttons}= require("../DiscordCommunication");
+const {Reply}= require("../DiscordCommunication");
 let social= require("../SocialGames");
 
 import {commandObject} from '../DiscordCommunication';
 import {commandArgs} from '../DiscordCommunication';
-import { ButtonTypes } from '../DiscordCommunication';
+
 
 module.exports={
 

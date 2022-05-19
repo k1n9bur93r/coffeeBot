@@ -95,13 +95,15 @@ module.exports=
                             TotalWinAnswerPlayer+=FlipResponse.amount;
                         returnMessages.push(FlipResponse);
                     }
-                    if(TotalWinInitPlayer-TotalWinAnswerPlayer>0)
+                    if(TotalWinInitPlayer-TotalWinAnswerPlayer>0) //this stuff could be a possible regression, test it 
                     {
+
                         flipIO.AddUserCoffee(Id, flipRequests[checkRequestAmount].ID, TotalWinInitPlayer-TotalWinAnswerPlayer,"COINFLIP")
                     }
                     else if(TotalWinAnswerPlayer-TotalWinInitPlayer>0)
                     {
                         flipIO.AddUserCoffee(flipRequests[checkRequestAmount].ID, Id, TotalWinAnswerPlayer-TotalWinInitPlayer,"COINFLIP")
+
                     }
                flipRequests.splice(checkRequestAmount,1);
                return returnMessages;

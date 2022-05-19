@@ -1,8 +1,8 @@
 "use strict"
 
-const {Reply,Embed,Buttons}= require("../DiscordCommunication");
+const {Reply,Embed}= require("../DiscordCommunication");
 let cf= require("../CoinFlip");
-
+let QwikButtonCreate= require("../DiscordButtons").QwikButtonCreate;
 let CoinEvents= require("../BuisnessEvents");
 
 let OmniInit= new CoinEvents.BEvent("OM-Init",[""],.5,OmniTimeOut);
@@ -12,7 +12,10 @@ let OmniEnd= new CoinEvents.BEvent("OM-End",["OM-Init"],.01,null);
 import {commandObject} from '../DiscordCommunication';
 import {commandArgs} from '../DiscordCommunication';
 import {CoinFlipResponse} from '../CoinFlip'
-import { ButtonTypes } from '../DiscordCommunication';
+import {QwikButtonTypes,QwikButtonConfig,QwikButtonStyles,QwikAttributes,QwikPostProcess}  from '../DiscordButtons';
+
+const QwikButtons = new QwikButtonCreate();
+
 module.exports=
 {
 
@@ -29,6 +32,7 @@ module.exports=
     }
 
 }
+
 
 function Flip(args:commandArgs) 
 {
@@ -121,27 +125,29 @@ function Flip(args:commandArgs)
         let responseString:string;
         if(args.Amount==undefined)
         {
-             button=Buttons(
+             button=QwikButtons.CreateButtonComponent(
                 [
                     {
-                     id:{Command:"coinflip",Args:{UserID:"PROVID"}},
+                     command:{Command:"coinflip",Args:{UserID:"PROVID"}},
                      label:"Take Coin Flip ",
                      style:"SUCCESS",
-                     type:ButtonTypes.SingleLong      
-                    }
+                     type:QwikButtonTypes.SingleLong,
+                     postProcess:{ overrideDisableLogic: false, function: DisableFlipButtonAfterClick }     
+                    } 
                 ]
             );
             responseString=`<@${args.UserID}> is offering a **coin flip coffee bet** for **1 coffee**.  Do **/coinflip** to take the bet, or click the button below!`;
         }
         else
         {
-            button=Buttons(
+            button=QwikButtons.CreateButtonComponent(
                 [
                     {
-                     id:{Command:"multiflip",Args:{UserID:"PROVID",Amount:args.Amount}},
+                     command:{Command:"multiflip",Args:{UserID:"PROVID",Amount:args.Amount}},
                      label:`Take Multi Flip for ${args.Amount} coffs`,
                      style:"SUCCESS",
-                     type:ButtonTypes.SingleLong   
+                     type:QwikButtonTypes.SingleLong,
+                     postProcess:{ overrideDisableLogic: false, function: DisableFlipButtonAfterClick }     
                     }
                 ]
             );
@@ -166,29 +172,31 @@ function OmniFlipConfirm(args:commandArgs)
         "DARK_AQUA",
         "https://media1.popsugar-assets.com/files/thumbor/akF5W-FXSyszxgQZD--zBUaX9-g/fit-in/2048xorig/filters:format_auto-!!-:strip_icc-!!-/2012/09/39/3/192/1922195/81485b01898e48d8_404794e6026211e2af9022000a1c9e2c_7/i/Ying-Yang.jpeg"
         );
-    let buttons=Buttons(
+    let buttons=QwikButtons.CreateButtonComponent(
         [
             {
-             id:{Command:"omniflipaccept",Args:{UserID:args.UserID}},
-             label:"I'm Ready",
-             style:"SUCCESS",   
+                command:{Command:"omniflipaccept",Args:{UserID:args.UserID}},
+                label:"I'm Ready",
+                style:"SUCCESS", 
+                type:QwikButtonTypes.SingleShort  
             },
             {
-                id:{Command:"omniflipdeny",Args:{UserID:args.UserID}},
+                command:{Command:"omniflipdeny",Args:{UserID:args.UserID}},
                 label:"No I'm Scared",
-                style:"DANGER",   
+                style:"DANGER", 
+                type:QwikButtonTypes.SingleShort     
             },
             {
-                id:{Command:"omniflipchance",Args:{UserID:args.UserID}},
+                command:{Command:"omniflipchance",Args:{UserID:args.UserID}},
                 label:"Choose For Me ",
-                style:"PRIMARY",   
+                style:"PRIMARY"  , 
+                type:QwikButtonTypes.SingleShort   
             }
         ]
     );
     return Reply(embed,"",true,buttons);
-    
-
 }
+
 function OmniFlipAccept(args:commandArgs)
 {
     let responses=[] as Array<CoinFlipResponse>;
@@ -279,10 +287,17 @@ else
    return OmniFlipDeny(args);
 }
 
-
 function OmniTimeOut()
 {
     let OmniCreator=cf.CommandEndOmniRequest();
     CoinEvents.NewBroadCast(`Nobody has taken up <@${OmniCreator}>'s Omniflip, grow a pair people!`);
+
+}
+
+
+function DisableFlipButtonAfterClick() : QwikAttributes
+{
+
+        return{style:QwikButtonStyles.Secondary,disable:true,text:"taken"};
 
 }

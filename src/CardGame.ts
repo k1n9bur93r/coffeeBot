@@ -1,7 +1,8 @@
 "use strict"
 let  CardFileIO = require("./FileIO");
-const {Reply,Embed,Buttons}= require("./DiscordCommunication");
+const {Reply,Embed}= require("./DiscordCommunication");
 let CardEvents= require("./BuisnessEvents");
+let QwikButtonCreate= require("./DiscordButtons").QwikButtonCreate;
 
 let GameStart= new CardEvents.BEvent("CG-Start",["CG-Init","BS-Init"],5,TimerWarning);
 let GameEnd= new CardEvents.BEvent("CG-End",["CG-Init","CG-Action","CG-Start,","CG-Warning"],.01,null);
@@ -9,7 +10,10 @@ let GameAction= new CardEvents.BEvent("CG-Action",["CG-Start","CG-Action","CG-Wa
 let GameEndWarning= new CardEvents.BEvent("CG-Warning",["CG-Start","CG-Action"],1,TimeOutLongWait); 
 let GameInit= new CardEvents.BEvent("CG-Init",["BS-Init"],5,TimeOutNoStart);
 
-import {ButtonTypes} from "./DiscordCommunication"
+import {QwikButtonTypes,QwikButtonStyles,QwikAttributes} from "./DiscordButtons"
+
+const QwikButtons= new QwikButtonCreate();
+
 
 const CardThumbnail="https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg";
 
@@ -511,21 +515,23 @@ function ValidateAction(playerIndex:number) //this is kinda convoluted and will 
     return null;
 }
 
+//Button UI Logic
+
 function HandButtons(interactionID)
 {
-    return Buttons(
+    return QwikButtons.CreateButtonComponent  (
         [
             {
-                id:{Command:"draw",Args:{UserID:interactionID}},
+                command:{Command:"draw",Args:{UserID:interactionID}},
                 label:"Draw",
                 style:"PRIMARY",
-                type:ButtonTypes.SingleLong   
+                type:QwikButtonTypes.SingleLong   
             },
             {
-                id:{Command:"stay",Args:{UserID:interactionID}},
+                command:{Command:"stay",Args:{UserID:interactionID}},
                 label:"Stay",
                 style:"SUCCESS",
-                type:ButtonTypes.SingleLong      
+                type:QwikButtonTypes.SingleLong      
             }
         ]
     );
@@ -534,14 +540,26 @@ function HandButtons(interactionID)
 function JoinButton()
 {
 
-    return Buttons     (
+    return QwikButtons.CreateButtonComponent     (
         [
             {
-             id:{Command:"21",Args:{UserID:"PROVID"}},
+             command:{Command:"21",Args:{UserID:"PROVID"}},
              label:"Join / Start",
              style:"PRIMARY",  
-             type:ButtonTypes.MultiLong 
+             type:QwikButtonTypes.MultiLong,
+             postProcess:{overrideDisableLogic:true,function:DisableJoinButtonOnStart}
             }
         ]
     );
+}
+
+
+function DisableJoinButtonOnStart(UserID) : QwikAttributes
+{
+    console.log("I am in the postprocess function")
+    if(UserID==currentGame.StartingPlayer)
+        return {style:QwikButtonStyles.Secondary,disable:true,text:"Started"};
+    else
+        return{style:QwikButtonStyles.Primary,disable:false,text:""};
+
 }

@@ -59,7 +59,6 @@ module.exports={
     {
         return cg.CommandHand(args.UserID);
     }
-
     function CGBestOfHandler(timeout=false,isGameRunning:boolean=true)
     {
         var pastWinner=cg.CommandGetPastWinner();
@@ -76,6 +75,7 @@ module.exports={
             
         }  
     }
+
 
 
 

@@ -2,8 +2,7 @@
 
 const {DiscordClientInstance} =require ("./DiscordClient"); 
 const {BotChannelMessage}=require("./DiscordBroadcast");
-const {ButtonSettings}= require("./DiscordCommunication");
-
+let  QwikButtonService = require( './DiscordButtons').QwikButtonService;
 
 let CardGameCommand= require("./Commands/CardGameCommands")
 let ProfileCommand =require("./Commands/PlayerInfoCommands")
@@ -16,18 +15,14 @@ let TalkCommand= require("./Commands/TalkCommands");
 let SocialCommand= require("./Commands/SocialCommands");
 let DiscordLogger= require("./logger");
 
+
+
 import {commandObject} from './DiscordCommunication';
 import {commandArgs} from './DiscordCommunication';
 import {commandExecute} from './DiscordCommunication';
 
-
- interface DisableButtonsObj{interaction:any,index:number};
-
-
-let SentButtons= new Array();
-
-
 const Commands= new Map();
+const ButtonService= new QwikButtonService(DiscordLogger);
 module.exports = 
 {
     Initalize: function()
@@ -122,59 +117,18 @@ function CommandInteraction(interaction)
                 }
             };
         let needsToAgree;
-        if(interaction.commandName!="agree")needsToAgree= VerifyUser(interaction);
+        if(interaction.commandName!="agree")
+        needsToAgree= VerifyUser(interaction);
         if(needsToAgree) return;
         return BotReply(commandFunction.Func(args),interaction);  
         }
 
-
 }
 function ButtonInteraction(interaction)
 {
-    let needsToAgree=VerifyUser(interaction);
+    let needsToAgree=VerifyUser(interaction); 
     if(needsToAgree) return ;
-    //TODO/DID:
-    //1.A button may either disable itself on click, or allow itself to be clicked multiple times 
-    //2. If a button has multiple instances tied to the user, and one of those instances is clicked, the other ones should disable themselves (might be better for when a button is first being loaded into the queue rather than when an action is taken) 
-    //3. Click counters? 
-    //4. Right now there is not much of a difference between the "multiInstance" and "clickOnce" properties of the buttons. Possibly not needed? 
-
-    //Determine all the interactions which have  buttons that currently exist which have a matching ID
-    let MatchingButtons= SentButtons.filter(set=>{
-        for(let x=0;x<set.IDs.length;x++)
-            if(set.IDs[x]==interaction.customId)
-                return true;
-        return false;
-    });
-    let recalledInstance={};
-    //for all the interactions that were found above check if their included buttons should be deactivated 
-    for(let x=0;x<MatchingButtons.length;x++)
-    {
-        if(MatchingButtons[x].Timer._timerArgs[0].id!=interaction.id)
-        {
-            for(let y=0;y<MatchingButtons[x].Types.length;y++)
-                {
-                    if(MatchingButtons[x].Types[y].clickOnce)
-                    DisableClickedMessageButtons(MatchingButtons[x].Timer._timerArgs[0]);
-                }
-        }
-        else
-        {
-            recalledInstance=MatchingButtons[x].Timer. _timerArgs[0];
-            // in the future something here for click once 
-
-        }
-    }
-
-    let PassedJSON=JSON.parse(interaction.customId);
-    DiscordLogger(`BUTTON CLICK : ${interaction.customId}`);
-    let commandFunction: commandExecute=Commands.get(PassedJSON.Command);
-    let args ={} as commandArgs;
-    args=PassedJSON.Args;
-    if(args.UserID&&args.UserID=="PROVID")
-        args.UserID=interaction.user.id;
-    
-    return BotReply(commandFunction.Func(args),interaction);
+    return BotReply(ButtonService.PressButton(interaction,Commands),interaction);
 }
 
 function VerifyUser(interaction)
@@ -187,55 +141,18 @@ function VerifyUser(interaction)
         return BotReply(tandCResp,interaction);
 }
 
-function DisableClickedMessageButtons(obj:DisableButtonsObj)
-{
-    DiscordLogger(`BUTTON EXPIRED`);
-    obj.interaction.fetchReply()
-    .then(reply=>{
-        if (reply)
-        {
-        let updatedIndex=SentButtons.findIndex(objProp=>objProp.interaction=obj.interaction);
-        for(let x=0;x<reply.components[0].components.length;x++)
-            reply.components[0].components[x].setDisabled(true);
-        obj.interaction.editReply({components:reply.components});
-        SentButtons.splice(updatedIndex,1);
-        }
-    });
-}
-
-function SaveButtons(communicationRequests,interaction)
-{
-    ////buts are able to exist for their proper length of time 
-    //currently all buttons are bound to run out as the fastest button, maybe in the future buttons can have their own options 
-    let fastestButton=9999999999; // switch to be a proper uninitalized value 
-    let IDs=[];
-    let Types=[];
-    for(let x=0;x<communicationRequests.ButtonsObj.Types.length;x++)
-    {
-        IDs.push(communicationRequests.ButtonsObj.Buttons.components[x].customId);
-        Types.push(communicationRequests.ButtonsObj.Types[x]);
-        let tempSpeed=communicationRequests.ButtonsObj.Types[x].timeout;
-        if(tempSpeed<fastestButton)
-            fastestButton=tempSpeed;
-    }
-        SentButtons.push({IDs:IDs,Types:Types,Timer:setTimeout(DisableClickedMessageButtons,fastestButton,{interaction:interaction,index:SentButtons.length})});
-    }
-
-async function BotReply(communicationRequests,interaction) { 
+async function BotReply(communicationRequests,interaction) 
+{ 
     if(communicationRequests.ButtonsObj)
     {
-        SaveButtons(communicationRequests,interaction);
+        ButtonService.ProcessQwikButtons(communicationRequests.ButtonsObj,interaction);
     }
-//something here that tracks past buttons that were sent, then can do an action to kill off said button
-
-
-
     if (communicationRequests.embed && communicationRequests.message == "") {
         if(communicationRequests.ButtonsObj)
         interaction.reply({
             ephemeral: communicationRequests.hidden,
             embeds: [communicationRequests.embed],
-            components: [communicationRequests.ButtonsObj.Buttons]
+            components: communicationRequests.ButtonsObj.Buttons
         });
         else
          interaction.reply({
@@ -247,22 +164,24 @@ async function BotReply(communicationRequests,interaction) {
         interaction.reply({
             ephemeral: communicationRequests.hidden,
             content: communicationRequests.message,
-            components: [communicationRequests.ButtonsObj.Buttons],
+            components: communicationRequests.ButtonsObj.Buttons,
             embeds: [communicationRequests.embed]
         });
         else
          interaction.reply({
             content: communicationRequests.message,
             ephemeral: communicationRequests.hidden,
-            embeds: [communicationRequests.embed]
+            embeds: communicationRequests.embed
             
         });
-    } else {
+    } 
+    else 
+    {
         if(communicationRequests.ButtonsObj)
         interaction.reply({
             ephemeral: communicationRequests.hidden,
             content: communicationRequests.message,
-            components: [communicationRequests.ButtonsObj.Buttons]
+            components: communicationRequests.ButtonsObj.Buttons
         });
         else
          interaction.reply({
