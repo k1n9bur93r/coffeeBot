@@ -4,9 +4,10 @@ const {Reply,Embed}= require("./DiscordCommunication");
 let CardEvents= require("./BuisnessEvents");
 let QwikButtonCreate= require("./DiscordButtons").QwikButtonCreate;
 
-let GameStart= new CardEvents.BEvent("CG-Start",["CG-Init","BS-Init"],2,TimeOutLongWait);
-let GameEnd= new CardEvents.BEvent("CG-End",["CG-Init","CG-Action","CG-Start"],.01,null);
-let GameAction= new CardEvents.BEvent("CG-Action",["CG-Start","CG-Action"],2,TimeOutLongWait); 
+let GameStart= new CardEvents.BEvent("CG-Start",["CG-Init","BS-Init"],5,TimerWarning);
+let GameEnd= new CardEvents.BEvent("CG-End",["CG-Init","CG-Action","CG-Start,","CG-Warning"],.01,null);
+let GameAction= new CardEvents.BEvent("CG-Action",["CG-Start","CG-Action","CG-Warning"],4,TimerWarning); 
+let GameEndWarning= new CardEvents.BEvent("CG-Warning",["CG-Start","CG-Action"],1,TimeOutLongWait); 
 let GameInit= new CardEvents.BEvent("CG-Init",["BS-Init"],5,TimeOutNoStart);
 
 import {QwikButtonTypes,QwikButtonStyles,QwikAttributes} from "./DiscordButtons"
@@ -215,8 +216,8 @@ module.exports =
         let CommandReply;
         if(!amount)
         amount=1;
-        else if(amount>2)
-            return  Reply(null,"Can't have a buy in greater than 2!",true); 
+        else if(amount>100)
+            return  Reply(null,"Can't have a buy in greater than 100!",true); 
         else if (amount && currentGame.StartingPlayer) 
             return Reply(null,`There is already a game you can join with a buy in of ${currentGame.PotSize}.`,true);
         if(currentGame.GameRunning==true)
@@ -368,7 +369,6 @@ module.exports =
         return 0;
     }
 }
-
 function CreatePlayerHandEmbed (playerObject, newDraw:boolean=false):object
 {
       let cardString = ``;
@@ -399,14 +399,21 @@ function TimeOutNoStart():string
     currentGame.ResetGame();
     return message;
 }
+
 function TimeOutLongWait():string
 {
-    let message="The current game of 21 has gone stale! No one has played an action in over two minutes. Wrapping up the game!";
+    let message="The current game of 21 has gone stale! No one has played an action in over five minutes. Wrapping up the game!";
 
     for(let x=0;x<currentGame.PlayerObjects.length;x++)
         currentGame.StayHand(x);
     CheckWinner();
     return message; 
+}
+
+function TimerWarning()
+{
+    CardEvents.NewBroadCast("Players of the current 21 Game have 60 seconds left to perform an action before the game goes stale.");
+    CardEvents.NewTimerEvent(GameEndWarning);
 }
 
 function CheckWinner () //TODO: take the logic that handles ties and move it back into the main card game object
@@ -496,7 +503,6 @@ for (let x=0;x<tempPlayerObject.length;x++)
         currentGame.ResetGame();
     }
 }
-
 function ValidateAction(playerIndex:number) //this is kinda convoluted and will be updated 
 {
   

@@ -159,7 +159,6 @@ module.exports =
             return Reply(null,`There is no 'Best Of' set to join!`,false);
     },
 
-
 }    
 function BestOfEnd()
 {

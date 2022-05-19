@@ -1,10 +1,11 @@
 
 
+
 let DiscordEvent = require("./DiscordBroadcast");
 
 let APIEvent = require("./ApiEntry");
 "use strict"
-
+let EventLogger= require("./logger");
 
 interface TimerObject{Timer:ReturnType<typeof setTimeout>,Name:string}
 
@@ -50,7 +51,7 @@ NewTimerEvent:function(IndividualEvent)
                 {
                     if(IndividualEvent.Replace[z]==TimerLists[y].Name)
                     {
-                        console.log(`REPLACED A CURRENT TIMER  '${TimerLists[y].Name}' with: ${IndividualEvent.Name}`);
+                        EventLogger(`TIMER REPLACE:  '${TimerLists[y].Name}' with: ${IndividualEvent.Name}`);
                         clearTimeout(TimerLists[y].Timer);
                         TimerLists.splice(y,1);
                         break;
@@ -59,12 +60,13 @@ NewTimerEvent:function(IndividualEvent)
             }
         }
         if(IndividualEvent.CallBack)
-            TimerLists.push({Timer:setTimeout(this.NewBroadCastEvent, IndividualEvent.Minutes,IndividualEvent.CallBack),Name: IndividualEvent.Name} );
+            TimerLists.push({Timer:setTimeout(this.NewBroadCastEvent, IndividualEvent.Minutes,{CallbackFunction:IndividualEvent.CallBack,TimerName:IndividualEvent.Name}),Name: IndividualEvent.Name} );
 },
-NewBroadCastEvent:function(callingFunction:any) //some kind of object that describes the broadcast
+NewBroadCastEvent:function(EventInfo:any) //some kind of object that describes the broadcast
 {
- if(callingFunction){
-    let data=callingFunction();
+    EventLogger(`TIMER FIRE: ${EventInfo.TimerName}`);
+ if(EventInfo.CallbackFunction){
+    let data=EventInfo.CallbackFunction();
     if(data)
         DiscordEvent.BotChannelMessage(data,null,"755280645978325003");//process.env.broadcastChannelId);
 }

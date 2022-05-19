@@ -13,6 +13,7 @@ let CoffeePotCommand= require("./Commands/CoffeePotCommands");
 let RPSCommand= require("./Commands/RPSCommands");
 let TalkCommand= require("./Commands/TalkCommands");
 let SocialCommand= require("./Commands/SocialCommands");
+let DiscordLogger= require("./logger");
 
 
 
@@ -45,16 +46,27 @@ module.exports =
 
 function HandleInteraction(interaction)
 {
-
-    if(interaction.isCommand())
-        CommandInteraction(interaction);
-    else if( interaction.isButton())
-        ButtonInteraction(interaction);
+    try {
+        if(interaction.isCommand())
+            CommandInteraction(interaction);
+        else if( interaction.isButton())
+            ButtonInteraction(interaction);
+    } catch (e) {
+        BotChannelMessage(
+            `I'm Sowwy UwU~ <@${
+                interaction.user.id
+            }> \n> but something happened and I'm brokie... || ${e.message}${
+                e.stack ? `\nStackTrace:\n=========\n${e.stack}` : ``
+            } ||`,
+            null,
+            process.env.broadcastChannelId
+        );
+    }
 }
 
 function CommandInteraction(interaction)
 {
-    try {
+   
         let commandFunction: commandExecute=Commands.get(interaction.commandName);
 
         
@@ -105,22 +117,12 @@ function CommandInteraction(interaction)
                 }
             };
         let needsToAgree;
-        if(interaction.commandName!="agree")needsToAgree= VerifyUser(interaction);
+        if(interaction.commandName!="agree")
+        needsToAgree= VerifyUser(interaction);
         if(needsToAgree) return;
         return BotReply(commandFunction.Func(args),interaction);  
         }
 
-} catch (e) {
-        BotChannelMessage(
-            `I'm Sowwy UwU~ <@${
-                interaction.user.id
-            }> \n> but something happened and I'm brokie... || ${e.message}${
-                e.stack ? `\nStackTrace:\n=========\n${e.stack}` : ``
-            } ||`,
-            null,
-            "755280645978325003"//process.env.broadcastChannelId
-        );
-    }
 }
 function ButtonInteraction(interaction)
 {
