@@ -297,19 +297,49 @@ export const enum QwikGridTypes {
     {
         this.logger(`BUTTON TIMEOUT: ${TimedOutSet.length} buttons have timed out.`);
         this.UpdateMultipleMessageButtons(TimedOutSet.MessageID,TimedOutSet.Buttons,{click:false,expire:true,specialButton:{id:"",updatedAttribute:undefined}});
+        let foundIndex=this.ActiveQwikTimeouts.get(TimedOutSet.MessageID).findIndex(Item=>Item.Buttons=TimedOutSet.Buttons);
+        if(foundIndex!=-1)
+        {
+            this.logger(`BUTTON GROUP TIMEOUT: Deleting expired Button timeout group instance`);
+            this.ActiveQwikTimeouts.get(TimedOutSet.MessageID).splice(1,foundIndex);
+            if(this.ActiveQwikTimeouts.get(TimedOutSet.MessageID).length==0)
+            {
+                this.logger(`BUTTON GROUP TIMEOUT: No button timeout groups left for the current tracked parent message, removing...`);
+                this.ActiveQwikTimeouts.delete(TimedOutSet.MessageID);
+            }
+        }
+        else
+        {
+            this.logger(`BUTTON GROUP TIMEOUT: Unable to remove TimeoutInstanece, no Timeout found for ${JSON.stringify(TimedOutSet.Buttons)}`,`ERROR`)
+        }
+    
+        for(let x=0;x<TimedOutSet.Buttons.length;x++)
+        {
+            let foundButtonIndex=this.ActiveQwiks.get(TimedOutSet.Buttons[x].Hash).findIndex(Item=>Item.ID=TimedOutSet.Buttons[x].ID);
+            if(foundButtonIndex!=-1)
+            {
+                this.logger(`BUTTON TIMEOUT: Removing Qwik Button Reference ${TimedOutSet.Buttons[x].ID}`);
+                this.ActiveQwiks.get(TimedOutSet.Buttons[x].Hash).splice(1,foundButtonIndex);
+            }
+            else
+            {
+                this.logger(`BUTTON TIMEOUT: Unable to remove expired button reference, does not exist for given Hash and ID combo.`,'ERROR');
+            }
+        }
+        
     }
     private  MessageTimeOut(MessageID)
     {
-    if(this.ActiveQwikMessages.has(MessageID))
-    {
-        this.logger(`BUTTON PARENT TIMEOUT: Button Parent message has timed out .`);
-        this.ActiveQwikMessages.delete(MessageID);
-    }
-    else
-    {
-        this.logger(`BUTTON PARENT TIMEOUT: FAILED to remove parent button reference, it was already deleted?`,'ERROR');
-        //message reference does not exist for some reason, log it 
-    }
+        if(this.ActiveQwikMessages.has(MessageID))
+        {
+            this.logger(`BUTTON PARENT TIMEOUT: Button Parent message has timed out .`);
+            this.ActiveQwikMessages.delete(MessageID);
+        }
+        else
+        {
+            this.logger(`BUTTON PARENT TIMEOUT: FAILED to remove parent button reference, it was already deleted?`,'ERROR');
+            
+        }
     }
     private ProcessButtonMultiInstance(ButtonHash:Array<string>,IgnoredButtons:Array<QwikIDGroup>) //checked
     {  
