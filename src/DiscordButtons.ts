@@ -1,5 +1,6 @@
 const {MessageButton, MessageActionRow } = require("discord.js");
 const crypto = require('crypto');
+let QwikButtonLogger= require("./logger");
 import {commandArgs} from "./DiscordCommunication"
 
 export interface QwikCommand { Func: any, Args: Array<string> };
@@ -51,7 +52,16 @@ export const enum QwikGridTypes {
 
  class QwikButtonService
 {
-
+    constructor(logger:any=undefined)
+    {
+        if(logger)
+        {
+            this.logger=logger
+        }
+        else
+        this.logger=QwikButtonLogger;
+    }
+    private logger;
     private ActiveQwiks= new Map<string, Qwik[]>(); 
     private ActiveQwikTimeouts= new Map();
     private ActiveQwikMessages=new Map<string, QwikMessage>();
@@ -63,11 +73,12 @@ export const enum QwikGridTypes {
         let StoredCommand:QwikCommmandOptions= this.GetButtonCommand(IDs);
         let CommandAction: QwikCommand=Commands.get(StoredCommand.Command);
         let ButtonCommandArgument:commandArgs;
-
+        this.logger(`BUTTON CLICK : ${JSON.stringify(StoredCommand)}`);
         ButtonCommandArgument=JSON.parse(JSON.stringify(StoredCommand.Args));
         if(ButtonCommandArgument.UserID&&ButtonCommandArgument.UserID=="PROVID")
         ButtonCommandArgument.UserID=Interaction.user.id;
         this.ProcessButtonInteraction(IDs,Interaction.user.id);
+        this.logger(`BUTTON CLICK : Performing Command`);
         return CommandAction.Func(ButtonCommandArgument);
     }
 
@@ -253,10 +264,14 @@ export const enum QwikGridTypes {
                     {
                         let overrideIgnoreIndividual=true;
                         let defaultUpdate:QwikAttributes={style:QwikButtonStyles.NOACTION,disable:true,text:""};
+                        let foundID="";
+                        let foundHash="";
                         let checkExists=ButtonIdentidies.findIndex(item=>{ 
 
                             if(item.Hash+"~~"+item.ID== reply.components[x].components[y].customId) 
                             {
+                                foundID=item.ID;
+                                foundHash=item.Hash;
                                 if(item.ID==overrides.specialButton.id&&overrides.specialButton.updatedAttribute==undefined)
                                     overrideIgnoreIndividual=false;
                                 else if(item.ID==overrides.specialButton.id&&overrides.specialButton.updatedAttribute)
@@ -268,7 +283,14 @@ export const enum QwikGridTypes {
                         });
                         console.log(defaultUpdate);
                         if(overrideIgnoreIndividual && (overrideAll || checkExists!=-1))
+                        {
                             reply.components[x].components[y]=this.UpdateButtonAttribute(reply.components[x].components[y],defaultUpdate); 
+                            if(defaultUpdate.disable)
+                            {
+                                this.ActiveQwiks.get(foundHash).splice(checkExists,1);
+                            }
+
+                        }
                     }
                 }
                 this.ActiveQwikMessages.get(MessageID).Interaction.editReply({components:reply.components});
@@ -278,17 +300,19 @@ export const enum QwikGridTypes {
     }
     private  ButtonTimeOut(TimedOutSet)
     {
+        this.logger(`BUTTON TIMEOUT: ${TimedOutSet.length} buttons have timed out.`);
         this.UpdateMultipleMessageButtons(TimedOutSet.MessageID,TimedOutSet.Buttons,{click:false,expire:true,specialButton:{id:"",updatedAttribute:undefined}});
     }
     private  MessageTimeOut(MessageID)
     {
     if(this.ActiveQwikMessages.has(MessageID))
     {
+        this.logger(`BUTTON PARENT TIMEOUT: Button Parent message has timed out .`);
         this.ActiveQwikMessages.delete(MessageID);
     }
     else
     {
-        console.log("Temp statement replace with logging later");
+        this.logger(`BUTTON PARENT TIMEOUT: FAILED to remove parent button reference, it was already deleted?`,'ERROR');
         //message reference does not exist for some reason, log it 
     }
     }

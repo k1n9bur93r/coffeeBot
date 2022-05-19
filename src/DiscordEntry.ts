@@ -22,7 +22,7 @@ import {commandArgs} from './DiscordCommunication';
 import {commandExecute} from './DiscordCommunication';
 
 const Commands= new Map();
-const ButtonService= new QwikButtonService();
+const ButtonService= new QwikButtonService(DiscordLogger);
 module.exports = 
 {
     Initalize: function()
