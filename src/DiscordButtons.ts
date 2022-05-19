@@ -295,13 +295,14 @@ export const enum QwikGridTypes {
     }
     private  ButtonTimeOut(TimedOutSet)
     {
-        this.logger(`BUTTON TIMEOUT: ${TimedOutSet.length} buttons have timed out.`);
+        this.logger(`BUTTON TIMEOUT: ${TimedOutSet.Buttons.length} buttons have timed out`);
         this.UpdateMultipleMessageButtons(TimedOutSet.MessageID,TimedOutSet.Buttons,{click:false,expire:true,specialButton:{id:"",updatedAttribute:undefined}});
         let foundIndex=this.ActiveQwikTimeouts.get(TimedOutSet.MessageID).findIndex(Item=>Item.Buttons=TimedOutSet.Buttons);
         if(foundIndex!=-1)
         {
             this.logger(`BUTTON GROUP TIMEOUT: Deleting expired Button timeout group instance`);
             this.ActiveQwikTimeouts.get(TimedOutSet.MessageID).splice(1,foundIndex);
+            this.logger(`TEST TEST TEST: length of current time out refs ${this.ActiveQwikTimeouts.get(TimedOutSet.MessageID).length}`);
             if(this.ActiveQwikTimeouts.get(TimedOutSet.MessageID).length==0)
             {
                 this.logger(`BUTTON GROUP TIMEOUT: No button timeout groups left for the current tracked parent message, removing...`);
@@ -323,7 +324,7 @@ export const enum QwikGridTypes {
             }
             else
             {
-                this.logger(`BUTTON TIMEOUT: Unable to remove expired button reference, does not exist for given Hash and ID combo.`,'ERROR');
+                this.logger(`BUTTON TIMEOUT: Unable to remove expired button reference, does not exist for given Hash and ID combo`,'ERROR');
             }
         }
         
@@ -332,7 +333,7 @@ export const enum QwikGridTypes {
     {
         if(this.ActiveQwikMessages.has(MessageID))
         {
-            this.logger(`BUTTON PARENT TIMEOUT: Button Parent message has timed out .`);
+            this.logger(`BUTTON PARENT TIMEOUT: Button Parent message has timed out`);
             this.ActiveQwikMessages.delete(MessageID);
         }
         else
