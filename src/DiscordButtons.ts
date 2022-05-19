@@ -92,7 +92,7 @@ export const enum QwikGridTypes {
         if(foundIndex==-1)
         {
 
-            //some kind of error here
+            this.logger(`BUTTON CLICK: Unable to find the reference to the following button ${ID}  `,'ERROR')
             return;
         }
 
@@ -285,13 +285,6 @@ export const enum QwikGridTypes {
                         if(overrideIgnoreIndividual && (overrideAll || checkExists!=-1))
                         {
                             reply.components[x].components[y]=this.UpdateButtonAttribute(reply.components[x].components[y],defaultUpdate); 
-                            if(defaultUpdate.disable)
-                            {
-                                this.logger(`This is the found hash and the index of the button that was diabled Hash: ${foundHash} Index: ${checkExists}`)
-                                if(foundHash &&checkExists!=-1)
-                                    this.ActiveQwiks.get(foundHash).splice(checkExists,1);
-                            }
-
                         }
                     }
                 }
