@@ -301,7 +301,7 @@ export const enum QwikGridTypes {
         if(foundIndex!=-1)
         {
             this.logger(`BUTTON GROUP TIMEOUT: Deleting expired Button timeout group instance`);
-            this.ActiveQwikTimeouts.get(TimedOutSet.MessageID).splice(1,foundIndex);
+            this.ActiveQwikTimeouts.get(TimedOutSet.MessageID).splice(foundIndex,1);
             this.logger(`TEST TEST TEST: length of current time out refs ${this.ActiveQwikTimeouts.get(TimedOutSet.MessageID).length}`);
             this.logger(this.ActiveQwikTimeouts.get(TimedOutSet.MessageID));
             if(this.ActiveQwikTimeouts.get(TimedOutSet.MessageID).length==0)
@@ -321,7 +321,7 @@ export const enum QwikGridTypes {
             if(foundButtonIndex!=-1)
             {
                 this.logger(`BUTTON TIMEOUT: Removing Qwik Button Reference ${TimedOutSet.Buttons[x].ID}`);
-                this.ActiveQwiks.get(TimedOutSet.Buttons[x].Hash).splice(1,foundButtonIndex);
+                this.ActiveQwiks.get(TimedOutSet.Buttons[x].Hash).splice(foundButtonIndex,1);
             }
             else
             {
