@@ -70,6 +70,9 @@ const commands = [
         .setName("coinflip")
         .setDescription("Coinflip for 1 coffee"),
         new SlashCommandBuilder()
+        .setName("niceflip")
+        .setDescription("Coinflip for 69 coffees"),
+        new SlashCommandBuilder()
         .setName("omniflip")
         .setDescription("Coinflip an Omni amount of times"),
     new SlashCommandBuilder()

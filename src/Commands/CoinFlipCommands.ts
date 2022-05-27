@@ -23,6 +23,7 @@ module.exports=
     {
         return [
         {Name:"coinflip" ,Logic:{Func:Flip,Args:["ID","Amount"]}},
+        {Name:"niceflip" ,Logic:{Func:NiceFlip,Args:["ID"]}},
         {Name:"multiflip" ,Logic:{Func:Flip,Args:["ID","Amount"]}},
         {Name:"omniflip" ,Logic:{Func:OmniFlipConfirm,Args:["ID"]}},
         {Name:"omniflipaccept",Logic:{Func:OmniFlipAccept,Args:["ID"]}},
@@ -33,6 +34,11 @@ module.exports=
 
 }
 
+function NiceFlip(args:commandArgs)
+{
+    args.Amount=69;
+    return Flip(args);
+} 
 
 function Flip(args:commandArgs) 
 {
