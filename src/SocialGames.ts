@@ -128,7 +128,7 @@ module.exports=
         {
             let LoserId= interactionUser==requests[findIndex].ID? requests[findIndex].RequestData.OtherID:requests[findIndex].ID;
             let SaveGrid=requests[findIndex].RequestData.Grid;
-            socialIO.AddUserCoffee(LoserId,interactionUser,10,"TICTACTOE");
+            socialIO.AddUserCoffee(LoserId,interactionUser,5,"TICTACTOE");
             requests.splice(findIndex,1);
             
             return {Success:true,Message:`WINNER `,AdditionalInfo:{ID:interactionUser,Grid:SaveGrid,WinGrid:winner.WinGrid}}

@@ -79,7 +79,7 @@ let Message="";
 let Buttons;
 if(response.Message.includes("REQUEST"))
 {
-    Message+=`<@${args.UserID}> Want's to play a game of Tic-Tac-Toe for 10 Coffs! Click the button below or type **/tictactoe** to join!`;
+    Message+=`<@${args.UserID}> Want's to play a game of Tic-Tac-Toe for 5 Coffs! Click the button below or type **/tictactoe** to join!`;
     Buttons=QwikButtons.CreateButtonComponent(
         [{
             command:{Command:"tictactoe",Args:{UserID:"PROVID"}},
