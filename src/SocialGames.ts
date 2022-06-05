@@ -72,9 +72,9 @@ module.exports=
             requests.splice(findIndex,1);
             return {Success:true,Message:"CANCEL"};
         }
-        else if(requests[findIndex].RequestData)
+        else if(findIndex!=-1 && requests[findIndex].RequestData)
         {
-            return {Success:true,Message:"EXISTS"};
+            return {Success:true,Message:"EXIST"};
         }
         else 
         {
