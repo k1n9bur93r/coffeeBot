@@ -13,7 +13,7 @@ export interface QwikPostProcess { overrideDisableLogic: boolean, function: any 
 
 export interface QwikAttributes { style: QwikButtonStyles, text: string, disable: boolean };
 
-export interface QwikButtonConfig { command: QwikCommmandOptions, label: string, style: string, type: number, customType?: QwikType , postProcess?: QwikPostProcess  };
+export interface QwikButtonConfig { command?: QwikCommmandOptions, label: string, style: number, type: number, customType?: QwikType , postProcess?: QwikPostProcess, disabled?:boolean  };
 
 export interface QwikGeneratedButtons { ParentMessage: string, TimeOutGroups: QwikTimeOut[], Types: QwikType[], Commands: QwikCommmandOptions[], Hashes: string[], GUIDS: string[], PostProcess: QwikPostProcess[], Buttons: typeof MessageActionRow[] };
 
@@ -30,7 +30,8 @@ export const enum QwikButtonTypes {
     SingleShort = 0,
     SingleLong = 1,
     MultiShort = 2,
-    MultiLong = 3
+    MultiLong = 3,
+    MultiLongSingle=4
 
 }
 export const  enum QwikButtonStyles {
@@ -69,6 +70,7 @@ export const enum QwikGridTypes {
 
     public PressButton(Interaction:any, Commands:any)
     {
+        let returnObj;
         let IDs:QwikIDGroup= this.GetButtonIdentity(Interaction.customId);
         let StoredCommand:QwikCommmandOptions= this.GetButtonCommand(IDs);
         let CommandAction: QwikCommand=Commands.get(StoredCommand.Command);
@@ -77,9 +79,10 @@ export const enum QwikGridTypes {
         ButtonCommandArgument=JSON.parse(JSON.stringify(StoredCommand.Args));
         if(ButtonCommandArgument.UserID&&ButtonCommandArgument.UserID=="PROVID")
         ButtonCommandArgument.UserID=Interaction.user.id;
-        this.ProcessButtonInteraction(IDs,Interaction.user.id);
         this.logger(`BUTTON CLICK : Performing Command`);
-        return CommandAction.Func(ButtonCommandArgument);
+        returnObj= CommandAction.Func(ButtonCommandArgument);
+        this.ProcessButtonInteraction(IDs,Interaction.user.id);
+        return returnObj;
     }
 
     public GetButtonIdentity(ButtonInteractionCustomID:string):QwikIDGroup
@@ -127,8 +130,6 @@ export const enum QwikGridTypes {
             }
  
         }
-        console.log(returnedAttributes);
-        console.log(savedButtonGUID);
         if(this.ActiveQwiks.get(ButtonIdentidy.Hash)[foundIndex].Type.clickOnce==true||this.ActiveQwiks.get(ButtonIdentidy.Hash)[foundIndex].Type.overrideAllClick==true)
         {
 
@@ -281,7 +282,6 @@ export const enum QwikGridTypes {
                             else 
                                 return false;    
                         });
-                        console.log(defaultUpdate);
                         if(overrideIgnoreIndividual && (overrideAll || checkExists!=-1))
                         {
                             reply.components[x].components[y]=this.UpdateButtonAttribute(reply.components[x].components[y],defaultUpdate); 
@@ -392,25 +392,32 @@ export const enum QwikGridTypes {
         { multiInstances: false, timeout: 5 * 60000, name: "SingleLong", clickOnce: true, overrideAllExpire: true, overrideAllClick: true },
         { multiInstances: false, timeout: 2 * 60000, name: "MultiShort", clickOnce: false, overrideAllExpire: true, overrideAllClick: true },
         { multiInstances: false, timeout: 5 * 60000, name: "MultiLong", clickOnce: false, overrideAllExpire: true, overrideAllClick: true },
+        { multiInstances: true, timeout: 5 * 60000, name: "MultiLongSingle", clickOnce: false, overrideAllExpire: false, overrideAllClick: false }
     ];    
     
     private DefaultGrids: Array<Array<number>> = [
        [2,2],
+       [3,3,3],
+       [4,4,4,4],
        [3,3],
-       [4,4],
-       [3,2],
-    
+       [5,5,5,5,5],
     ];   
 
         /** 
      Supply an array of ButtonConfig and optional ButtonLayout to define a Reply's attached buttons
     *@param {Array<ButtonConfig>} Buttons
-    *@param {Array<number>} ButtonLayout
+    *@param {number} ButtonLayout
+    *@param {Array<number>} CustomLayout
     *@returns {ReplyButtonComponent} ReplyButtonComponent
     */
-    public CreateButtonComponent(Buttons: Array<QwikButtonConfig>, ButtonLayout:Array<number>= [5,5,5,5,5]): QwikGeneratedButtons {
+    public CreateButtonComponent(Buttons: Array<QwikButtonConfig>, ButtonLayout:number= 4,CustomLayout:Array<number>=undefined): QwikGeneratedButtons {
 
-        let maxButtons = ButtonLayout.reduce((a,b)=>a+b);
+        let Layout:Array<number>
+        if(CustomLayout)
+            Layout=CustomLayout;
+        else
+            Layout=this.DefaultGrids[ButtonLayout];
+        let maxButtons = Layout.reduce((a,b)=>a+b);
         let TimeOutGroups: QwikTimeOut[] = new Array<QwikTimeOut>();
         let messageGuid = crypto.randomBytes(16).toString("hex");
 
@@ -418,9 +425,9 @@ export const enum QwikGridTypes {
 
         let rowCount = 0;
         if (Buttons.length > maxButtons)
-            throw new Error(`A Button Grid with the shape of ${JSON.stringify(ButtonLayout)} cannot have more than ${maxButtons} buttons.`);
+            throw new Error(`A Button Grid with the shape of ${JSON.stringify(Layout)} cannot have more than ${maxButtons} buttons.`);
 
-        rowCount = ButtonLayout.length;
+        rowCount = Layout.length;
 
         let ButtonObj: QwikGeneratedButtons = { ParentMessage: messageGuid, TimeOutGroups: [], Types: [], Commands: [], Hashes: [], GUIDS: [], PostProcess: [], Buttons: [new MessageActionRow()] };
         let ButtonRowTracker=0;
@@ -428,7 +435,12 @@ export const enum QwikGridTypes {
         for (let x = 0; x < Buttons.length; x++) {
 
             let tempGuid = crypto.randomBytes(16).toString("hex");
-            let tempHash = crypto.createHash('sha1').update(JSON.stringify(Buttons[x].command)).digest('hex')
+            let tempHash;
+            let isDisabled= Buttons[x].disabled ? Buttons[x].disabled :false; 
+            if(!Buttons[x].command)
+                tempHash=crypto.createHash('sha1').update("WOW NO DATA HERE? LOL").digest('hex')
+            else
+                tempHash= crypto.createHash('sha1').update(JSON.stringify(Buttons[x].command)).digest('hex')
             let rowPlacement: number;
 
             //Button Type characteristics 
@@ -443,7 +455,7 @@ export const enum QwikGridTypes {
             }
             if (ButtonObj.Types[x].timeout == -1) ButtonObj.Types[x].timeout = 15 * 60000;
             //Button Row Placement
-            if(LocalButtonRow<ButtonLayout[ButtonRowTracker])
+            if(LocalButtonRow<Layout[ButtonRowTracker])
             {
                 rowPlacement=ButtonRowTracker;
                 LocalButtonRow++;
@@ -465,7 +477,8 @@ export const enum QwikGridTypes {
                 new MessageButton()
                     .setCustomId(`${tempHash}~~${tempGuid}`)
                     .setLabel(Buttons[x].label)
-                    .setStyle(Buttons[x].style),
+                    .setStyle(Buttons[x].style)
+                    .setDisabled(isDisabled)
             );
 
             //button timeout grouping

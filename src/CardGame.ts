@@ -212,13 +212,12 @@ module.exports =
     },
     CommandStartJoinGame: function (interactionID: number, amount:number, messageReply:boolean=true):object //TODO: Move dealing of cards/ setting of bools out to a seperate function that handles such things.
     {
-
         let CommandReply;
         if(!amount)
-        amount=1;
+            amount=1;
         else if(amount>100)
-            return  Reply(null,"Can't have a buy in greater than 100!",true); 
-        else if (amount && currentGame.StartingPlayer) 
+            return  Reply(null,"Can't have a buy in greater than 100!",true);
+        else if (amount>1 && currentGame.StartingPlayer) 
             return Reply(null,`There is already a game you can join with a buy in of ${currentGame.PotSize}.`,true);
         if(currentGame.GameRunning==true)
             return Reply(null,`Sorry, there is a game currently on going!`,true); 
@@ -279,9 +278,7 @@ module.exports =
                     CommandReply=Reply(null,`<@${interactionID}> has joined the game of 21 started by <@${currentGame.StartingPlayer}>!` ); 
                 else
                     CardEvents.NewBroadCast(`<@${interactionID}> has joined the game of 21 started by <@${currentGame.StartingPlayer}>!`);
-
             }
-
         }
         return CommandReply;
     },
