@@ -72,7 +72,11 @@ module.exports=
             requests.splice(findIndex,1);
             return {Success:true,Message:"CANCEL"};
         }
-        else
+        else if(requests[findIndex].RequestData)
+        {
+            return {Success:true,Message:"EXISTS"};
+        }
+        else 
         {
             let startingPlayer= Math.random() > 0.5 ? true:false;
             
@@ -115,10 +119,7 @@ module.exports=
             return {Success:false,Message:`NOT Your turn ${interactionUser}`}
         }
 
-        if (requests[findIndex].RequestData.GameMoves==8)
-        {
-            return {Success:true,Message:`DRAW ${interactionUser}`,AdditionalInfo:{Grid:requests[findIndex].RequestData.Grid}}
-        }
+
         winner=this.CommandTicTacToeCheckWinner(findIndex);
         requests[findIndex].RequestData.XTurn=!requests[findIndex].RequestData.XTurn; 
         requests[findIndex].RequestData.PrevTurnSuccess=true;
@@ -132,7 +133,10 @@ module.exports=
             
             return {Success:true,Message:`WINNER `,AdditionalInfo:{ID:interactionUser,Grid:SaveGrid,WinGrid:winner.WinGrid}}
         }
-
+        else if (requests[findIndex].RequestData.GameMoves==8)
+        {
+            return {Success:true,Message:`DRAW ${interactionUser}`,AdditionalInfo:{Grid:requests[findIndex].RequestData.Grid}}
+        }
         else 
         {
             return {Success:true,Message:`CONTINUE`,AdditionalInfo:{Grid:requests[findIndex].RequestData.Grid}}

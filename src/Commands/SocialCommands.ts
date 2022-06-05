@@ -92,6 +92,10 @@ if(response.Message.includes("REQUEST"))
     );
     return Reply(null,Message,false,Buttons);
 }
+else if (response.Message.includes("EXIST"))
+{
+    return EditReply(null,`A Tic-Tac-Toe game is already in progress!`,false);
+}
 else if(response.Message.includes("CANCEL"))
 {
     Buttons=QwikButtons.CreateButtonComponent(
