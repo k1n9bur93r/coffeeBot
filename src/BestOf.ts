@@ -2,12 +2,23 @@
 let  BestFileIO = require("./FileIO");
 const {Reply}= require("./DiscordCommunication");
 let BestEvents= require("./BuisnessEvents");
+let QwikButtonCreate= require("./DiscordButtons").QwikButtonCreate;
+import {QwikButtonTypes,QwikButtonConfig,QwikButtonStyles,QwikAttributes,QwikPostProcess, QwikGridTypes}  from './DiscordButtons';
+
+
 
 let BestInit= new BestEvents.BEvent("BS-Init",["CG-Init","CG-Start","CG-Action","CG-End"],5,BestOfEnd);
 let BestTimeOut= new BestEvents.BEvent("BS-Time",["CG-Init","CG-Start","CG-Action","CG-End"],.01);
+const QwikButtons = new QwikButtonCreate();
 
 export interface BestOfResponse{gameRunning:boolean,isWinner:boolean,winnerId:number,players:Array<BestOfPlayer>,Sets:number,SetsPlayed:number};
 interface BestOfPlayer {id:number,wins:number}
+interface BestofGames{name:string,maxPlayers:number,startingCommand:string,}
+const enum ConfigedGames{
+twentyone=0,
+tictactoe=1
+}
+
 class BestOfSet{
 
     Session={
@@ -92,11 +103,11 @@ module.exports =
     {
         set.gameRunning=true;
     },
-    CommandAddWinner:function(winner:number,isTimeOut:boolean) 
+    CommandAddWinner:function(winner:number,isTimeOut:boolean=false) 
     {
         var winObject= set.PlayerWin(winner);
         if(winObject.winner==true)
-        BestEvents.NewBroadCast(`<@${winner}> has won the 'Best Of' set!`);
+            BestEvents.NewBroadCast(`<@${winner}> has won the 'Best Of' set!`);
         else
         {
             if(isTimeOut)
@@ -137,10 +148,20 @@ module.exports =
     {
         if(set.StartingPlayer==0)
         {
+            let Buttons= QwikButtons.CreateButtonComponent(
+                [
+                    {
+                        command:{Command:"bestjoin",Args:{UserID:"PROVID"}},
+                        label:"Join!",
+                        style:QwikButtonStyles.Success,
+                        type:QwikButtonTypes.MultiLong
+                    }
+                ]
+            );
             set.CreateBestOf(InteractionID,gameType,coffAmount,winsRequired)
             set.AddPlayer(InteractionID);
             BestEvents.NewTimerEvent(BestInit);
-            return Reply(null,`<@${InteractionID}> is starting a 'Best Of' ${winsRequired} in ${gameType} for ${coffAmount} :coffee:s `);
+            return Reply(null,`<@${InteractionID}> is starting a 'Best Of' ${winsRequired} in ${gameType} for ${coffAmount} :coffee:s `,false,Buttons);
         }
         else
             return Reply(null,`There is already a 'Best Of' set running, see if  you can join it!`,false);  
@@ -153,7 +174,7 @@ module.exports =
             if(set.AddPlayer(InteractionID))
                 return Reply(null,`<@${InteractionID}> has joined the 'Best Of' set!`);
             else
-                return Reply(null,`You are already in this 'Best Of' set!`);
+                return Reply(null,`You are already in this 'Best Of' set!`,false);
         }
         else
             return Reply(null,`There is no 'Best Of' set to join!`,false);

@@ -49,6 +49,8 @@ function HandleInteraction(interaction)
             CommandInteraction(interaction);
         else if( interaction.isButton())
             ButtonInteraction(interaction);
+            else if( interaction.isSelectMenu())
+            PanelInteraction(interaction);
     } catch (e) {
         BotChannelMessage(
             `I'm Sowwy UwU~ <@${
@@ -57,7 +59,7 @@ function HandleInteraction(interaction)
                 e.stack ? `\nStackTrace:\n=========\n${e.stack}` : ``
             } ||`,
             null,
-            process.env.broadcastChannelId
+            "755280645978325003"//process.env.broadcastChannelId
         );
     }
 }
@@ -128,6 +130,11 @@ function ButtonInteraction(interaction)
     if(needsToAgree) return ;
     return BotReply(ButtonService.PressButton(interaction,Commands),interaction);
 }
+function PanelInteraction(interaction)
+{
+    console.log(interaction);
+}
+
 
 function VerifyUser(interaction)
 {
@@ -141,51 +148,105 @@ function VerifyUser(interaction)
 
 async function BotReply(communicationRequests,interaction) 
 { 
+    if(!communicationRequests)
+    {
+        interaction.deferUpdate();
+        return;
+    }
+
     if(communicationRequests.ButtonsObj)
     {
         ButtonService.ProcessQwikButtons(communicationRequests.ButtonsObj,interaction);
     }
-    if (communicationRequests.embed && communicationRequests.message == "") {
-        if(communicationRequests.ButtonsObj)
-        interaction.reply({
-            ephemeral: communicationRequests.hidden,
-            embeds: [communicationRequests.embed],
-            components: communicationRequests.ButtonsObj.Buttons
-        });
-        else
-         interaction.reply({
-            ephemeral: communicationRequests.hidden,
-            embeds: [communicationRequests.embed]
-        });
-    } else if (communicationRequests.embed) {
-        if(communicationRequests.ButtonsObj)
-        interaction.reply({
-            ephemeral: communicationRequests.hidden,
-            content: communicationRequests.message,
-            components: communicationRequests.ButtonsObj.Buttons,
-            embeds: [communicationRequests.embed]
-        });
-        else
-         interaction.reply({
-            content: communicationRequests.message,
-            ephemeral: communicationRequests.hidden,
-            embeds: communicationRequests.embed
-            
-        });
-    } 
-    else 
+    if(!communicationRequests.EditReply)
     {
-        if(communicationRequests.ButtonsObj)
-        interaction.reply({
-            ephemeral: communicationRequests.hidden,
-            content: communicationRequests.message,
-            components: communicationRequests.ButtonsObj.Buttons
-        });
-        else
-         interaction.reply({
-            content: communicationRequests.message,
-            ephemeral: communicationRequests.hidden
-        });
+        if (communicationRequests.embed && communicationRequests.message == "") {
+            if(communicationRequests.ButtonsObj)
+            interaction.reply({
+                ephemeral: communicationRequests.hidden,
+                embeds: [communicationRequests.embed],
+                components: communicationRequests.ButtonsObj.Buttons
+            });
+            else
+            interaction.reply({
+                ephemeral: communicationRequests.hidden,
+                embeds: [communicationRequests.embed]
+            });
+        } 
+        else if (communicationRequests.embed) {
+            if(communicationRequests.ButtonsObj)
+            interaction.reply({
+                ephemeral: communicationRequests.hidden,
+                content: communicationRequests.message,
+                components: communicationRequests.ButtonsObj.Buttons,
+                embeds: [communicationRequests.embed]
+            });
+            else
+            interaction.reply({
+                content: communicationRequests.message,
+                ephemeral: communicationRequests.hidden,
+                embeds: communicationRequests.embed
+                
+            });
+        } 
+        else 
+        {
+            if(communicationRequests.ButtonsObj)
+            interaction.reply({
+                ephemeral: communicationRequests.hidden,
+                content: communicationRequests.message,
+                components: communicationRequests.ButtonsObj.Buttons
+            });
+            else
+            interaction.reply({
+                content: communicationRequests.message,
+                ephemeral: communicationRequests.hidden
+            });
+        }
     }
-    
+    else
+    {
+        if (communicationRequests.embed && communicationRequests.message == "") {
+            if(communicationRequests.ButtonsObj)
+            interaction.message.edit({
+
+                embeds: [communicationRequests.embed],
+                components: communicationRequests.ButtonsObj.Buttons
+            });
+            else
+             interaction.message.edit({
+                embeds: [communicationRequests.embed]
+            });
+        } 
+        else if (communicationRequests.embed) {
+            if(communicationRequests.ButtonsObj)
+            interaction.message.edit({
+                content: communicationRequests.message,
+                components: communicationRequests.ButtonsObj.Buttons,
+                embeds: [communicationRequests.embed]
+            });
+            else
+             interaction.message.edit({
+                content: communicationRequests.message,
+                embeds: communicationRequests.embed
+                
+            });
+        } 
+        else 
+        {
+            if(communicationRequests.ButtonsObj)
+            {
+                //TODO: Maybe look into replacing existing buttons in we are "updating" the buttons that were previously stored 
+                interaction.message.edit({content: communicationRequests.message}).then(repsone=>{
+                interaction.update({components: communicationRequests.ButtonsObj.Buttons});
+                });
+                
+            }
+            else
+             interaction.message.edit({
+                content: communicationRequests.message,
+            });
+         
+        }
+    }
 }

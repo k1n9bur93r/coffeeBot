@@ -1,4 +1,4 @@
-const { MessageEmbed} = require("discord.js");
+const { MessageEmbed,  MessageActionRow, MessageSelectMenu} = require("discord.js");
 import {QwikGeneratedButtons} from './DiscordButtons';
 
 
@@ -30,12 +30,51 @@ module.exports =
 
     },
     Reply: function (embedObject: object, botMessage: string, isHidden: boolean = false, buttonsObj: QwikGeneratedButtons = null) {
+
+        // if(buttonsObj)
+        // {
+        //     buttonsObj.Buttons.push(new MessageActionRow());
+        //     buttonsObj.Buttons[buttonsObj.Buttons.length-1].addComponents(
+        //         new MessageSelectMenu()
+        //         .setCustomId("WoahNow")
+        //         .setPlaceholder('Category')
+        //         .setMinValues(2)
+        //         .addOptions([
+        //             {
+        //                 label:'Option 1',
+        //                 description:'I am talking about Option 1',
+        //                 value:'Value/Name of Command 1'
+        //             },
+        //             {
+        //                 label:'Option 2',
+        //                 description:'I am talking about Option 2',
+        //                 value:'Value/Name of Command 2'
+        //             }
+        //         ])
+        //     );
+        // }
+
         let object = {
-            winner: 0,
             embed: embedObject,
             message: botMessage,
             hidden: isHidden,
-            ButtonsObj: buttonsObj
+            ButtonsObj: buttonsObj,
+            EditReply:false
+
+        }
+        return object;
+
+    },
+    EditReply: function (embedObject: object, botMessage: string, isHidden: boolean = false, buttonsObj: QwikGeneratedButtons = null) {
+
+
+        let object = {
+            embed: embedObject,
+            message: botMessage,
+            hidden: isHidden,
+            ButtonsObj: buttonsObj,
+            EditReply:true
+
         }
         return object;
 

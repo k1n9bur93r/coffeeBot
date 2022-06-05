@@ -160,6 +160,14 @@ const commands = [
         new SlashCommandBuilder()
         .setName("bestcreate")
         .setDescription("Create a new 'Best Of' Set for a game")
+        .addStringOption((option) =>
+        option
+            .setName("choice")
+            .setDescription("game you want to play")
+            .setRequired(true)
+            .addChoice("21", "21")
+            .addChoice("Tic-Tac-Toe", "tictactoe")
+        )
         .addIntegerOption((option) =>
         option
             .setName("rounds")
@@ -187,6 +195,9 @@ const commands = [
             .setDescription("Pick up drop coffs, or set the amount you want to drop")
             .setRequired(false)
     ),
+    new SlashCommandBuilder()
+    .setName("tictactoe")
+    .setDescription("Start a game of Tic-Tac-Toe!"),
 ].map((command) => command.toJSON());
 
 const rest = new REST({ version: "9" }).setToken(discordToken);

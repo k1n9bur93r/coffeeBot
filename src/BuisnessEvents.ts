@@ -68,14 +68,23 @@ NewBroadCastEvent:function(EventInfo:any) //some kind of object that describes t
  if(EventInfo.CallbackFunction){
     let data=EventInfo.CallbackFunction();
     if(data)
-        DiscordEvent.BotChannelMessage(data,null,process.env.broadcastChannelId);
+        DiscordEvent.BotChannelMessage(data,null,"755280645978325003")//process.env.broadcastChannelId);
 }
 
 },
-NewBroadCast:function(message,embed=null) //this will get filled in with the channel of the OG interaction
+NewBroadCast:  function(message,embed=null) //this will get filled in with the channel of the OG interaction
 {
-    DiscordEvent.BotChannelMessage(message,embed,process.env.broadcastChannelId)
+    let reference;
+    reference=DiscordEvent.BotChannelMessage(message,embed,"755280645978325003")//process.env.broadcastChannelId)
+    return reference;
+    
+},
+
+EditBroadCast:function(interaction,message,embed=null) //this will get filled in with the channel of the OG interaction
+{
+     DiscordEvent.EditBotChannelMessage(interaction,message,embed);
 }
+
 }
 
 
