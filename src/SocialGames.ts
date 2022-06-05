@@ -133,7 +133,7 @@ module.exports=
             
             return {Success:true,Message:`WINNER `,AdditionalInfo:{ID:interactionUser,Grid:SaveGrid,WinGrid:winner.WinGrid}}
         }
-        else if (requests[findIndex].RequestData.GameMoves==8)
+        else if (requests[findIndex].RequestData.GameMoves==9)
         {
             return {Success:true,Message:`DRAW ${interactionUser}`,AdditionalInfo:{Grid:requests[findIndex].RequestData.Grid}}
         }
