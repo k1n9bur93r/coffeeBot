@@ -12,7 +12,8 @@ module.exports={
                 content: message,
                 embeds: [embed]
             }).then(sent=> savedInteraction=sent);
-        } else {
+        } 
+        else {
             savedInteraction= ChannelTarget.send(message);
         }
         return savedInteraction;

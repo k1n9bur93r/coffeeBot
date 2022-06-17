@@ -59,7 +59,7 @@ function HandleInteraction(interaction)
                 e.stack ? `\nStackTrace:\n=========\n${e.stack}` : ``
             } ||`,
             null,
-            "755280645978325003"//process.env.broadcastChannelId
+            process.env.broadcastChannelId
         );
     }
 }
