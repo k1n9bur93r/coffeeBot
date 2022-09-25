@@ -6,10 +6,10 @@ let  QwikButtonService = require( './DiscordButtons').QwikButtonService;
 
 let CardGameCommand= require("./Commands/CardGameCommands")
 let ProfileCommand =require("./Commands/PlayerInfoCommands")
-let BestOfCommand= require("./Commands/BestOfCommands");
+//let BestOfCommand= require("./Commands/BestOfCommands");
 let CoinFlipCommand= require("./Commands/CoinFlipCommands")
 let ProfileWriteCommand= require("./Commands/ProfileWriteCommands");
-let CoffeePotCommand= require("./Commands/CoffeePotCommands");
+//let CoffeePotCommand= require("./Commands/CoffeePotCommands");
 let RPSCommand= require("./Commands/RPSCommands");
 let SocialCommand= require("./Commands/SocialCommands");
 let DiscordLogger= require("./logger");
@@ -30,10 +30,10 @@ module.exports =
 
         commandArray=commandArray.concat(CardGameCommand.LoadCommands());
         commandArray=commandArray.concat(ProfileCommand.LoadCommands());
-        commandArray=commandArray.concat(BestOfCommand.LoadCommands());
+        //commandArray=commandArray.concat(BestOfCommand.LoadCommands());
         commandArray=commandArray.concat(ProfileWriteCommand.LoadCommands());
         commandArray=commandArray.concat(CoinFlipCommand.LoadCommands());
-        commandArray=commandArray.concat(CoffeePotCommand.LoadCommands());
+        //commandArray=commandArray.concat(CoffeePotCommand.LoadCommands());
         commandArray=commandArray.concat(RPSCommand.LoadCommands());
         commandArray=commandArray.concat(SocialCommand.LoadCommands());
         commandArray.forEach(Command=>{Commands.set(Command.Name,Command.Logic)}); 
@@ -116,18 +116,18 @@ function CommandInteraction(interaction)
                     args.Text=ref;
                 }
             };
-        let needsToAgree;
-        if(interaction.commandName!="agree")
-        needsToAgree= VerifyUser(interaction);
-        if(needsToAgree) return;
+        // let needsToAgree;
+        // if(interaction.commandName!="agree")
+        // needsToAgree= VerifyUser(interaction);
+        // if(needsToAgree) return;
         return BotReply(commandFunction.Func(args),interaction);  
         }
 
 }
 function ButtonInteraction(interaction)
 {
-    let needsToAgree=VerifyUser(interaction); 
-    if(needsToAgree) return ;
+    // let needsToAgree=VerifyUser(interaction); 
+    // if(needsToAgree) return ;
     return BotReply(ButtonService.PressButton(interaction,Commands),interaction);
 }
 function PanelInteraction(interaction)
@@ -136,15 +136,15 @@ function PanelInteraction(interaction)
 }
 
 
-function VerifyUser(interaction)
-{
-    let commandTandCAgree: commandExecute= Commands.get('checkAgree');
-    let args ={} as commandArgs;
-    args.UserID=interaction.user.id;
-    let tandCResp =commandTandCAgree.Func(args);
-    if(tandCResp)
-        return BotReply(tandCResp,interaction);
-}
+// function VerifyUser(interaction)
+// {
+//     let commandTandCAgree: commandExecute= Commands.get('checkAgree');
+//     let args ={} as commandArgs;
+//     args.UserID=interaction.user.id;
+//     let tandCResp =commandTandCAgree.Func(args);
+//     if(tandCResp)
+//         return BotReply(tandCResp,interaction);
+// }
 
 async function BotReply(communicationRequests,interaction) 
 { 
@@ -236,7 +236,7 @@ async function BotReply(communicationRequests,interaction)
         {
             if(communicationRequests.ButtonsObj)
             {
-                //TODO: Maybe look into replacing existing buttons in we are "updating" the buttons that were previously stored 
+                //TODO: Maybe look into replacing existing buttons if we are "updating" the buttons that were previously stored 
                 interaction.message.edit({content: communicationRequests.message}).then(repsone=>{
                 interaction.update({components: communicationRequests.ButtonsObj.Buttons});
                 });

@@ -161,7 +161,7 @@ module.exports =
             set.CreateBestOf(InteractionID,gameType,coffAmount,winsRequired)
             set.AddPlayer(InteractionID);
             BestEvents.NewTimerEvent(BestInit);
-            return Reply(null,`<@${InteractionID}> is starting a 'Best Of' ${winsRequired} in ${gameType} for ${coffAmount} :coffee:s `,false,Buttons);
+            return Reply(null,`<@${InteractionID}> is starting a 'Best Of' ${winsRequired} in ${gameType} for ${coffAmount} :key:s `,false,Buttons);
         }
         else
             return Reply(null,`There is already a 'Best Of' set running, see if  you can join it!`,false);  

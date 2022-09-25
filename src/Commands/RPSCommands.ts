@@ -58,7 +58,7 @@ if(!response.isWinner)
                 }
             ]    
             );
-    replytext=`<@${args.UserID}> is offering a game of **rock, paper, scissors** for **1 coffee**. Do **/rps [choice]** to take the bet, or click one of the buttons below!`;
+    replytext=`<@${args.UserID}> is offering a game of **rock, paper, scissors** for **1 key**. Do **/rps [choice]** to take the bet, or click one of the buttons below!`;
     }
     else if(response.message.toLowerCase().includes("revoke"))
     {
@@ -74,7 +74,7 @@ else
     let winnerIndex= response.choices.findIndex(player=>player.id==response.winnerID);
     let loserIndex=0;
     if(winnerIndex==0) loserIndex=1;
-    replytext=`<@${response.winnerID}>'s ${emojis[choices.indexOf(response.choices[winnerIndex].choice)]} ${verbs[choices.indexOf(response.choices[winnerIndex].choice)]} <@${response.loserID}>'s ${emojis[choices.indexOf(response.choices[loserIndex].choice)]}. <@${response.loserID}> paid up 1 :coffee:.`;
+    replytext=`<@${response.winnerID}>'s ${emojis[choices.indexOf(response.choices[winnerIndex].choice)]} ${verbs[choices.indexOf(response.choices[winnerIndex].choice)]} <@${response.loserID}>'s ${emojis[choices.indexOf(response.choices[loserIndex].choice)]}. <@${response.loserID}> paid up 1 :key:.`;
 }
 return Reply(null, replytext,false,button);
 }
