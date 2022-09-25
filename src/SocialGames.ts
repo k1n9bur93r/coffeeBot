@@ -29,7 +29,7 @@ module.exports=
             {
                 if(requests[x].ID==interactionUser)
                 {
-                    SocialEvents.NewBroadCast(`<@${interactionUser}> Picked up the coffs they dropped`);
+                    SocialEvents.NewBroadCast(`<@${interactionUser}> Picked up the keys they dropped`);
                     requests.splice(x,1);
                     return {Success:false,Message:"Ohhh feeling not so generous all of a sudden???"};
                 }
@@ -39,23 +39,23 @@ module.exports=
                    let item= socialIO.GetPlayerTransfer(interactionUser,requests[x].ID,requests[x].RequestData.Removals[y].RefID1,requests[x].RequestData.Removals[y].Amount);
                 }
 
-                let message=`<@${interactionUser}> has picked up  **${requests[x].Amount}** :coffee: ${requests[x].Amount > 1 ? "s" : ""} that <@${requests[x].ID}> dropped  `;
+                let message=`<@${interactionUser}> has picked up  **${requests[x].Amount}** :key: ${requests[x].Amount > 1 ? "s" : ""} that <@${requests[x].ID}> dropped  `;
                 requests.splice(x,1);
                 return {Success:true,Message:message};
             }
         }
         //there is no request, create one
         if(amount==undefined||amount<=0)
-            return {Success:false,Message:"You need to specify how many coffees you want to drop "};
+            return {Success:false,Message:"You need to specify how many keys you want to drop "};
         let removalAmount;
         removalAmount=socialIO.GetBalancedRemoval(interactionUser,amount)
         if(removalAmount.CanDrop)
         {
             requests.push({Type:SocialGames.Drop,ID:interactionUser,Amount:amount,RequestData:removalAmount});
-            return  {Success:true,Message:`<@${interactionUser}> has dropped **${amount}** :coffee: ${amount > 1 ? "s" : ""} on the ground! Use */drop* to pick it up!`};
+            return  {Success:true,Message:`<@${interactionUser}> has dropped **${amount}** :key: ${amount > 1 ? "s" : ""} on the ground! Use */drop* to pick it up!`};
         }
         else
-        return {Success:false,Message:"You can not drop more coffs than you are owed"};
+        return {Success:false,Message:"You can not drop more keys than you are owed"};
 
     },
     CommandTicTacToeInit:function(interactionUser):SocialResponse

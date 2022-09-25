@@ -29,7 +29,7 @@ function Give(args:commandArgs){
     if(returnList) 
         return returnList;
     pfWIO.AddUserCoffee(args.UserID ,args.RefID1,args.Amount,"GIVE");
-    return Reply(null,`<@${args.UserID}> gave <@${args.RefID1}> ${args.Amount} coffee${args.Amount > 1 ? "s" : ""}`);
+    return Reply(null,`<@${args.UserID}> gave <@${args.RefID1}> ${args.Amount} key${args.Amount > 1 ? "s" : ""}`);
 } 
 function Redeem(args:commandArgs) {
     var returnList=VeriftyCoffTransaction(args);
@@ -38,7 +38,7 @@ function Redeem(args:commandArgs) {
     if (pfWIO.GetUserCoffeeDebt(args.UserID,args.RefID1) <args.Amount) 
         return Reply(null,`<@${args.RefID1}> does not owe you ${args.Amount}`,true);
     pfWIO.RemoveUserCoffee(args.RefID1,args.UserID,args.Amount,"REDEEM");
-    return Reply(null,`<@${args.UserID}> redeemed ${args.Amount} coffee${args.Amount > 1 ? "s" : ""} from <@${args.RefID1}>`);
+    return Reply(null,`<@${args.UserID}> redeemed ${args.Amount} key${args.Amount > 1 ? "s" : ""} from <@${args.RefID1}>`);
 } 
 function Transfer(args:commandArgs) {
     

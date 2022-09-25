@@ -91,15 +91,15 @@ function Flip(args:commandArgs)
         {
             if(player2>player1)
             {
-                coinflipResultText+=`\n\n<@${args.UserID}> has won ${player2-player1} :coffee: ${player2-player1 > 1 ? "s" : ""} !`;
+                coinflipResultText+=`\n\n<@${args.UserID}> has won ${player2-player1} :key: ${player2-player1 > 1 ? "s" : ""} !`;
             }
             else
             {
-                coinflipResultText+=`\n\n<@${OtherPlayer}> has won ${player1-player2} :coffee: ${player1-player2 > 1 ? "s" : ""} !`;
+                coinflipResultText+=`\n\n<@${OtherPlayer}> has won ${player1-player2} :key: ${player1-player2 > 1 ? "s" : ""} !`;
             }
         }
         else
-            coinflipResultText+=`\n\nBoth Players tied, no coffess owed!`;
+            coinflipResultText+=`\n\nBoth Players tied, no keys owed!`;
         const coinFlipResults = Embed(
             title,
             coinflipResultText,
@@ -142,7 +142,7 @@ function Flip(args:commandArgs)
                     } 
                 ]
             );
-            responseString=`<@${args.UserID}> is offering a **coin flip coffee bet** for **1 coffee**.  Do **/coinflip** to take the bet, or click the button below!`;
+            responseString=`<@${args.UserID}> is offering a **coin flip key bet** for **1 key**.  Do **/coinflip** to take the bet, or click the button below!`;
         }
         else
         {
@@ -150,14 +150,14 @@ function Flip(args:commandArgs)
                 [
                     {
                      command:{Command:"multiflip",Args:{UserID:"PROVID",Amount:args.Amount}},
-                     label:`Take Multi Flip for ${args.Amount} coffs`,
+                     label:`Take Multi Flip for ${args.Amount} keys`,
                      style:"SUCCESS",
                      type:QwikButtonTypes.SingleLong,
                      postProcess:{ overrideDisableLogic: false, function: DisableFlipButtonAfterClick }     
                     }
                 ]
             );
-            responseString=`<@${args.UserID}> is offering **${args.Amount}** coin flips for 1 :coffee: each. Do **/multiflip ${args.Amount}** to take the bet, or click the button below!`;
+            responseString=`<@${args.UserID}> is offering **${args.Amount}** coin flips for 1 :key: each. Do **/multiflip ${args.Amount}** to take the bet, or click the button below!`;
         }
         return Reply(null,responseString,false,button);
 
@@ -236,15 +236,15 @@ if(responses[0].message=="")
     {
         if(player2>player1)
         {
-            coinflipResultText+=`\n<@${args.UserID}> has won ${player2-player1} :coffee: ${player2-player1 > 1 ? "s" : ""} !`;
+            coinflipResultText+=`\n<@${args.UserID}> has won ${player2-player1} :key: ${player2-player1 > 1 ? "s" : ""} !`;
         }
         else
         {
-            coinflipResultText+=`\n<@${OtherPlayer}> has won ${player1-player2} :coffee: ${player1-player2 > 1 ? "s" : ""} !`;
+            coinflipResultText+=`\n<@${OtherPlayer}> has won ${player1-player2} :key: ${player1-player2 > 1 ? "s" : ""} !`;
         }
     }
     else
-        coinflipResultText+=`\nBoth Players tied, no coffess owed!`;
+        coinflipResultText+=`\nBoth Players tied, no keys owed!`;
     const coinFlipResults = Embed(
         title,
         coinflipResultText,

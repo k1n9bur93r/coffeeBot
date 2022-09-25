@@ -15,8 +15,7 @@ import {QwikButtonTypes,QwikButtonStyles,QwikAttributes} from "./DiscordButtons"
 const QwikButtons= new QwikButtonCreate();
 
 
-const CardThumbnail="https://ae01.alicdn.com/kf/Hf0a2644ab27443aeaf2b7f811096abf3V/Bicycle-House-Blend-Coffee-Playing-Cards-Cafe-Deck-Poker-Size-USPCC-Custom-Limited-Edition-Magic-Cards.jpg_q50.jpg";
-
+const CardThumbnail="https://www.creativegiftsdirect.com/mas_assets/cache/image/1/5/2/1/x600-5409.Jpg";
 function cardGamePermutation(canDraw=true,canStay=true,winAmount=21,deck=[],minDraw=-1)
 {
     return{
@@ -228,7 +227,7 @@ module.exports =
                     fields.push({title:`Player ${x+1}`,content:`<@${currentGame.PlayerObjects[x].userId}>`,fieldsAlign:true});
                 const embed=Embed(
                     "21 Round Starting",
-                    `The game of 21 is starting with ${(currentGame.PlayerObjects.length-1)*currentGame.PotSize} coffs on the line! Players see your hand with **/hand** and use **/draw** to draw or **/stay** stay!\n`,
+                    `The game of 21 is starting with ${(currentGame.PlayerObjects.length-1)*currentGame.PotSize} keys on the line! Players see your hand with **/hand** and use **/draw** to draw or **/stay** stay!\n`,
                     fields,
                     true,
                     "DARK_RED",
@@ -254,7 +253,7 @@ module.exports =
                 currentGame.DealCard(0);
                 embed=Embed(
                     "21 New Round",
-                    `<@${interactionID}> Is starting a round of 21 with a ${currentGame.PotSize} coff buy in, use /21 to join or start the game!`,
+                    `<@${interactionID}> Is starting a round of 21 with a ${currentGame.PotSize} key buy in, use /21 to join or start the game!`,
                     null,
                     null,
                     "DARK_RED",
@@ -309,7 +308,7 @@ module.exports =
                 fields.push({title:`Player ${x+1}`,content:`<@${currentGame.PlayerObjects[x].userId}>`});
             const embed=Embed(
                 "21 Current Players",
-                `There are *${(currentGame.PlayerObjects.length-1)*currentGame.PotSize}* coffs on the line`,
+                `There are *${(currentGame.PlayerObjects.length-1)*currentGame.PotSize}* keys on the line`,
                 fields,
                 true,
                 'DARK_RED',
@@ -444,7 +443,7 @@ if(currentGame.Winners.length>1)
 else if(currentGame.Winners.length==1)
 {
     currentGame.PastWinner=currentGame.Winners[0].userId;
-    warText = `<@${currentGame.Winners[0].userId}> has won the game of 21! They won **${(currentGame.PlayerIds.length-1)*currentGame.PotSize}** :coffee:!\n\n`;
+    warText = `<@${currentGame.Winners[0].userId}> has won the game of 21! They won **${(currentGame.PlayerIds.length-1)*currentGame.PotSize}** :key:!\n\n`;
         for ( let x=0;x<currentGame.PlayerIds.length;x++)
         {
             tempPlayerObject=currentGame.PlayerObjects;
