@@ -105,10 +105,10 @@ function getProfileString(id,avatar,name) {
         }
     }
     if (owedCoffs == "") {
-        owedCoffs = "No owed coffs!\n";
+        owedCoffs = "No owed keys!\n";
     }
     if (receivingCoffs == "") {
-        receivingCoffs = "No redeemable coffs!\n";
+        receivingCoffs = "No redeemable keys!\n";
     }
     pString += `**Owed :key:**\n${owedCoffs}\n**Redeemable :key:**\n${receivingCoffs}\n**Net :key: worth\n${
         data.ReceivingCoffs - data.OwedCoffs

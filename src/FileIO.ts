@@ -26,7 +26,7 @@ module.exports = {
         {
             FileIOLogger("Fetching Player Information from FireStore DB ");
             serverGroup=serverSelection;
-            let playerData=await db.collection('Players').get().where('Server','==',serverGroup);
+            let playerData=await db.collection('Players').where('Server','==',serverGroup).get();
             FileIOLogger("Player Information Fetched, Storing in Hashmap");
             playerData.forEach(document=>{
                 playerMap.set(document.id,PlayerObject(document.data()));
