@@ -20,7 +20,7 @@ LoadCommands:function():Array<commandObject>
 function Leader(args:commandArgs)
 {
     const embed =Embed(
-        ":coffee: Leaderboard",
+        ":key: Leaderboard",
         getLeaderboardString(),
         null,
         false,
@@ -110,7 +110,7 @@ function getProfileString(id,avatar,name) {
     if (receivingCoffs == "") {
         receivingCoffs = "No redeemable coffs!\n";
     }
-    pString += `**Owed :coffee:**\n${owedCoffs}\n**Redeemable :coffee:**\n${receivingCoffs}\n**Net :coffee: worth\n${
+    pString += `**Owed :key:**\n${owedCoffs}\n**Redeemable :key:**\n${receivingCoffs}\n**Net :key: worth\n${
         data.ReceivingCoffs - data.OwedCoffs
     }**`
     
@@ -150,7 +150,7 @@ function getLeaderboardString() {
         }
         else if(x==leaderboard.length-1)
         {
-            coffeeLeaderboardString += `**${leaderboard[x].Total}** <@${leaderboard[x].ID}> :hot_face:\n\n`; 
+            coffeeLeaderboardString += `**${leaderboard[x].Total}** <@${leaderboard[x].ID}> :lock:\n\n`; 
         }
         else
         {
