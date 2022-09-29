@@ -4,7 +4,7 @@ let FileIO = require("./FileIO");
 let Discord= require("./DiscordEntry");
 //let API=require("./ApiEntry");
 let IndexLogger = require("./logger");
-FileIO.Initalize(+initServerGroup);
+FileIO.Initalize(initServerGroup);
 Discord.Initalize();
 //API.Initalize(); //not needed for now 
 IndexLogger("Ready!");
