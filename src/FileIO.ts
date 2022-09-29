@@ -12,7 +12,7 @@ const db= admin.firestore();
 let writeActions: number=0;
 let timerStart: number=0;
 let timerObject: ReturnType<typeof setTimeout>;
-let serverGroup=-1;
+let serverGroup:number=0;
 
 let FileIOLogger=require(`./logger`);
 //TODO set config values for how often things are saved to the DB, test the overflow handler insta save 
@@ -20,12 +20,12 @@ let FileIOLogger=require(`./logger`);
 
 
 module.exports = {
-    Initalize: async function(serverSelection)
+    Initalize: async function(serverSelection:string)
     {
         try
         {
             FileIOLogger("Fetching Player Information from FireStore DB ");
-            serverGroup=serverSelection;
+            serverGroup=+serverSelection;
             let playerData=await db.collection('Players').where('Server','==',serverGroup).get();
             FileIOLogger("Player Information Fetched, Storing in Hashmap");
             playerData.forEach(document=>{
