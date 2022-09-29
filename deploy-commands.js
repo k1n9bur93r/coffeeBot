@@ -51,21 +51,21 @@ const commands = [
                 .setDescription("Amount to give")
                 .setRequired(true)
         ),
-    // new SlashCommandBuilder()
-    //     .setName("redeem")
-    //     .setDescription("Redeem some keys")
-    //     .addUserOption((option) =>
-    //         option
-    //             .setName("user")
-    //             .setDescription("User to redeem keys from")
-    //             .setRequired(true)
-    //     )
-    //     .addIntegerOption((option) =>
-    //         option
-    //             .setName("amount")
-    //             .setDescription("Amount to redeem")
-    //             .setRequired(true)
-    //     ),
+    new SlashCommandBuilder()
+        .setName("redeem")
+        .setDescription("Redeem some keys")
+        .addUserOption((option) =>
+            option
+                .setName("user")
+                .setDescription("User to redeem keys from")
+                .setRequired(true)
+        )
+        .addIntegerOption((option) =>
+            option
+                .setName("amount")
+                .setDescription("Amount to redeem")
+                .setRequired(true)
+        ),
     new SlashCommandBuilder()
         .setName("coinflip")
         .setDescription("Coinflip for 1 coffee"),
