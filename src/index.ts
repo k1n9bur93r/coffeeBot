@@ -1,10 +1,10 @@
 // Require the necessary discord.js classes
-let initServerGroup:string= process.env.serverGroup;
+let initServerGroup:= process.env.serverGroup;
 let FileIO = require("./FileIO");
 let Discord= require("./DiscordEntry");
 //let API=require("./ApiEntry");
 let IndexLogger = require("./logger");
-FileIO.Initalize(initServerGroup);
+FileIO.Initalize(+initServerGroup);
 Discord.Initalize();
 //API.Initalize(); //not needed for now 
 IndexLogger("Ready!");

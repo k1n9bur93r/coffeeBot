@@ -20,7 +20,7 @@ let FileIOLogger=require(`./logger`);
 
 
 module.exports = {
-    Initalize: async function(serverSelection)
+    Initalize: async function(serverSelection: number)
     {
         try
         {
